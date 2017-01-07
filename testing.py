@@ -37,15 +37,12 @@ class Testinput:
                     if (apos>-1): self.goodanswer[rowi]=line[apos+2:comment]
                 i=i+1
             if (epos>-1 and mpos==-1 and apos==-1 and comment==-1):
-                if ("\n" in line[i-2:i]): self.eng[rowi]=line[epos+2:i-2]
-                else: self.eng[rowi]=line[epos+2:i]
+                self.eng[rowi]=line[epos+2:i].strip()
             if (mpos>-1 and apos==-1 and comment==-1):
-                if ("\n" in line[i-2:i]): self.mentalese[rowi]=line[mpos+2:i-2]
-                else: self.mentalese[rowi]=line[mpos+2:i]
+                self.mentalese[rowi]=line[mpos+2:i].strip()
             if (apos>-1 and comment==-1):
                 self.question[rowi]=1
-                if ("\n" in line[i-2:i]): self.goodanswer[rowi]=line[apos+2:i-2]
-                else: self.goodanswer[rowi]=line[apos+2:i]
+                self.goodanswer[rowi]=line[apos+2:i].strip()
 
 if __name__ == "__main__":
     print("This is a module file, run natlan.py instead")
