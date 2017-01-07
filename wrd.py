@@ -16,3 +16,6 @@ class Wlist:
         self.wcp[self.wci].wchild.append(gl.KB.ci)         # add the meaning concept as child in the word object.
         gl.log.add_log((self.wname," add_word ",self.wcp[self.wci].word," wordindex=",self.wci," KB index=",gl.KB.ci))
         return gl.KB.ci
+
+if __name__ == "__main__":
+    print("This is a module file, run natlan3.py instead")

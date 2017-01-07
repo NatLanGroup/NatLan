@@ -17,5 +17,8 @@ class Logging:
             for item in what: self.logf.write(str(item))
             self.logf.write("\n")
         except: print("ERROR: Logging: log file not present or called incorrectly",str(what))
+
+if __name__ == "__main__":
+    print("This is a module file, run natlan3.py instead")
         
 
