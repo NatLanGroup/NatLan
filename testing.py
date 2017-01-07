@@ -46,3 +46,6 @@ class Testinput:
                 self.question[rowi]=1
                 if ("\n" in line[i-2:i]): self.goodanswer[rowi]=line[apos+2:i-2]
                 else: self.goodanswer[rowi]=line[apos+2:i]
+
+if __name__ == "__main__":
+    print("This is a module file, run natlan.py instead")

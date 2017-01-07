@@ -18,4 +18,4 @@ class Wlist:
         return gl.KB.ci
 
 if __name__ == "__main__":
-    print("This is a module file, run natlan3.py instead")
+    print("This is a module file, run natlan.py instead")

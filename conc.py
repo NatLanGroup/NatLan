@@ -49,3 +49,6 @@ class Kbase:
                 found[0]=found[0]+1                 #increase number of items found
             sindex=sindex+1
         return found
+
+if __name__ == "__main__":
+    print("This is a module file, run natlan.py instead")
