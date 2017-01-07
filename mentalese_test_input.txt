@@ -1,0 +1,2 @@
+C(girl,people)p=0.99 C(boy,people)p=0.98
+A(F(girl,little)p=0.45,talk)
