@@ -22,14 +22,11 @@ class Wlist:
             (self.wname, " add_word ", self.wcp[self.wci].word, " wordindex=", self.wci, " KB index=", gl.KB.ci))
         return gl.KB.ci
 
-<<<<<<< HEAD
     def find(self,new_word) -> int:
         for index in range(len(self.wcp)):
             if self.wcp[index].word == new_word:
                 return self.wcp[index].wchild[0]
         return -1
-=======
 
 if __name__ == "__main__":
     print("This is a module file, run natlan.py instead")
->>>>>>> origin/master
