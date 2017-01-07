@@ -6,11 +6,11 @@ gl.KB = conc.Kbase("KB")  # KNOWLEDGE BASE
 gl.WL = wrd.Wlist("WL")  # WORD LIST
 gl.log = gl.Logging()
 
-gl.KB.add_concept(3, 3, [9, 5])
-gl.WL.add_word("pista")
-gl.WM.add_concept(3, 1, [19])
-gl.WM.add_concept(4, 2, [12, 17])
-gl.WL.add_word("joska")
+#gl.KB.add_concept(3, 3, [9, 5])
+#gl.WL.add_word("pista")
+#gl.WM.add_concept(3, 1, [19])
+#gl.WM.add_concept(4, 2, [12, 17])
+#gl.WL.add_word("joska")
 
 test1 = conc.Concept()
 test1.add_parents([-1, 17])
@@ -23,5 +23,7 @@ if gl.args.argnum == 2:
           gl.test.goodanswer[4])
     gl.test.testf.close()
 
+gl.WM.read_mentalese("mentalese_test_input.txt")
+
 gl.log.logf.close()
-print(gl.KB.cp[0].parent, "word with index 1=", gl.WL.wcp[1].word, "search:", result)
+#print(gl.KB.cp[0].parent, "word with index 1=", gl.WL.wcp[1].word, "search:", result)
