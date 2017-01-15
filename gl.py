@@ -6,13 +6,13 @@ import sys
 class Arguments:
     def __init__(self):
         self.argnum = len(sys.argv)
-
-        self.pgranu = 4  # granularity for p, pgranu+1 discrete values from 0
+        self.pdefault=1         #default value of p   
+        self.pgranu = 4         # granularity for p, pgranu+1 discrete values from 0
 
         # pclas is the matrix for class reasoning. C(%1,%2)p1 and %X(%2,%3)p2 -> %x(%2,%3)pclas, pclas[p2,p1]
         self.pclas = [[0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 1, 1, 2, 2], [0, 1, 2, 2, 3], [0, 1, 2, 3, 4]]
 
-        self.relationcode = {
+        self.rcode = {
             "W": 1, "S": 2, "D": 3, "C": 4, "F": 5,
             "Q": 6, "A": 7, "I": 8, "R": 9, "T": 10,
             "P": 11, "M": 12, "IM": 13, "N": 14, "V": 15,

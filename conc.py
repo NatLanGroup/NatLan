@@ -23,11 +23,13 @@ def match(what1, inwhat):  # two concepts match? handles questions
 
 
 class Concept:
-    def __init__(self):
-        self.p = 0.5  # p value of concept
-        self.relation = 2  # relation code
-        self.parent = []  # parents list
-        self.child = []  # children list
+    def __init__(self,rel=0):
+        self.p = 0.5        # p value of concept
+        self.relation = rel # relation code
+        self.parent = []    # parents list
+        self.child = []     # children list
+        self.wordlink = []  # link to WL, if this is a word
+        self.kblink = []    # link to KB, if this is in WM
 
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
@@ -39,14 +41,18 @@ class Kbase:
         self.ci = -1
         self.name = instancename          # the name of the instance can be used in the log file
 
-    def add_concept(self, new_p, new_rel, new_parents):        #add new concept to WM or KB. parents argument is list
-        self.cp.append(Concept())                           #concept added
+    def add_concept(self, new_p, new_rel, new_parents,kbl=[]):        #add new concept to WM or KB. parents argument is list
+        self.cp.append(Concept(new_rel))                        #concept added
         self.ci = len(self.cp) - 1                              #current index
-        self.cp[self.ci].p = new_p                            #set p value
-        self.cp[self.ci].relation = new_rel                   # set relation code
-        self.cp[self.ci].add_parents(new_parents)           #set parents        
-        for par in self.cp[self.ci].parent:                        #register new concept as the child of parents
-            self.cp[par].child.append(self.ci)
+        self.cp[self.ci].p = new_p                              #set p value
+        self.cp[self.ci].add_parents(new_parents)               #set parents
+        self.cp[self.ci].kblink[:]=kbl[:]                       # set link to KB
+        if (new_rel != gl.args.rcode["W"]):                     # if this is not a word
+            for par in self.cp[self.ci].parent:                     #register new concept as the child of parents
+                self.cp[par].child.append(self.ci)
+        else:                                                   #this is a word
+            if (len(kbl)>0):                                    #set word link if we have KB link
+                self.cp[self.ci].wordlink.append(gl.KB.cp[kbl[0]].wordlink[0])      # we have a single word link
         gl.log.add_log((self.name," add_concept index=",self.ci," p=",new_p," rel=",new_rel," parents=",new_parents))      #content to be logged is tuple (( ))
         return self.ci
 
@@ -60,29 +66,34 @@ class Kbase:
             sindex = sindex + 1
         return found
 
-    def read_mentalese(self,mfilename):             #read Mentalese input from a file
-        try: 
-            mfile = open(mfilename,"r")             #open Mentalese input file
-            for mline in mfile:                     #read lines one-by-one and process them
-                attr=[mline]
-                while len(attr[0])>1:
-                    self.read_concept(attr)
-        except IOError:
-            print("ERROR: Mentalese input file not present or read incorrectly")
-        mfile.close()
+    def read_mentalese(self,mfilename,mlist=[]):    #read Mentalese from a file or get in a list
+        if (len(mlist)==0):                         #no input in mlist
+            try: 
+                mfile = open(mfilename,"r")             #open Mentalese input file
+                for mline in mfile:                     #read lines one-by-one and process them
+                    attr=[mline]
+                    while len(attr[0])>1:
+                        self.read_concept(attr)
+            except IOError:
+                print("ERROR: Mentalese input file not present or read incorrectly")
+            mfile.close()
+        else:
+            ment=[];ment[:]=mlist[0][:]         # only 1 item in list gets processed for now
+            while len(ment)>1:
+                self.read_concept(ment)
             
     def read_concept(self,attrList):                #recursive function to read concepts from Mentalese input
         aStr=str(attrList[0]).strip()               #parameter is passed in a wrapping list to be able to use recursion
         actPos=0
         relType=0
-        pp=0.5                                      #default p is set to 0.5
+        pp=gl.args.pdefault                         #default p is set to 0.5
         parents=[]
         isWord=1
         while (actPos<len(aStr)):
             c = aStr[actPos]                        #check the characters in the string one-by-one
             if c == '(':                            #if finds a "(", check the relType before "(", and read the embedded concept
                 isWord=0
-                relType=gl.args.relationcode[aStr[0:actPos]]
+                relType=gl.args.rcode[aStr[0:actPos]]
                 attrList[0]=str(aStr[actPos+1:]).strip()
                 parents.append(self.read_concept(attrList))
                 aStr=str(attrList[0]).strip()
@@ -95,7 +106,7 @@ class Kbase:
                     attrList[0]=str(aStr[actPos:]).strip()
                     if wl_ind == -1:
                         wl_ind = gl.WL.add_word(ss)
-                    return self.add_concept(1,1,[wl_ind])
+                    return self.add_concept(1,1,[],[wl_ind])  #parent is empty, KB link is wl_ind
                 else:                               #if the concept is not a single word, register the embedded concept as parent, and read the next parent
                     attrList[0]=str(aStr[actPos+1:]).strip()
                     parents.append(self.read_concept(attrList))
@@ -109,7 +120,7 @@ class Kbase:
                     attrList[0]=str(aStr[actPos:]).strip()
                     if wl_ind == -1:
                         wl_ind = gl.WL.add_word(ss)
-                    return self.add_concept(1,1,[wl_ind])
+                    return self.add_concept(1,1,[],[wl_ind])
                 else:                               #if the concept is not a single word, register the embedded concept as parent, and read the next parent
                     if actPos+2 < len(aStr) and aStr[actPos+1]=='p' and aStr[actPos+2]=='=':
                         n_end=actPos+4

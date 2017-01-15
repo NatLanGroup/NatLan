@@ -1,5 +1,9 @@
 import sys, gl, conc, wrd, testing
 
+def process_mentalese (mentalese):                  # input is a mentalese string vector
+    tfm[:]=mentalese[:]
+    
+
 gl.args = gl.Arguments()  # initialize
 gl.WM = conc.Kbase("WM")  # WORKING MEMORY
 gl.KB = conc.Kbase("KB")  # KNOWLEDGE BASE
@@ -15,6 +19,7 @@ gl.log = gl.Logging()
 test1 = conc.Concept()
 test1.add_parents([-1, 17])
 result = gl.WM.search_inlist(test1)
+gl.unittest=testing.Temptest()              # initialize temporary tests
 
 if gl.args.argnum == 2:
     gl.test = testing.Testinput(sys.argv[1])
@@ -23,7 +28,7 @@ if gl.args.argnum == 2:
           gl.test.goodanswer[4])
     gl.test.testf.close()
 
-gl.WM.read_mentalese("mentalese_test_input.txt")
+gl.unittest.utest_read_concept()            # run read_concept unit test
 
 gl.log.logf.close()
 #print(gl.KB.cp[0].parent, "word with index 1=", gl.WL.wcp[1].word, "search:", result)

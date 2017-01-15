@@ -55,5 +55,43 @@ class Testinput:
                 self.goodanswer[rowi] = line[apos + 2:i].strip()
 
 
+class Temptest:                                 # unit tests and other temporary data
+    def __init__(self):
+        self.dog=gl.WL.add_word("dog")
+
+    def utest_read_concept(self):               # unit test for conc: read_concept
+        testcase=[]; testretain=[]; counter=0
+        k0 = gl.KB.add_concept(1,2,[0])         # a test concept in KB which is not a word
+        c0 = ["A(boy,run)p=0.4"]                # mukodik
+        c1 = ["A(boy,run)"]                     # mukodik de az inputban zarojel marad
+        c2 = ["AND(A(boy,run)p=0.82,S(boy,girl))"]    # mukodik
+        c3 = ["AND(A(boy,run),S(boy,girl))"]    # nem mukodik
+        c4 = ["S(boy,dog)p=0.2 A(boy,run)p=0"]  # mukodik
+        c5 = ["S(boy,dog) A(boy,run)p=0"]       # nem mukodik
+        c6 = ["S(boy,dog)p=0.2 A(boy,run)"]     # mukodik de zarojel marad az inputban
+        c7 = ["F(A(dog,run),fast)p=0.99"]       # nem mukodik
+        if (gl.args.argnum==2):
+            x=1
+        else:
+            testcase[:]=c5[:]
+            testretain[:]=testcase[:]
+            while (len(testcase[0])>3 and counter<20):
+                gl.WM.read_concept(testcase)
+                counter=counter+1
+
+        print ("TEST read_concept",testretain,"remained:",testcase,"counter",counter)
+        for i in range(len(gl.WL.wcp)):
+            print ("W",i,gl.WL.wcp[i].word)
+        print ("KB 0 parents",gl.KB.cp[0].parent,"Wlink",gl.KB.cp[0].wordlink,"KBlink",gl.KB.cp[0].kblink,"KB 1 parents",gl.KB.cp[1].parent,"Wlink",gl.KB.cp[1].wordlink,"KBlink",gl.KB.cp[1].kblink)
+        for i in range(len(gl.WM.cp)):
+            w=""
+            if (len(gl.WM.cp[i].wordlink)>0): w="word: "+gl.WL.wcp[gl.WM.cp[i].wordlink[0]].word
+            print ("WM",i,"relation",gl.WM.cp[i].relation,"parents",gl.WM.cp[i].parent,"WLink",gl.WM.cp[i].wordlink,"KBlink",gl.WM.cp[i].kblink,"p=",gl.WM.cp[i].p,w)
+            
+
+        
+        
+        
+
 if __name__ == "__main__":
     print("This is a module file, run natlan.py instead")
