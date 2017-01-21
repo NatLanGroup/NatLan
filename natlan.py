@@ -17,7 +17,6 @@ def process_testinput (tf):                  # input is the Testinput object
                         gl.WM.cp[endi].parent[pix]=-1
                 pix=pix+1
             tf.systemanswer[ri][:] = gl.WM.answer_question(endi)[:]    # answer question and record concept indices
-        print ("debug process_testinput","index",ri,"mentalese:",tf.mentalese[ri],"remained:",tfment,"starti:",starti,"endi:",endi,"last concept relation:",gl.WM.cp[endi].relation,"parents:",gl.WM.cp[endi].parent)
         if (tf.question[ri]==1):
             for i in range(endi-starti): gl.WM.remove_concept()        # remove question from WM
             endi=starti
@@ -41,6 +40,7 @@ if gl.args.argnum == 2:
     gl.test.readtest()
     process_testinput (gl.test)
     gl.test.testf.close()
+    gl.test.resultf.close()
 
 #gl.unittest.utest_read_concept()            # run read_concept unit test
 

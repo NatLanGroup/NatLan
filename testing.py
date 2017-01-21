@@ -63,6 +63,7 @@ class Testinput:
 
     def eval_test(self,rowindex):                       # create row of output file
         eval="*** BAD"
+        ok=0; okmatch=0; pdif=0; all=0
         if (self.question[rowindex]==0): eval="       " # not a question
         else:
             notfound=0; counter=0; tfment=[]
@@ -94,12 +95,12 @@ class Testinput:
                         if len(self.systemanswer[rowindex])==0:
                             if (notfound==0): eval="***MISS"    # missing system answer
                             else: eval="OK     "    # not found answer match
+        #print ("debug eval_test",self.mentalese[rowindex],"sys answer:",self.systemanswer[rowindex],"eval:",eval,"okmatch",okmatch,"pdif",pdif)
         return eval
                     
     def write_result(self,rowindex):                    # write outpit file
         evals=self.eval_test(rowindex)
         self.resultf.write(evals)                       # write OK, BAD
-        print ("debug write_result ",evals,"row:",self.mentalese[rowindex])
         self.resultf.write(" /e ")
         self.resultf.write(self.eng[rowindex])
         addspaces(self.eng[rowindex],22)                # fill spaces up to 22 characters
@@ -109,6 +110,7 @@ class Testinput:
         self.resultf.write(" /a ")
         self.resultf.write(self.goodanswer[rowindex])
         self.resultf.write(" /s ")
+        self.resultf.write(str(self.systemanswer[rowindex]))
         # here we need to add the mentalese string of system answers
         self.resultf.write("\n")
         
