@@ -1,0 +1,53 @@
+e/ A garden is a place.              m/ C(garden,place)
+e/ Persons are the same as people.   m/ D(person,people)
+e/ Animals are not people.           m/ C(animal,people)p=0
+e/ People are not animals.           m/ C(people,animal)p=0
+e/ What is a garden?                 m/ C(garden,?)              a/ C(garden,place)p=1
+e/ What is a place?                  m/ C(place,?)               a/ not found:C(place,?)
+e/ What is a toy?                    m/ C(toy,?)                 a/ not found:C(toy,?)
+e/ What is a person?                 m/ C(person,?)              a/ not found:C(person,?)
+e/ Who are persons?                  m/ D(person,?)              a/ D(person,people)p=1
+e/ Who are people?                   m/ D(people,?)              a/ not found:D(people,?)
+e/ Is the garden a place?            m/ C(garden,place)?         a/ C(garden,place)p=1
+e/ Is the place a garden?            m/ C(place,garden)?         a/ C(place,garden)p=0.5        
+e/ Are toys dogs?                    m/ C(toy,dog)?              a/ C(toy,dog)p=0.5
+e/ Are people same as persons?       m/ D(people,person)?        a/ D(people,person)p=0.5
+e/ Are persons same as people?       m/ D(person,people)?        a/ D(person,people)p=1
+e/ Are people animals?               m/ C(people,animal)?        a/ C(people,animal)p=0
+e/ What are people?                  m/ C(people,?)              a/ C(people,animal)p=0
+e/ Dogs are animals.                 m/ C(dog,animal)
+e/ What are animals?                 m/ C(animal,?)              a/ not found:C(animal,?)
+e/ What animals are there?           m/ C(?,animal)              a/ C(people,animal)p=0 C(dog,animal)p=1
+e/ People walk.                      m/ A(people,walk)
+e/ People talk.                      m/ A(people,talk)
+e/ What do people do?                m/ A(people,?)              a/ A(people,walk)p=1 A(people,talk)p=1
+e/ Who walks?                        m/ A(?,walk)                a/ A(people,walk)p=1
+e/ Do people walk?                   m/ A(people,walk)?          a/ A(people,walk)p=1
+e/ Do people sing?                   m/ A(people,sing)?          a/ A(people,sing)p=0.5
+e/ What do dogs do?                  m/ A(dog,?)                 a/ not found:A(dog,?)
+e/ Dogs are not the same as people.  m/ D(dog,people)p=0
+e/ Do dogs walk?                     m/ A(dog,walk)?             a/ A(dog,walk)p=0.5
+
+// D-reasoning
+e/ Who are people?                   m/ D(people,?)              a/ D(people,person)p=1
+e/ Are people same as persons?       m/ D(people,person)?        a/ D(people,person)p=1
+e/ Do persons walk?                  m/ A(person,walk)?          a/ A(person,walk)p=1
+e/ Are persons animals?              m/ C(person,animal)?        a/ C(person,animal)p=0
+
+// generating C from D
+e/ What are people?                  m/ C(people,?)              a/ C(people,animal)p=0 C(people,person)p=1
+e/ What are persons?                 m/ C(person,?)              a/ C(person,animal)p=0 C(person,people)p=1
+
+// C-reasoning. In the fox example we see an implicit C relation.
+e/ Animals move.                     m/ A(animal,move)
+e/ What do dogs do?                  m/ A(dog,?)                 a/ A(dog,move)p=1
+e/ What moves?                       m/ A(?,move)                a/ A(animal,move)p=1 A(dog,move)p=1
+e/ Do dogs move?                     m/ A(dog,move)?             a/ A(dog,move)p=1
+e/ Do dogs walk?                     m/ A(dog,walk)?             a/ A(dog,walk)p=0.5
+e/ Joe is a person.                  m/ C(Joe,person)
+e/ Mary is a girl.                   m/ C(Mary,girl)
+e/ Does Joe walk?                    m/ A(Joe,walk)?             a/ A(Joe,walk)p=1
+e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)p=0.5
+e/ Girls are people. 		     m/ C(girl,people)  
+e/ Boys are people.		     m/ C(boy,people)              
+e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)p=1
