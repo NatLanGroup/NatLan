@@ -18,6 +18,7 @@ class Wlist:
         self.wci = len(self.wcp) - 1        # current index in WL
         kbi=gl.KB.add_concept(1, 1, [])     # create the concept for the word meaning. Parent is empty.
         gl.KB.cp[kbi].wordlink.append(self.wci)     # set word link in KB
+        gl.KB.cp[kbi].mentstr = new_word[:]
         self.wcp[self.wci].wchild.append(gl.KB.ci)  # add the meaning concept as child in the word object.
         gl.log.add_log(
             (self.wname, " add_word ", self.wcp[self.wci].word, " wordindex=", self.wci, " KB index=", gl.KB.ci))

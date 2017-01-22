@@ -19,6 +19,13 @@ class Arguments:
             "AND": 16, "NOT": 17, "OR": 18, "XOR": 19
         }
 
+        self.rcodeBack = {
+            1: "W", 2: "S", 3: "D", 4: "C", 5: "F",
+            6: "Q", 7: "A", 8: "I", 9: "R", 10: "T",
+            11: "P", 12: "M", 13: "IM", 14: "N", 15: "V",
+            16: "AND", 17: "NOT", 18: "OR", 19: "XOR"
+        }
+
 
 class Logging:
     def __init__(self, fname="logfile.txt"):

@@ -38,7 +38,7 @@ class Concept:
         self.child = []     # children list
         self.wordlink = []  # link to WL, if this is a word
         self.kblink = []    # link to KB, if this is in WM
-        self.mentstr = []   # string format of mentalese
+        self.mentstr = ""   # string format of mentalese
 
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
@@ -59,10 +59,17 @@ class Kbase:
         if (new_rel != gl.args.rcode["W"]):                     # if this is not a word
             for par in self.cp[self.ci].parent:                 #register new concept as the child of parents
                 self.cp[par].child.append(self.ci)
+
+            self.cp[self.ci].mentstr = gl.args.rcodeBack[new_rel] + "("     # set mentstr
+            for cind in self.cp[self.ci].parent:
+                self.cp[self.ci].mentstr = self.cp[self.ci].mentstr + self.cp[cind].mentstr + ","
+            self.cp[self.ci].mentstr = self.cp[self.ci].mentstr[:-1] + ")"
+            
         else:                                                   #this is a word
             if (len(kbl)>0):                                    #set word link if we have KB link
                 self.cp[self.ci].wordlink.append(gl.KB.cp[kbl[0]].wordlink[0])      # we have a single word link
-        gl.log.add_log((self.name," add_concept index=",self.ci," p=",new_p," rel=",new_rel," parents=",new_parents,"wordlink=",self.cp[self.ci].wordlink))      #content to be logged is tuple (( ))
+                self.cp[self.ci].mentstr = gl.KB.cp[kbl[0]].mentstr[:]
+        gl.log.add_log((self.name," add_concept index=",self.ci," p=",new_p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
         return self.ci
 
     def remove_concept(self):
@@ -157,6 +164,8 @@ class Kbase:
                         newp=float(aStr[actPos+3:n_end])
                         pp=newp
                         actPos=n_end
+                    else:
+                        actPos += 1
                     attrList[0]=str(aStr[actPos:]).strip()
                     return self.add_concept(pp,relType,parents)
                 
