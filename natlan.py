@@ -18,8 +18,13 @@ def process_testinput (tf):                  # input is the Testinput object
                 pix=pix+1
             tf.systemanswer[ri][:] = gl.WM.answer_question(endi)[:]    # answer question and record concept indices
         if (tf.question[ri]==1):
+            if len(tf.systemanswer[ri])==0:                         # no answer
+                if -1 not in gl.WM.cp[endi].parent:                 # question not for parent
+                    starti=endi                                     # keep question
+                    tf.systemanswer[ri].append(endi)                # the question is the answer
+                    gl.WM.cp[endi].p=0.5                            # set p for unknown
             for i in range(endi-starti): gl.WM.remove_concept()        # remove question from WM
-            endi=starti
+            endi=gl.WM.ci
         gl.test.write_result(ri)                    # write reult file
         ri=ri+1
                

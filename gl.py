@@ -6,7 +6,8 @@ import sys
 class Arguments:
     def __init__(self):
         self.argnum = len(sys.argv)
-        self.pdefault=1         #default value of p   
+        self.pdefault=1         #default value of p
+        self.pdef_unknown=0.5
         self.pgranu = 4         # granularity for p, pgranu+1 discrete values from 0
 
         # pclas is the matrix for class reasoning. C(%1,%2)p1 and %X(%2,%3)p2 -> %x(%2,%3)pclas, pclas[p2,p1]

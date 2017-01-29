@@ -22,12 +22,12 @@ def match(what1, inwhat):  # two concepts match? handles questions
             if (gl.WM.cp[sparents[pix]].relation!=1):   # not word
                 try:
                     if (sparents[pix]!=inwhat.parent[pix]):yes=0    # pARENTS MUST MATCH
-                except: yes=2                           # list length mismatch
+                except: yes=0                           # list length mismatch
             else:                                       # parent is word
                 try:
                     if (gl.WM.cp[sparents[pix]].kblink != gl.WM.cp[inwhat.parent[pix]].kblink):
                         yes=0                           # kblink indicates word meaning, it should match
-                except: yes=3                           # list length mismatch
+                except: yes=0                           # list length mismatch
     return yes
 
 class Concept:

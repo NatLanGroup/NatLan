@@ -9,12 +9,13 @@ def addspaces(ins,num):
 class Testinput:
     def __init__(self, testfilename):
         self.name = testfilename
-        self.eng = []  # english text
-        self.mentalese = []  # mentalese version of english
-        self.goodanswer = []  # expected answer (if english is a question)
-        self.question = []  # flag to indicate questions
+        self.eng = []           # english text
+        self.mentalese = []     # mentalese version of english
+        self.goodanswer = []    # expected answer (if english is a question)
+        self.question = []      # flag to indicate questions
         self.systemanswer = []  # output of the system
-        self.evaluation = []  # evaluation of system output includinmg mentalese translation
+        self.evaluation = []    # evaluation of system output includinmg mentalese translation
+        self.comment = []       # comment
         try:
             self.testf = open(testfilename, "r")
             pos=testfilename.find(".")
@@ -30,12 +31,13 @@ class Testinput:
             mpos = -1;
             apos = -1;
             comment = -1
-            self.eng.append(" ");
-            self.mentalese.append(" ")  # each list must have a new item
-            self.goodanswer.append(" ");
+            self.eng.append("");
+            self.mentalese.append("")  # each list must have a new item
+            self.goodanswer.append("");
             self.question.append(0)
             self.systemanswer.append([]);
-            self.evaluation.append(" ")
+            self.evaluation.append("")
+            self.comment.append("")
             rowi = len(self.eng) - 1  # index of the new item
             while i < len(line):
                 if "e/" in line[i:i + 2]: epos = i  # order of e/ m/ a/ // is fixed but all are optioonal
@@ -49,6 +51,7 @@ class Testinput:
                     if mpos == -1 and epos > -1: self.eng[rowi] = line[epos + 2:apos]
                 if "//" in line[i:i + 2]:
                     comment = i
+                    self.comment[rowi]=line[comment:]
                     if epos > -1 and mpos == -1: self.eng[rowi] = line[epos + 2:comment]
                     if mpos > -1 and apos == -1: self.mentalese[rowi] = line[mpos + 2:comment]
                     if apos > -1: self.goodanswer[rowi] = line[apos + 2:comment]
@@ -61,43 +64,51 @@ class Testinput:
                 self.question[rowi] = 1
                 self.goodanswer[rowi] = line[apos + 2:i].strip()
 
-    def eval_test(self,rowindex):                       # create row of output file
-        eval="*** BAD"
-        ok=0; okmatch=0; pdif=0; all=0
-        if (self.question[rowindex]==0): eval="       " # not a question
-        else:
-            notfound=0; counter=0; tfment=[]
-            starti=gl.WM.ci                             # remember index in WM
-            tfment.append(self.goodanswer[rowindex])    # good answer mentalese from input
-            if "not found" in tfment[0]: notfound=1     # the answer is not found
+    def goodanswer_list(self,starti,endi):              # get indices of good answers
+        subanswerlist=[]
+        finalanswerlist=[]
+        for i in range(endi-starti):
+            for pari in gl.WM.cp[starti+i+1].parent:
+                if (pari>starti and pari<=endi):
+                    subanswerlist.append(pari)          # collect non-final answers
+        for i in range(endi-starti):
+            if starti+i+1 not in subanswerlist:
+                finalanswerlist.append(starti+i+1)
+        return finalanswerlist
+
+    def eval_test(self,rowindex):                       # evaluation string of a row of the input file
+        finalanswers=[]
+        eval="       "
+        if (self.question[rowindex]==1):                # *** QUESTION ***
+            eval="OK     "
+            tfment=[]; counter=0                        # good answer mentalese string
+            starti=gl.WM.ci
+            tfment.append(self.goodanswer[rowindex])
+            if "not found" not in tfment[0]: notfound=0
+            else: notfound=1
             while (notfound==0 and len(tfment[0])>3 and counter<20):
-                gl.WM.read_concept(tfment)              # store good answer in WM temporarily
+                gl.WM.read_concept(tfment)              # store good answer in WM temporarliy
                 counter=counter+1
             endi=gl.WM.ci                               # final index in WM
-            ok=0; okmatch=0; pdif=0; all=0
-            for answer in self.systemanswer[rowindex]:   # walk through system answers
-                if (notfound==0): okmatch=conc.match(gl.WM.cp[endi],gl.WM.cp[answer])     # compare answer with goodanswer on endi
-                if (okmatch==1):                        # compare p value
-                    if (gl.WM.cp[endi].p==gl.WM.cp[answer].p): ok=ok+1     # count full, p value match
-                    else: pdif=pdif+1                   # count p value mismatch
-                all=all+1                               # count system answers
-            for i in range(endi-starti):
-                gl.WM.remove_concept()                  # remove good answer from WM
-            if (ok==all):
-                eval="OK     "                          # full answer match
-            else:
-                if (ok>0):
-                    if (pdif>0): eval="***BADP"     # p value mismatch
-                    else: eval="***MORE"            # more answers
-                else:
-                    if (pdif>0): eval="***BADP"
-                    else:
-                        if len(self.systemanswer[rowindex])==0:
-                            if (notfound==0): eval="***MISS"    # missing system answer
-                            else: eval="OK     "    # not found answer match
-        #print ("debug eval_test",self.mentalese[rowindex],"sys answer:",self.systemanswer[rowindex],"eval:",eval,"okmatch",okmatch,"pdif",pdif)
+            finalanswers[:]=self.goodanswer_list(starti,endi)[:]    # get indices of good answers
+            sysamatch=[0]*len(self.systemanswer[rowindex])          # all system answer has 1 element, initially 0
+            for gooda in finalanswers:                  # take all good answers
+                sysindex=0; goodmatch=0
+                for sysa in self.systemanswer[rowindex]:    # and take all system answers
+                    if (conc.match(gl.WM.cp[gooda],gl.WM.cp[sysa])==1): # relation and parents match
+                        goodmatch=1
+                        if (gl.WM.cp[gooda].p == gl.WM.cp[sysa].p):     # p value is the same
+                            sysamatch[sysindex]=1
+                        else: eval="***BADP"                # p value mismatch
+                    sysindex=sysindex+1
+                if (goodmatch==0): eval="***MISS"           # good answer missing, override p mismatch
+            if (eval=="OK     " and (0 in sysamatch)):      # too many system answers
+                eval="***MORE"
+            for i in range(endi-starti):                # good answer concepts in WM
+                gl.WM.remove_concept()                  # remove them from WM
         return eval
-                    
+
+ 
     def write_result(self,rowindex):                    # write outpit file
         evals=self.eval_test(rowindex)
         self.resultf.write(evals)                       # write OK, BAD
@@ -111,7 +122,11 @@ class Testinput:
         self.resultf.write(self.goodanswer[rowindex])
         self.resultf.write(" /s ")
         self.resultf.write(str(self.systemanswer[rowindex]))
-        # here we need to add the mentalese string of system answers
+        if (len(self.eng[rowindex])==0 and len(self.mentalese[rowindex])==0 and len(self.comment[rowindex])>0):
+            self.resultf.write("\n")
+            self.resultf.write(self.comment[rowindex])
+        for sysa in self.systemanswer[rowindex]:
+            self.resultf.write(gl.WM.cp[sysa].mentstr + str(gl.WM.cp[sysa].p)+" ")   # write answer string
         self.resultf.write("\n")
         
 
