@@ -95,7 +95,8 @@ class Testinput:
             for gooda in finalanswers:                  # take all good answers
                 sysindex=0; goodmatch=0
                 for sysa in self.systemanswer[rowindex]:    # and take all system answers
-                    if (conc.match(gl.WM.cp[gooda],gl.WM.cp[sysa])==1): # relation and parents match
+#                    if (conc.match(gl.WM.cp[gooda],gl.WM.cp[sysa])==1): # relation and parents match
+                    if (gl.WM.rec_match(gl.WM.cp[gooda],gl.WM.cp[sysa])==1): # relation and parents match
                         goodmatch=1
                         if (gl.WM.cp[gooda].p == gl.WM.cp[sysa].p):     # p value is the same
                             sysamatch[sysindex]=1

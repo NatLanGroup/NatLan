@@ -51,3 +51,6 @@ e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)
 e/ Girls are people. 		     m/ C(girl,people)  
 e/ Boys are people.		     m/ C(boy,people)              
 e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)p=1
+
+e/ Test sentence.					m/ A(C(Joe,person),walk)
+e/ Test question?					m/ A(C(Joe,person),?)		a/ A(C(Joe,person),walk)p=1

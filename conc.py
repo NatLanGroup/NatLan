@@ -30,6 +30,7 @@ def match(what1, inwhat):  # two concepts match? handles questions
                 except: yes=0                           # list length mismatch
     return yes
 
+
 class Concept:
     def __init__(self,rel=0):
         self.p = 0.5        # p value of concept
@@ -79,11 +80,37 @@ class Kbase:
             self.ci=self.ci-1   
         return self.ci
 
+    def rec_match(self, what1, inwhat):  # two concepts match? handles questions
+        # TODO should we use booleans instead numbers?
+        # e.g. result = True
+
+        if what1.relation != -1 and inwhat.relation != -1 and what1.relation != inwhat.relation:
+            return 0     # relation is neither same nor -1 -> not match
+
+        if what1.relation == 1:     # comparing two word concepts
+            if what1.kblink == inwhat.kblink :
+                return 1
+            else: 
+                return 0
+        
+        if len(what1.parent) != len(inwhat.parent):
+            return 0     # if number of parents are not equal -> not match
+            
+        for pindex in range(0, len(what1.parent)):
+            if what1.parent[pindex] == -1 or inwhat.parent[pindex] == -1 :     # handle -1 parents
+                continue    # -1 indicates question mark, this is considered as matching
+
+            if self.rec_match(self.cp[what1.parent[pindex]], self.cp[inwhat.parent[pindex]]) == 0:      # compare parent concepts for match
+                return 0    # if parent concept does not match -> no match
+            
+        return 1
+
+
     def search_inlist(self, swhat):
         found = []
         sindex = 0
         for conitem in self.cp:
-            if match(swhat, conitem) == 1:
+            if self.rec_match(swhat, conitem) == 1:
                 found.append(sindex)  # add to found list
             sindex = sindex + 1
         return found
