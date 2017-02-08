@@ -115,12 +115,24 @@ class Kbase:
             sindex = sindex + 1
         return found
 
-    def answer_question(self,qindex):           # answer a question that is is WM
+    def answer_question(self,starti,endi):           # answer a question that is is WM
         answerlist=[]
-        answers=gl.WM.search_inlist(gl.WM.cp[qindex])   # search in WM
+        pix=0
+        for pit in gl.WM.cp[endi].parent:
+            for wi in gl.WM.cp[pit].wordlink:
+                if (gl.WL.wcp[wi].word=="?"):           # replace ? word with parent=-1
+                    gl.WM.cp[endi].parent[pix]=-1
+            pix=pix+1
+        answers=gl.WM.search_inlist(gl.WM.cp[endi])     # search in WM
         for aw in answers:
-            if (aw<qindex):                     # answer must be before question
+            if (aw<endi):                               # answer must be before question
                 answerlist.append(aw)
+        if len(answerlist)==0:                          # no answer
+            if -1 not in gl.WM.cp[endi].parent:         # question not for parent but for p Z(a,b)?
+                starti=endi                              # we keep the question as answer
+                answerlist.append(endi)
+                gl.WM.cp[endi].p=gl.args.pdef_unknown   # p is set to unknown value, 0.5
+        for i in range(endi-starti): gl.WM.remove_concept()     # remove question from WM
         return answerlist
     
     def read_mentalese(self,mfilename,mlist=[]):    #read Mentalese from a file or get in a list
