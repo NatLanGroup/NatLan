@@ -24,7 +24,7 @@ class Wlist:
             (self.wname, " add_word ", self.wcp[self.wci].word, " wordindex=", self.wci, " KB index=", gl.KB.ci))
         return gl.KB.ci
 
-    def find(self,new_word) -> int:
+    def find(self,new_word):
         for index in range(len(self.wcp)):
             if self.wcp[index].word == new_word:
                 return self.wcp[index].wchild[0]

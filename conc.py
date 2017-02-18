@@ -105,6 +105,49 @@ class Kbase:
             
         return 1
 
+    def get_child(self,rel,parents=[]):                      # search concept as child of parent
+        found=-1
+        for child in self.cp[parents[0]].child:         # in children of the first parent
+            if (self.cp[child].relation==rel):          # relation must match
+                if (self.cp[child].parent==parents):    # parents must match
+                    found=child
+        return found
+
+    def walk_db(self,curri,lasti=-2):                   # recursive walk over WM or KB from curri towards all parents. Call without lasti.
+        while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
+            try: nextp=self.cp[curri].parent.index(lasti)+1
+            except:
+                lasti=-2        # enter lower level
+                nextp=0
+            lasti=self.walk_db(self.cp[curri].parent[nextp],lasti)
+        print ("walk",self.name,"current concept",curri,"parents",self.cp[curri].parent,"mentalese",self.cp[curri].mentstr)
+        return curri
+
+    def copyto_kb(self,curri,lasti=-2):         # copy concept in WM on curri to KB with all parents
+        while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
+            try: nextp=self.cp[curri].parent.index(lasti)+1
+            except:
+                lasti=-2        # enter lower level
+                nextp=0
+            lasti=self.copyto_kb(self.cp[curri].parent[nextp],lasti)
+        # COPY ACTION to follow:
+        if self.name=="WM":                         # copy from WM only
+            if len(self.cp[curri].kblink)==0:       # not yet in KB
+                plist=[]                            # holds parent indices valiod in KB
+                for pari in self.cp[curri].parent:  # parents valid in WM
+                    plist.append(self.cp[pari].kblink[0])   # append parent index valid in KB
+                kbl=gl.KB.get_child(self.cp[curri].relation,plist)   # search concept in KB as child of parent
+                if kbl==-1:                         # not found in KB
+                    kbl=gl.KB.add_concept(self.cp[curri].p,self.cp[curri].relation,plist)      # copy to KB
+                self.cp[curri].kblink.append(kbl)   # set KB link in WM
+                # print ("KB copy curri",curri,"KB index",kbl,"ment:",gl.KB.cp[kbl].mentstr)
+        return curri
+            
+    def move_rule(self,tf,ri,starti):           # if this is a rule then move it to KB
+        if ("%1" in tf.mentalese[ri]):          # if this is a rule
+            gl.WM.copyto_kb(gl.WM.ci)           # copy last concept in WM, which should be the rule, to KLB
+            for i in range(gl.WM.ci-starti): gl.WM.remove_concept()     # remove rule from WM
+        
 
     def search_inlist(self, swhat):
         found = []

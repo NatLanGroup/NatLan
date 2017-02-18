@@ -8,6 +8,7 @@ def process_testinput (tf):                  # input is the Testinput object
         while (len(tfment[0])>3 and counter<20):    # counter protects against endless loop
             gl.WM.read_concept(tfment)              # store concepts in WM
             counter=counter+1
+        gl.WM.move_rule(tf,ri,starti)               # if this is a rule, move to KB
         endi = gl.WM.ci                             # end position in WM
         if (tf.question[ri]==1):                    # if yes, then on endi we assume a question
             tf.systemanswer[ri][:] = gl.WM.answer_question(starti,endi)[:]    # answer question and record concept indices
@@ -35,6 +36,8 @@ if gl.args.argnum == 2:
     gl.test.testf.close()
     gl.test.resultf.close()
 
+# gl.KB.walk_db(11)                        # walk through parents of a concept, print them                        
 #gl.unittest.utest_read_concept()            # run read_concept unit test
 
 gl.log.logf.close()
+
