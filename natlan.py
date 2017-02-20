@@ -30,6 +30,7 @@ gl.unittest=testing.Temptest()              # initialize temporary tests
 thisrule=reason.Rule(2)
 
 if gl.args.argnum == 2:
+    gl.unittest.test_implication()
     gl.test = testing.Testinput(sys.argv[1])
     gl.test.readtest()
     process_testinput (gl.test)
