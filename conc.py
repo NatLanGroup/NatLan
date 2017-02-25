@@ -1,36 +1,5 @@
 import sys, gl
 
-
-def match(what1, inwhat):  # two concepts match? handles questions
-    # TODO should we use booleans instead numbers?
-    # e.g. result = True
-    yes = 1;
-    sparents = []
-    if what1.relation != -1 and what1.relation != inwhat.relation:
-        yes = 0  # relation is either same or -1
-    else:                               # relation matches
-        for item in what1.parent: sparents.append(item)
-        pindex = 0
-        for parentitem in sparents:     # handle -1 parents
-            if parentitem == -1:        # -1 indicates question mark, this is considered as matching
-                try:
-                    sparents[pindex] = inwhat.parent[pindex]
-                except:
-                    yes = yes
-            pindex = pindex + 1
-        for pix in range(len(sparents)):                # compare for match
-            if (gl.WM.cp[sparents[pix]].relation!=1):   # not word
-                try:
-                    if (sparents[pix]!=inwhat.parent[pix]):yes=0    # pARENTS MUST MATCH
-                except: yes=0                           # list length mismatch
-            else:                                       # parent is word
-                try:
-                    if (gl.WM.cp[sparents[pix]].kblink != gl.WM.cp[inwhat.parent[pix]].kblink):
-                        yes=0                           # kblink indicates word meaning, it should match
-                except: yes=0                           # list length mismatch
-    return yes
-
-
 class Concept:
     def __init__(self,rel=0):
         self.p = 0.5        # p value of concept
@@ -40,6 +9,7 @@ class Concept:
         self.wordlink = []  # link to WL, if this is a word
         self.kblink = []    # link to KB, if this is in WM
         self.mentstr = ""   # string format of mentalese
+        self.rulestr = ""   # string for rule-information like p=p1 or p=pclas
 
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
@@ -120,7 +90,7 @@ class Kbase:
                 lasti=-2        # enter lower level
                 nextp=0
             lasti=self.walk_db(self.cp[curri].parent[nextp],lasti)
-        print ("walk",self.name,"current concept",curri,"parents",self.cp[curri].parent,"mentalese",self.cp[curri].mentstr)
+        print ("walk",self.name,"current concept",curri,"parents",self.cp[curri].parent,"mentalese",self.cp[curri].mentstr,"rule:"[:5*len(self.cp[curri].rulestr)],self.cp[curri].rulestr)
         return curri
 
     def copyto_kb(self,curri,lasti=-2):         # copy concept in WM on curri to KB with all parents
@@ -138,7 +108,8 @@ class Kbase:
                     plist.append(self.cp[pari].kblink[0])   # append parent index valid in KB
                 kbl=gl.KB.get_child(self.cp[curri].relation,plist)   # search concept in KB as child of parent
                 if kbl==-1:                         # not found in KB
-                    kbl=gl.KB.add_concept(self.cp[curri].p,self.cp[curri].relation,plist)      # copy to KB
+                    kbl=gl.KB.add_concept(self.cp[curri].p,self.cp[curri].relation,plist)   # copy to KB
+                    gl.KB.cp[kbl].rulestr=gl.WM.cp[curri].rulestr                           # copy rule string like p=p1    
                 self.cp[curri].kblink.append(kbl)   # set KB link in WM
                 # print ("KB copy curri",curri,"KB index",kbl,"ment:",gl.KB.cp[kbl].mentstr)
         return curri
@@ -192,9 +163,18 @@ class Kbase:
         else:
             while len(mlist[0])>1:
                 self.read_concept(mlist)
+
+    def get_rulestr(self, aStr, pos):            # process the rule-part of mentalese string, like p=p1
+        pos +=1
+        out=""
+        while (pos<len(aStr) and aStr[pos]!="," and aStr[pos]!=")" and aStr[pos]!=" "):
+            out=out+aStr[pos]
+            pos +=1
+        return out
             
-    def read_concept(self,attrList):                #recursive function to read concepts from Mentalese input
-        aStr=str(attrList[0]).strip()               #parameter is passed in a wrapping list to be able to use recursion
+    def read_concept(self,attrList):                # recursive function to read concepts from Mentalese input
+        aStr=str(attrList[0]).strip()               # parameter is passed in a wrapping list to be able to use recursion
+        rulStr=""                                   # string for rule-information like p=p1
         actPos=0
         relType=0
         pp=gl.args.pdefault                         #default p is set to 0.5
@@ -243,13 +223,19 @@ class Kbase:
                                 break
                             else:
                                 n_end += 1
-                        newp=float(aStr[actPos+3:n_end])
+                        try: newp=float(aStr[actPos+3:n_end])               # explicit p value like p=0.1
+                        except:                                             # rule, like p=p1
+                            newp=gl.args.pdef_unknown
+                            rulStr=self.get_rulestr(aStr,actPos)            # process the rule-string
+                            n_end=actPos+1+len(rulStr)
                         pp=newp
                         actPos=n_end
                     else:
                         actPos += 1
                     attrList[0]=str(aStr[actPos:]).strip()
-                    return self.add_concept(pp,relType,parents)
+                    newindex=self.add_concept(pp,relType,parents)           # add the concept to WM
+                    self.cp[newindex].rulestr=rulStr                        # add the rule string
+                    return newindex
                 
             actPos=actPos+1
         return
