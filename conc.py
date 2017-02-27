@@ -129,14 +129,18 @@ class Kbase:
             sindex = sindex + 1
         return found
 
+    def rec_set_undefined_parents(self, childi):        # recursive function to replace ? words with parent=-1
+        paridx=0
+        for pari in gl.WM.cp[childi].parent:
+            for wi in gl.WM.cp[pari].wordlink:
+                if (gl.WL.wcp[wi].word=="?"):           # replace ? word with parent=-1
+                    gl.WM.cp[childi].parent[paridx]=-1
+            self.rec_set_undefined_parents(pari)
+            paridx=paridx+1
+
     def answer_question(self,starti,endi):           # answer a question that is is WM
         answerlist=[]
-        pix=0
-        for pit in gl.WM.cp[endi].parent:
-            for wi in gl.WM.cp[pit].wordlink:
-                if (gl.WL.wcp[wi].word=="?"):           # replace ? word with parent=-1
-                    gl.WM.cp[endi].parent[pix]=-1
-            pix=pix+1
+        self.rec_set_undefined_parents(endi)
         answers=gl.WM.search_inlist(gl.WM.cp[endi])     # search in WM
         for aw in answers:
             if (aw<endi):                               # answer must be before question
