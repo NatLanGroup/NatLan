@@ -93,6 +93,22 @@ class Kbase:
         print ("walk",self.name,"current concept",curri,"parents",self.cp[curri].parent,"mentalese",self.cp[curri].mentstr,"rule:"[:5*len(self.cp[curri].rulestr)],self.cp[curri].rulestr)
         return curri
 
+    #2. feladat -------------------------------------
+    def get_children_implication(self, curri):
+        for i in range(0, self.cp[curri].child.__len__()):
+            if self.cp[self.cp[curri].child[i]].relation == 13:
+                print(self.cp[self.cp[curri].child[i]].mentstr)
+            else:
+                self.get_children_implication(self.cp[curri].child[i])
+
+    #new one
+    def search_for_rule(self):
+        for i in range(0, self.cp.__len__()):
+            self.get_children_implication(i)
+    #-------------------------------------------------
+
+
+
     def copyto_kb(self,curri,lasti=-2):         # copy concept in WM on curri to KB with all parents
         while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
             try: nextp=self.cp[curri].parent.index(lasti)+1
