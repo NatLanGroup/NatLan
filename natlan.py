@@ -37,7 +37,8 @@ if gl.args.argnum == 2:
     gl.test.testf.close()
     gl.test.resultf.close()
 
-# gl.KB.walk_db(11)                        # walk through parents of a concept, print them                        
+gl.KB.walk_db(24)                        # walk through parents of a concept, print them
+gl.KB.search_for_rule()
 #gl.unittest.utest_read_concept()            # run read_concept unit test
 
 gl.log.logf.close()
