@@ -124,17 +124,28 @@ class Kbase:
         return curri
 
     #2. feladat -------------------------------------
-    def get_children_implication(self, curri):
+    def get_children_implication(self, curri, res_list):
         for i in range(0, self.cp[curri].child.__len__()):
             if self.cp[self.cp[curri].child[i]].relation == 13:
                 print(self.cp[self.cp[curri].child[i]].mentstr)
+                dont_add = False
+                for j in range(0, len(res_list)):
+                    if self.rec_match(self.cp[self.cp[curri].child[i]], self.cp[self.cp[curri].child[j]]):
+                        dont_add = True
+                if dont_add == False:
+                    res_list.append(self.cp[self.cp[curri].child[i]].mentstr)
+                #res_list.append(self.cp[self.cp[curri].child[i]].mentstr)
             else:
-                self.get_children_implication(self.cp[curri].child[i])
+                self.get_children_implication(self.cp[curri].child[i], res_list)
 
     #new one
     def search_for_rule(self):
+        res_list = []
         for i in range(0, self.cp.__len__()):
-            self.get_children_implication(i)
+            self.get_children_implication(i, res_list)
+        print('list of rules: ')
+        print(str(res_list))
+
     #-------------------------------------------------
 
 
