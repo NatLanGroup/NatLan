@@ -11,6 +11,10 @@ def process_testinput (tf):                  # input is the Testinput object
         gl.WM.move_rule(tf,ri,starti)               # if this is a rule, move to KB
         endi = gl.WM.ci                             # end position in WM
         if (tf.question[ri]==1):                    # if yes, then on endi we assume a question
+
+            #generate from every rule:
+            #gl.KB.getRulesFor(0, gl.WM.ci)
+
             tf.systemanswer[ri][:] = gl.WM.answer_question(starti,endi)[:]    # answer question and record concept indices
         gl.test.write_result(ri)                    # write reult file
         ri=ri+1
@@ -38,8 +42,10 @@ if gl.args.argnum == 2:
     gl.test.resultf.close()
 
 gl.KB.walk_db(24)                        # walk through parents of a concept, print them
-gl.KB.search_for_rule()
+#gl.KB.search_for_rule()
 #gl.unittest.utest_read_concept()            # run read_concept unit test
+
+gl.unittest.jo_gyakorlat_1()
 
 gl.log.logf.close()
 

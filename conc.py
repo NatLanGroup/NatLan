@@ -118,7 +118,9 @@ class Kbase:
 
     #-------------------------------------------------
 
-
+    #def getRulesFor(self, start, end):
+    #    for i in range(start, end):
+            
 
     def copyto_kb(self,curri,lasti=-2):         # copy concept in WM on curri to KB with all parents
         while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
