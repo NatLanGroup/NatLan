@@ -185,30 +185,7 @@ class Temptest:                                 # unit tests and other temporary
         #the implication itself:
         gl.WM.add_concept(1,13,new_parents=[ciA,ciX2])
 
-    #param: index in WM
-    def checkEqualityFromWM(self, i):
-        print('Not implemented yet!')
-        #for j in range(0, len(gl.WM.cp[i].parent)):
 
-        #this function will recursively check if 2 concepts are the same
-
-    #According to the e-mail of Zoltan, this is an exercise for the search:
-    def jo_gyakorlat_1(self):
-        for i in range(0, len(gl.WM.cp)):
-            if gl.WM.cp[i].relation == 1:
-                wordlink_num = gl.WM.cp[i].wordlink[0]
-                for j in range(0, len(gl.KB.cp)):
-                    if gl.KB.cp[j].relation == 1:
-                        if wordlink_num == gl.KB.cp[j].wordlink[0]:
-                            #I have found the word!
-                            print('Kblink for word in WM: ' + gl.WL.wcp[wordlink_num].word)
-            else:
-                #it is not a word -> there are more parents
-                #if len(gl.WM.cp[i].parent) == 2:
-                #gl.unittest.checkEqualityFromWM(i)
-
-
-        
         
 
 if __name__ == "__main__":

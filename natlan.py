@@ -45,7 +45,7 @@ gl.KB.walk_db(24)                        # walk through parents of a concept, pr
 #gl.KB.search_for_rule()
 #gl.unittest.utest_read_concept()            # run read_concept unit test
 
-gl.unittest.jo_gyakorlat_1()
+thisrule.jo_gyakorlat_caller()
 
 gl.log.logf.close()
 
