@@ -70,7 +70,12 @@ class Kbase:
             if (len(kbl)>0):                                    #set word link if we have KB link
                 self.cp[self.ci].wordlink.append(gl.KB.cp[kbl[0]].wordlink[0])      # we have a single word link
                 self.cp[self.ci].mentstr = gl.KB.cp[kbl[0]].mentstr[:]
-        gl.log.add_log((self.name," add_concept index=",self.ci," p=",new_p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
+        if gl.args.rcodeBack[new_rel] == 'IM' : 
+            self.cp[self.ci].p = gl.args.pdef_unknown
+            for par in self.cp[self.ci].parent : 
+                self.cp[par].p = gl.args.pdef_unknown
+
+        gl.log.add_log((self.name," add_concept index=",self.ci," p=",self.cp[self.ci].p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
         return self.ci
 
     def remove_concept(self):
