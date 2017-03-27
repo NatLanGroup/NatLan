@@ -27,8 +27,15 @@ e/ Do people sing?                   m/ A(people,sing)?          a/ A(people,sin
 e/ What do dogs do?                  m/ A(dog,?)                 a/ not found:A(dog,?)
 e/ Dogs are not the same as people.  m/ D(dog,people)p=0
 e/ Do dogs walk?                     m/ A(dog,walk)?             a/ A(dog,walk)p=0.5
+e/ Tired dogs walk slowly.           m/ F(A(F(dog,tired),walk),slowly)
+e/ How do tired dogs walk?           m/ F(A(F(dog,tired),walk),?)       a/ F(A(F(dog,tired),walk),slowly)p=1
+e/ Do tired dogs walk slowly?        m/ F(A(F(dog,tired),walk),slowly)? a/ F(A(F(dog,tired),walk),slowly)p=1
+e/ What dogs walk slowly?            m/ F(A(F(dog,?),walk),slowly)      a/ F(A(F(dog,tired),walk),slowly)p=1
+e/ What do tired dogs do slowly?     m/ F(A(F(dog,tired),?),slowly)     a/ F(A(F(dog,tired),walk),slowly)p=1
 
 // D-reasoning
+m/ IM(AND(D(%1,%2)p=p1,X(%1,%3)p=p2),X(%2,%3)p=pid)
+m/ IM(D(%1,%2)p=p1,D(%2,%1)p=p1)
 e/ Who are people?                   m/ D(people,?)              a/ D(people,person)p=1
 e/ Are people same as persons?       m/ D(people,person)?        a/ D(people,person)p=1
 e/ Do persons walk?                  m/ A(person,walk)?          a/ A(person,walk)p=1
@@ -39,6 +46,7 @@ e/ What are people?                  m/ C(people,?)              a/ C(people,ani
 e/ What are persons?                 m/ C(person,?)              a/ C(person,animal)p=0 C(person,people)p=1
 
 // C-reasoning. In the fox example we see an implicit C relation.
+m/ IM(AND(C(%1,%2)p=p1,X(%2,%3)p=p2),X(%1,%3)p=pclas)
 e/ Animals move.                     m/ A(animal,move)
 e/ What do dogs do?                  m/ A(dog,?)                 a/ A(dog,move)p=1
 e/ What moves?                       m/ A(?,move)                a/ A(animal,move)p=1 A(dog,move)p=1
@@ -51,6 +59,37 @@ e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)
 e/ Girls are people. 		     m/ C(girl,people)  
 e/ Boys are people.		     m/ C(boy,people)              
 e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)p=1
+e/ The fox hunts in the forest.      m/ F(A(fox,hunt),R(in,forest))
+e/ Does the brown fox hunt?          m/ A(F(fox,brown),hunt)?    a/ A(F(fox,brown),hunt)p=1
 
-e/ Test sentence.					m/ A(C(Joe,person),walk)
-e/ Test question?					m/ A(C(Joe,person),?)		a/ A(C(Joe,person),walk)p=1
+// IM-reasoning
+e/ If a person runs, then that person moves. m/ IM(A(person,run),A(person,move))
+e/ Does a person run?                m/ A(person,run)?           a/ A(person,run)p=0.5
+e/ Does a person move?               m/ A(person,move)?          a/ A(person,move)p=0.5
+e/ Who moves?                        m/ A(?,move)                a/ A(person,move)p=0.5
+e/ People run.                       m/ A(people,run)    
+e/ Who moves?                        m/ A(?,move)                a/ A(person,move)p=1
+e/ Do animals walk?                  m/ A(animal,walk)?          a/ A(animal,walk)p=0.5
+e/ If animals are people, then animals walk.  m/ IM(C(animal,people),A(animal,walk))
+e/ Are animals people?               m/ C(animal,people)?        a/ C(animal,people)p=0
+e/ Do animals walk?                  m/ A(animal,walk)?          a/ A(animal,walk)p=0.5
+e/ Joe sits.                         m/ A(Joe,sit)
+e/ If people sit, then people do not move.  m/ IM(A(people,sit),A(people,move)p=0)
+e/ Do people sit?                    m/ A(people,sit)?           a/ A(people,sit)p=0.5
+e/ Does Joe sit?                     m/ A(Joe,sit)?              a/ A(Joe,sit)p=1
+e/ Does Joe move?                    m/ A(Joe,move)?             a/ A(Joe,move)p=0
+e/ If a person does not move, then the person stays.   m/ IM(A(person,move)p=0,A(person,stay))
+e/ Does Joe stay?                    m/ A(Joe,stay)?             a/ A(Joe,stay)p=1
+
+// AND-reasoning
+m/ IM(AND(%1,%2)p=p1,AND(%2,%1)p=p1)
+m/ IM(AND(%1,%2)p=p1,%1)
+e/ Mary and Joe walk.                m/ A(AND(Mary,Joe),walk)
+e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)p=1
+e/ Mary plays.                       m/ A(Mary,play)
+e/ Joe plays.                        m/ A(Joe,play)
+e/ Do Mary and Joe play?             m/ A(AND(Mary,Joe),play)?   a/ A(AND(Mary,Joe),play)p=1
+e/ What does Joe do?                 m/ A(Joe,?)                 a/ A(Joe,walk)p=1 A(Joe,talk)p=1 A(Joe,play)p=1 A(Joe,run)p=0.5 A(Joe,move)p=0.5 A(Joe,sit)p=1
+e/ Does Joe sit and play?            m/ A(Joe,AND(sit,play))?    a/ A(Joe,AND(sit,play))p=1
+e/ Does Joe run?                     m/ A(Joe,run)?              a/ A(Joe,run)p=0.5
+e/ Does Joe run and sit?             m/ A(Joe,AND(run,sit))?     a/ A(Joe,AND(run,sit))p=0.5

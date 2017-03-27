@@ -27,8 +27,15 @@ e/ Do people sing?                   m/ A(people,sing)?          a/ A(people,sin
 e/ What do dogs do?                  m/ A(dog,?)                 a/ not found:A(dog,?)
 e/ Dogs are not the same as people.  m/ D(dog,people)p=0
 e/ Do dogs walk?                     m/ A(dog,walk)?             a/ A(dog,walk)p=0.5
+e/ Tired dogs walk slowly.           m/ F(A(F(dog,tired),walk),slowly)
+e/ How do tired dogs walk?           m/ F(A(F(dog,tired),walk),?)       a/ F(A(F(dog,tired),walk),slowly)p=1
+e/ Do tired dogs walk slowly?        m/ F(A(F(dog,tired),walk),slowly)? a/ F(A(F(dog,tired),walk),slowly)p=1
+e/ What dogs walk slowly?            m/ F(A(F(dog,?),walk),slowly)      a/ F(A(F(dog,tired),walk),slowly)p=1
+e/ What do tired dogs do slowly?     m/ F(A(F(dog,tired),?),slowly)     a/ F(A(F(dog,tired),walk),slowly)p=1
 
 // D-reasoning
+m/ IM(AND(D(%1,%2),X(%1,%3)),X(%2,%3))
+m/ IM(D(%1,%2),D(%2,%1))
 e/ Who are people?                   m/ D(people,?)              a/ D(people,person)p=1
 e/ Are people same as persons?       m/ D(people,person)?        a/ D(people,person)p=1
 e/ Do persons walk?                  m/ A(person,walk)?          a/ A(person,walk)p=1
@@ -39,6 +46,7 @@ e/ What are people?                  m/ C(people,?)              a/ C(people,ani
 e/ What are persons?                 m/ C(person,?)              a/ C(person,animal)p=0 C(person,people)p=1
 
 // C-reasoning. In the fox example we see an implicit C relation.
+m/ IM(AND(C(%1,%2),X(%2,%3)),X(%1,%3))
 e/ Animals move.                     m/ A(animal,move)
 e/ What do dogs do?                  m/ A(dog,?)                 a/ A(dog,move)p=1
 e/ What moves?                       m/ A(?,move)                a/ A(animal,move)p=1 A(dog,move)p=1

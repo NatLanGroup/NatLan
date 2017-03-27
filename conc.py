@@ -1,36 +1,5 @@
 import sys, gl
 
-
-def match(what1, inwhat):  # two concepts match? handles questions
-    # TODO should we use booleans instead numbers?
-    # e.g. result = True
-    yes = 1;
-    sparents = []
-    if what1.relation != -1 and what1.relation != inwhat.relation:
-        yes = 0  # relation is either same or -1
-    else:                               # relation matches
-        for item in what1.parent: sparents.append(item)
-        pindex = 0
-        for parentitem in sparents:     # handle -1 parents
-            if parentitem == -1:        # -1 indicates question mark, this is considered as matching
-                try:
-                    sparents[pindex] = inwhat.parent[pindex]
-                except:
-                    yes = yes
-            pindex = pindex + 1
-        for pix in range(len(sparents)):                # compare for match
-            if (gl.WM.cp[sparents[pix]].relation!=1):   # not word
-                try:
-                    if (sparents[pix]!=inwhat.parent[pix]):yes=0    # pARENTS MUST MATCH
-                except: yes=0                           # list length mismatch
-            else:                                       # parent is word
-                try:
-                    if (gl.WM.cp[sparents[pix]].kblink != gl.WM.cp[inwhat.parent[pix]].kblink):
-                        yes=0                           # kblink indicates word meaning, it should match
-                except: yes=0                           # list length mismatch
-    return yes
-
-
 class Concept:
     def __init__(self,rel=0):
         self.p = 0.5        # p value of concept
@@ -40,6 +9,7 @@ class Concept:
         self.wordlink = []  # link to WL, if this is a word
         self.kblink = []    # link to KB, if this is in WM
         self.mentstr = ""   # string format of mentalese
+        self.rulestr = ""   # string for rule-information like p=p1 or p=pclas
 
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
@@ -110,6 +80,50 @@ class Kbase:
             
         return 1
 
+    def get_child(self,rel,parents=[]):                      # search concept as child of parent
+        found=-1
+        for child in self.cp[parents[0]].child:         # in children of the first parent
+            if (self.cp[child].relation==rel):          # relation must match
+                if (self.cp[child].parent==parents):    # parents must match
+                    found=child
+        return found
+
+    def walk_db(self,curri,lasti=-2):                   # recursive walk over WM or KB from curri towards all parents. Call without lasti.
+        while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
+            try: nextp=self.cp[curri].parent.index(lasti)+1
+            except:
+                lasti=-2        # enter lower level
+                nextp=0
+            lasti=self.walk_db(self.cp[curri].parent[nextp],lasti)
+        print ("walk",self.name,"current concept",curri,"parents",self.cp[curri].parent,"mentalese",self.cp[curri].mentstr,"rule:"[:5*len(self.cp[curri].rulestr)],self.cp[curri].rulestr)
+        return curri
+
+    def copyto_kb(self,curri,lasti=-2):         # copy concept in WM on curri to KB with all parents
+        while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
+            try: nextp=self.cp[curri].parent.index(lasti)+1
+            except:
+                lasti=-2        # enter lower level
+                nextp=0
+            lasti=self.copyto_kb(self.cp[curri].parent[nextp],lasti)
+        # COPY ACTION to follow:
+        if self.name=="WM":                         # copy from WM only
+            if len(self.cp[curri].kblink)==0:       # not yet in KB
+                plist=[]                            # holds parent indices valiod in KB
+                for pari in self.cp[curri].parent:  # parents valid in WM
+                    plist.append(self.cp[pari].kblink[0])   # append parent index valid in KB
+                kbl=gl.KB.get_child(self.cp[curri].relation,plist)   # search concept in KB as child of parent
+                if kbl==-1:                         # not found in KB
+                    kbl=gl.KB.add_concept(self.cp[curri].p,self.cp[curri].relation,plist)   # copy to KB
+                    gl.KB.cp[kbl].rulestr=gl.WM.cp[curri].rulestr                           # copy rule string like p=p1    
+                self.cp[curri].kblink.append(kbl)   # set KB link in WM
+                # print ("KB copy curri",curri,"KB index",kbl,"ment:",gl.KB.cp[kbl].mentstr)
+        return curri
+            
+    def move_rule(self,tf,ri,starti):           # if this is a rule then move it to KB
+        if ("%1" in tf.mentalese[ri]):          # if this is a rule
+            gl.WM.copyto_kb(gl.WM.ci)           # copy last concept in WM, which should be the rule, to KLB
+            for i in range(gl.WM.ci-starti): gl.WM.remove_concept()     # remove rule from WM
+        
 
     def search_inlist(self, swhat):
         found = []
@@ -120,12 +134,28 @@ class Kbase:
             sindex = sindex + 1
         return found
 
-    def answer_question(self,qindex):           # answer a question that is is WM
+    def rec_set_undefined_parents(self, childi):        # recursive function to replace ? words with parent=-1
+        paridx=0
+        for pari in gl.WM.cp[childi].parent:
+            for wi in gl.WM.cp[pari].wordlink:
+                if (gl.WL.wcp[wi].word=="?"):           # replace ? word with parent=-1
+                    gl.WM.cp[childi].parent[paridx]=-1
+            self.rec_set_undefined_parents(pari)
+            paridx=paridx+1
+
+    def answer_question(self,starti,endi):           # answer a question that is is WM
         answerlist=[]
-        answers=gl.WM.search_inlist(gl.WM.cp[qindex])   # search in WM
+        self.rec_set_undefined_parents(endi)
+        answers=gl.WM.search_inlist(gl.WM.cp[endi])     # search in WM
         for aw in answers:
-            if (aw<qindex):                     # answer must be before question
+            if (aw<endi):                               # answer must be before question
                 answerlist.append(aw)
+        if len(answerlist)==0:                          # no answer
+            if -1 not in gl.WM.cp[endi].parent:         # question not for parent but for p Z(a,b)?
+                starti=endi                              # we keep the question as answer
+                answerlist.append(endi)
+                gl.WM.cp[endi].p=gl.args.pdef_unknown   # p is set to unknown value, 0.5
+        for i in range(endi-starti): gl.WM.remove_concept()     # remove question from WM
         return answerlist
     
     def read_mentalese(self,mfilename,mlist=[]):    #read Mentalese from a file or get in a list
@@ -142,9 +172,18 @@ class Kbase:
         else:
             while len(mlist[0])>1:
                 self.read_concept(mlist)
+
+    def get_rulestr(self, aStr, pos):            # process the rule-part of mentalese string, like p=p1
+        pos +=1
+        out=""
+        while (pos<len(aStr) and aStr[pos]!="," and aStr[pos]!=")" and aStr[pos]!=" "):
+            out=out+aStr[pos]
+            pos +=1
+        return out
             
-    def read_concept(self,attrList):                #recursive function to read concepts from Mentalese input
-        aStr=str(attrList[0]).strip()               #parameter is passed in a wrapping list to be able to use recursion
+    def read_concept(self,attrList):                # recursive function to read concepts from Mentalese input
+        aStr=str(attrList[0]).strip()               # parameter is passed in a wrapping list to be able to use recursion
+        rulStr=""                                   # string for rule-information like p=p1
         actPos=0
         relType=0
         pp=gl.args.pdefault                         #default p is set to 0.5
@@ -193,13 +232,19 @@ class Kbase:
                                 break
                             else:
                                 n_end += 1
-                        newp=float(aStr[actPos+3:n_end])
+                        try: newp=float(aStr[actPos+3:n_end])               # explicit p value like p=0.1
+                        except:                                             # rule, like p=p1
+                            newp=gl.args.pdef_unknown
+                            rulStr=self.get_rulestr(aStr,actPos)            # process the rule-string
+                            n_end=actPos+1+len(rulStr)
                         pp=newp
                         actPos=n_end
                     else:
                         actPos += 1
                     attrList[0]=str(aStr[actPos:]).strip()
-                    return self.add_concept(pp,relType,parents)
+                    newindex=self.add_concept(pp,relType,parents)           # add the concept to WM
+                    self.cp[newindex].rulestr=rulStr                        # add the rule string
+                    return newindex
                 
             actPos=actPos+1
         return
