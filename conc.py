@@ -133,6 +133,14 @@ class Kbase:
                 found.append(sindex)  # add to found list
             sindex = sindex + 1
         return found
+        
+    def get_previous_sentence(self, beforei):           # finds the previous full sentence concept (before the given id)
+        i = beforei - 1                                 # the previous sentence concept's id must be before the given id
+        while i >= 0:
+            if len(self.cp[i].child) == 0:              # a concept is a full sentence concept, if it doesn't have children
+                return i
+            i -= 1
+        return -1                                       # return -1 if no previous sentence concept available
 
     def rec_set_undefined_parents(self, childi):        # recursive function to replace ? words with parent=-1
         paridx=0
