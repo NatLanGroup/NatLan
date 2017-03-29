@@ -55,9 +55,13 @@ class Kbase:
             self.ci=self.ci-1   
         return self.ci
 
-    def rec_match(self, what1, inwhat):  # two concepts match? handles questions
+    def rec_match(self, what1, inwhat, castSecondKbase=0):  # two concepts match? handles questions
         # TODO should we use booleans instead numbers?
         # e.g. result = True
+        # castSecondKbase help to compare WM concept with KB concept
+        #       castSecondKbase = 0 -> no cast, both concepts are searched in the Kbase from which the function was called
+        #       castSecondKbase = 1 -> cast to KB, i.e. second concepts is searched in KB, whichever Kbase the function was called from
+        #       castSecondKbase = 2 -> cast to WM, i.e. second concepts is searched in WM, whichever Kbase the function was called from
 
         if what1.relation != -1 and inwhat.relation != -1 and what1.relation != inwhat.relation:
             return 0     # relation is neither same nor -1 -> not match
@@ -75,8 +79,15 @@ class Kbase:
             if what1.parent[pindex] == -1 or inwhat.parent[pindex] == -1 :     # handle -1 parents
                 continue    # -1 indicates question mark, this is considered as matching
 
-            if self.rec_match(self.cp[what1.parent[pindex]], self.cp[inwhat.parent[pindex]]) == 0:      # compare parent concepts for match
-                return 0    # if parent concept does not match -> no match
+            if castSecondKbase == 1 : 
+                if self.rec_match(self.cp[what1.parent[pindex]], gl.KB.cp[inwhat.parent[pindex]], castSecondKbase) == 0 : 
+                    return 0    # if parent concept does not match -> no match
+            elif castSecondKbase == 2 : 
+                if self.rec_match(self.cp[what1.parent[pindex]], gl.WM.cp[inwhat.parent[pindex]], castSecondKbase) == 0 : 
+                    return 0    # if parent concept does not match -> no match
+            else :
+                if self.rec_match(self.cp[what1.parent[pindex]], self.cp[inwhat.parent[pindex]]) == 0:      # compare parent concepts for match
+                    return 0    # if parent concept does not match -> no match
             
         return 1
 
