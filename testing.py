@@ -165,7 +165,69 @@ class Temptest:                                 # unit tests and other temporary
             print ("WM",i,"relation",gl.WM.cp[i].relation,"parents",gl.WM.cp[i].parent,"WLink",gl.WM.cp[i].wordlink,"KBlink",gl.WM.cp[i].kblink,"p=",gl.WM.cp[i].p,w)
             
 
+    def test_branch_functions(self):                # test for the branches
+        c0 = conc.Concept()
+        c0.next.append(1)
+        c1 = conc.Concept()
+        c1.previous = 0
+        c1.next.append(2)
+        c2 = conc.Concept()
+        c2.previous = 1
+        c2.next.extend([3,4])
+        c3 = conc.Concept()
+        c3.previous = 2
+        c3.next.extend([5,6])
+        c4 = conc.Concept()
+        c4.previous = 2
+        c4.next.append(7)
+        c5 = conc.Concept()
+        c5.previous = 3
+        c5.next.append(8)
+        c6 = conc.Concept()
+        c6.previous = 3
+        c6.next.append(9)
+        c7 = conc.Concept()
+        c7.previous = 4
+        c7.next.append(10)
+        c8 = conc.Concept()
+        c8.previous = 5
+        c8.next.extend([11,12])
+        c9 = conc.Concept()
+        c9.previous = 6
+        c10 = conc.Concept()
+        c10.previous = 7
+        c10.next.extend([13,14,15])
+        c11 = conc.Concept()
+        c11.previous = 8
+        c11.next.append(16)
+        c12 = conc.Concept()
+        c12.previous = 8
+        c12.next.append(17)
+        c13 = conc.Concept()
+        c13.previous = 10
+        c14 = conc.Concept()
+        c14.previous = 10
+        c15 = conc.Concept()
+        c15.previous = 10
+        c16 = conc.Concept()
+        c16.previous = 11
+        c17 = conc.Concept()
+        c17.previous = 12
         
+        gl.WM.cp.extend([c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17])
+        
+        gl.WM.rec_print_tree(0)
+        
+        for i in range(18):
+            print("\n" + "#" * 40)
+            print("\nGet leaves on branch starting from " + str(i) + ":")
+            print(gl.WM.rec_get_leaves(i))
+            
+            print("\nGet previous concepts from " + str(i) + ":")
+            print(gl.WM.get_previous_concepts(i))
+            
+            print("\nGet next concepts from " + str(i) + ":")
+            print(gl.WM.rec_get_next_concepts(i))
         
         
 
