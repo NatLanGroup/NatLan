@@ -53,6 +53,34 @@ class Kbase:
 
         gl.log.add_log((self.name," add_concept index=",self.ci," p=",self.cp[self.ci].p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
         return self.ci
+        
+    def get_previous_concepts(self, beforei):            # returns the id list of previous concepts (inclusive)
+        previous_concepts = []
+        curri = beforei
+        while curri != -1:
+            previous_concepts.append(curri)
+            curri = self.cp[curri].previous
+        return previous_concepts
+    
+    def rec_get_next_concepts(self, rooti):              # returns the id list of all next concepts (starting from rooti, inclusive)
+        next_concepts = [rooti]
+        for i in self.cp[rooti].next:
+            next_concepts.extend(self.rec_get_next_concepts(i))
+        return next_concepts
+            
+    def rec_get_leaves(self, rooti):                     # returns the id list of leaf concepts (starting from rooti, inclusive)
+        leaf_concepts = []
+        if self.cp[rooti].is_leaf():
+            leaf_concepts.append(rooti)
+        else:
+            for i in self.cp[rooti].next:
+                leaf_concepts.extend(self.rec_get_leaves(i))
+        return leaf_concepts
+        
+    def rec_print_tree(self, rooti, level = 0):          # prints the tree recursively (starting from rooti, inclusive) 
+        print("." * (level * 3) + str(rooti))
+        for i in self.cp[rooti].next:
+            self.rec_print_tree(i, level + 1)
 
     def remove_concept(self):
         gl.log.add_log((self.name," remove concept index=",self.ci))
