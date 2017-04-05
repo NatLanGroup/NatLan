@@ -94,6 +94,22 @@ class Kbase:
         print("." * (level * 3) + str(rooti))
         for i in self.cp[rooti].next:
             self.rec_print_tree(i, level + 1)
+            
+    def remove_branch(self, branchi):
+        # removes branch starting from branchi
+        # doesn't really remove concepts, only terminates connection in the tree
+        # removes ids of next concepts from the child list of previous concepts
+        if self.cp[branchi].previous != -1:
+            self.cp[self.cp[branchi].previous].next.remove(branchi)
+            
+            next_concepts_list = self.rec_get_next_concepts(branchi)
+            i = self.cp[branchi].previous
+            while i != -1:
+                children_list = self.cp[i].child[:]
+                for childi in children_list:
+                    if childi in next_concepts_list:
+                        self.cp[i].child.remove(childi)
+                i = self.cp[i].previous
 
     def remove_concept(self):
         gl.log.add_log((self.name," remove concept index=",self.ci))
