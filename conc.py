@@ -90,10 +90,11 @@ class Kbase:
                 leaf_concepts.extend(self.rec_get_leaves(i))
         return leaf_concepts
         
-    def rec_print_tree(self, rooti, level = 0):          # prints the tree recursively (starting from rooti, inclusive) 
-        print("." * (level * 3) + str(rooti))
+    def rec_print_tree(self, rooti, printchildren = False, level = 0):          # prints the tree recursively (starting from rooti, inclusive) 
+        print("." * (level * 3) + str(rooti) + 
+            ((" (children: " + str(self.cp[rooti].child) + ")") if printchildren and len(self.cp[rooti].child)>0 else ""));
         for i in self.cp[rooti].next:
-            self.rec_print_tree(i, level + 1)
+            self.rec_print_tree(i, printchildren, level + 1)
             
     def remove_branch(self, branchi):
         # removes branch starting from branchi

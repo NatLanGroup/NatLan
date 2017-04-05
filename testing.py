@@ -166,55 +166,12 @@ class Temptest:                                 # unit tests and other temporary
             
 
     def test_branch_functions(self):                # test for the branches
-        c0 = conc.Concept()
-        c0.next.append(1)
-        c1 = conc.Concept()
-        c1.previous = 0
-        c1.next.append(2)
-        c2 = conc.Concept()
-        c2.previous = 1
-        c2.next.extend([3,4])
-        c3 = conc.Concept()
-        c3.previous = 2
-        c3.next.extend([5,6])
-        c4 = conc.Concept()
-        c4.previous = 2
-        c4.next.append(7)
-        c5 = conc.Concept()
-        c5.previous = 3
-        c5.next.append(8)
-        c6 = conc.Concept()
-        c6.previous = 3
-        c6.next.append(9)
-        c7 = conc.Concept()
-        c7.previous = 4
-        c7.next.append(10)
-        c8 = conc.Concept()
-        c8.previous = 5
-        c8.next.extend([11,12])
-        c9 = conc.Concept()
-        c9.previous = 6
-        c10 = conc.Concept()
-        c10.previous = 7
-        c10.next.extend([13,14,15])
-        c11 = conc.Concept()
-        c11.previous = 8
-        c11.next.append(16)
-        c12 = conc.Concept()
-        c12.previous = 8
-        c12.next.append(17)
-        c13 = conc.Concept()
-        c13.previous = 10
-        c14 = conc.Concept()
-        c14.previous = 10
-        c15 = conc.Concept()
-        c15.previous = 10
-        c16 = conc.Concept()
-        c16.previous = 11
-        c17 = conc.Concept()
-        c17.previous = 12
-        
-        gl.WM.cp.extend([c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17])
+        for testconc in [(-1,[1]),(0,[2]),(1,[3,4]),(2,[5,6]),(2,[7]),(3,[8]),(3,[9]),(4,[10]),(5,[11,12]),(6,[]),
+                        (7,[13,14,15]),(8,[16]),(8,[17]),(10,[]),(10,[]),(10,[]),(11,[]),(12,[])]:
+            c = conc.Concept()
+            c.previous = testconc[0]
+            c.next.extend(testconc[1])
+            gl.WM.cp.append(c)
         
         gl.WM.rec_print_tree(0)
         
@@ -230,20 +187,20 @@ class Temptest:                                 # unit tests and other temporary
             print(gl.WM.rec_get_next_concepts(i))
         
         # should not cause error
-        assert gl.WM.search_on_branch(16,0)
-        assert gl.WM.search_on_branch(0,2)
-        assert gl.WM.search_on_branch(0,13)
-        assert gl.WM.search_on_branch(6,0)
-        assert gl.WM.search_on_branch(2,17)
-        assert gl.WM.search_on_branch(8,3)
-        assert gl.WM.search_on_branch(4,7)
-        assert gl.WM.search_on_branch(11,5)
-        assert gl.WM.search_on_branch(5,5)
-        assert not gl.WM.search_on_branch(3,4)
-        assert not gl.WM.search_on_branch(3,14)
-        assert not gl.WM.search_on_branch(4,6)
-        assert not gl.WM.search_on_branch(14,17)
-        assert not gl.WM.search_on_branch(13,14)
+        for findonbranch in [(16,0),(0,2),(0,13),(6,0),(2,17),(8,3),(4,7),(11,5),(5,5)]:
+            assert gl.WM.search_on_branch(findonbranch[0], findonbranch[1])
+        for notfindonbranch in [(3,4),(3,14),(4,6),(14,17),(13,14)]:
+            assert not gl.WM.search_on_branch(notfindonbranch[0], notfindonbranch[1])
+        
+        for parentchild in [(0,12),(1,16),(2,6),(7,14),(4,10),(10,14),(2,9)]:
+            gl.WM.cp[parentchild[0]].child.append(parentchild[1])
+        
+        print("\n" + "#" * 40 + "\n\nTest of deleting branches:\n\nOriginal tree:")
+        gl.WM.rec_print_tree(0, True)
+        for delbranch in [12,3,14,7]:
+            print("\nDeleting branch starting from " + str(delbranch) + ":")
+            gl.WM.remove_branch(delbranch)
+            gl.WM.rec_print_tree(0, True)
         
         
 
