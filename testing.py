@@ -229,6 +229,22 @@ class Temptest:                                 # unit tests and other temporary
             print("\nGet next concepts from " + str(i) + ":")
             print(gl.WM.rec_get_next_concepts(i))
         
+        # should not cause error
+        assert gl.WM.search_on_branch(16,0)
+        assert gl.WM.search_on_branch(0,2)
+        assert gl.WM.search_on_branch(0,13)
+        assert gl.WM.search_on_branch(6,0)
+        assert gl.WM.search_on_branch(2,17)
+        assert gl.WM.search_on_branch(8,3)
+        assert gl.WM.search_on_branch(4,7)
+        assert gl.WM.search_on_branch(11,5)
+        assert gl.WM.search_on_branch(5,5)
+        assert not gl.WM.search_on_branch(3,4)
+        assert not gl.WM.search_on_branch(3,14)
+        assert not gl.WM.search_on_branch(4,6)
+        assert not gl.WM.search_on_branch(14,17)
+        assert not gl.WM.search_on_branch(13,14)
+        
         
 
 if __name__ == "__main__":

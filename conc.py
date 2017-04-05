@@ -62,6 +62,19 @@ class Kbase:
             curri = self.cp[curri].previous
         return previous_concepts
     
+    def search_previously(self, whati, beforei):        # returns True if the id (whati) appears previously on the branch (before beforei)
+        curri = beforei
+        while curri != -1:
+            if curri == whati:
+                return True
+            curri = self.cp[curri].previous
+        return False
+        
+    def search_on_branch(self, whati, branchi):
+        # returns True if the id (whati) appears on the branch
+        # in fact when whati and branchi are on the same branch, i.e. in the same 'domain'
+        return self.search_previously(whati, branchi) or self.search_previously(branchi, whati)
+    
     def rec_get_next_concepts(self, rooti):              # returns the id list of all next concepts (starting from rooti, inclusive)
         next_concepts = [rooti]
         for i in self.cp[rooti].next:
