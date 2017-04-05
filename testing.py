@@ -1,4 +1,4 @@
-import gl, conc
+import gl, conc, branch
 
 def addspaces(ins,num):
     stt=""
@@ -173,34 +173,34 @@ class Temptest:                                 # unit tests and other temporary
             c.next.extend(testconc[1])
             gl.WM.cp.append(c)
         
-        gl.WM.rec_print_tree(0)
+        branch.rec_print_tree(0)
         
         for i in range(18):
             print("\n" + "#" * 40)
             print("\nGet leaves on branch starting from " + str(i) + ":")
-            print(gl.WM.rec_get_leaves(i))
+            print(branch.rec_get_leaves(i))
             
             print("\nGet previous concepts from " + str(i) + ":")
-            print(gl.WM.get_previous_concepts(i))
+            print(branch.get_previous_concepts(i))
             
             print("\nGet next concepts from " + str(i) + ":")
-            print(gl.WM.rec_get_next_concepts(i))
+            print(branch.rec_get_next_concepts(i))
         
         # should not cause error
         for findonbranch in [(16,0),(0,2),(0,13),(6,0),(2,17),(8,3),(4,7),(11,5),(5,5)]:
-            assert gl.WM.search_on_branch(findonbranch[0], findonbranch[1])
+            assert branch.search_on_branch(findonbranch[0], findonbranch[1])
         for notfindonbranch in [(3,4),(3,14),(4,6),(14,17),(13,14)]:
-            assert not gl.WM.search_on_branch(notfindonbranch[0], notfindonbranch[1])
+            assert not branch.search_on_branch(notfindonbranch[0], notfindonbranch[1])
         
         for parentchild in [(0,12),(1,16),(2,6),(7,14),(4,10),(10,14),(2,9)]:
             gl.WM.cp[parentchild[0]].child.append(parentchild[1])
         
         print("\n" + "#" * 40 + "\n\nTest of deleting branches:\n\nOriginal tree:")
-        gl.WM.rec_print_tree(0, True)
+        branch.rec_print_tree(0, True)
         for delbranch in [12,3,14,7]:
             print("\nDeleting branch starting from " + str(delbranch) + ":")
-            gl.WM.remove_branch(delbranch)
-            gl.WM.rec_print_tree(0, True)
+            branch.remove_branch(delbranch)
+            branch.rec_print_tree(0, True)
         
         
 

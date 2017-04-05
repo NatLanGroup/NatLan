@@ -53,64 +53,6 @@ class Kbase:
 
         gl.log.add_log((self.name," add_concept index=",self.ci," p=",self.cp[self.ci].p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
         return self.ci
-        
-    def get_previous_concepts(self, beforei):            # returns the id list of previous concepts (inclusive)
-        previous_concepts = []
-        curri = beforei
-        while curri != -1:
-            previous_concepts.append(curri)
-            curri = self.cp[curri].previous
-        return previous_concepts
-    
-    def search_previously(self, whati, beforei):        # returns True if the id (whati) appears previously on the branch (before beforei)
-        curri = beforei
-        while curri != -1:
-            if curri == whati:
-                return True
-            curri = self.cp[curri].previous
-        return False
-        
-    def search_on_branch(self, whati, branchi):
-        # returns True if the id (whati) appears on the branch
-        # in fact when whati and branchi are on the same branch, i.e. in the same 'domain'
-        return self.search_previously(whati, branchi) or self.search_previously(branchi, whati)
-    
-    def rec_get_next_concepts(self, rooti):              # returns the id list of all next concepts (starting from rooti, inclusive)
-        next_concepts = [rooti]
-        for i in self.cp[rooti].next:
-            next_concepts.extend(self.rec_get_next_concepts(i))
-        return next_concepts
-            
-    def rec_get_leaves(self, rooti):                     # returns the id list of leaf concepts (starting from rooti, inclusive)
-        leaf_concepts = []
-        if self.cp[rooti].is_leaf():
-            leaf_concepts.append(rooti)
-        else:
-            for i in self.cp[rooti].next:
-                leaf_concepts.extend(self.rec_get_leaves(i))
-        return leaf_concepts
-        
-    def rec_print_tree(self, rooti, printchildren = False, level = 0):          # prints the tree recursively (starting from rooti, inclusive) 
-        print("." * (level * 3) + str(rooti) + 
-            ((" (children: " + str(self.cp[rooti].child) + ")") if printchildren and len(self.cp[rooti].child)>0 else ""));
-        for i in self.cp[rooti].next:
-            self.rec_print_tree(i, printchildren, level + 1)
-            
-    def remove_branch(self, branchi):
-        # removes branch starting from branchi
-        # doesn't really remove concepts, only terminates connection in the tree
-        # removes ids of next concepts from the child list of previous concepts
-        if self.cp[branchi].previous != -1:
-            self.cp[self.cp[branchi].previous].next.remove(branchi)
-            
-            next_concepts_list = self.rec_get_next_concepts(branchi)
-            i = self.cp[branchi].previous
-            while i != -1:
-                children_list = self.cp[i].child[:]
-                for childi in children_list:
-                    if childi in next_concepts_list:
-                        self.cp[i].child.remove(childi)
-                i = self.cp[i].previous
 
     def remove_concept(self):
         gl.log.add_log((self.name," remove concept index=",self.ci))
