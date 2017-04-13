@@ -58,6 +58,14 @@ def remove_branch(branchi):
                     gl.WM.cp[i].child.remove(childi)
             i = gl.WM.cp[i].previous
 
+def get_previous_sentence_on_branch(beforei):       # finds the previous full sentence concept on the branch (before the given id)
+    i = gl.WM.cp[beforei].previous                  # the previous sentence concept's id must be before the given id
+    while i != -1:
+        if len(gl.WM.cp[i].child) == 0:             # a concept is a full sentence concept, if it doesn't have children
+            return i
+        i = gl.WM.cp[i].previous
+    return -1                                       # return -1 if no previous sentence concept available
+                
                 
 if __name__ == "__main__":
     print("This is a module file, run natlan.py instead")

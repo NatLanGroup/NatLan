@@ -192,8 +192,12 @@ class Temptest:                                 # unit tests and other temporary
         for notfindonbranch in [(3,4),(3,14),(4,6),(14,17),(13,14)]:
             assert not branch.search_on_branch(notfindonbranch[0], notfindonbranch[1])
         
-        for parentchild in [(0,12),(1,16),(2,6),(7,14),(4,10),(10,14),(2,9)]:
+        for parentchild in [(0,12),(1,16),(2,6),(7,14),(4,10),(10,14),(2,9),(8,16)]:
             gl.WM.cp[parentchild[0]].child.append(parentchild[1])
+            
+        # should not cause error
+        for qa in [(13,-1),(16,11),(11,5),(12,5),(5,3)]:
+            assert branch.get_previous_sentence_on_branch(qa[0]) == qa[1]
         
         print("\n" + "#" * 40 + "\n\nTest of deleting branches:\n\nOriginal tree:")
         branch.rec_print_tree(0, True)
