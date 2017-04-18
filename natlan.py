@@ -13,10 +13,18 @@ def process_testinput (tf):                  # input is the Testinput object
         if (tf.question[ri]==1):                    # if yes, then on endi we assume a question
 
             #generate from every rule:
-            #gl.KB.getRulesFor(0, gl.WM.ci)
+            for concept_index in range(0, endi):
+                reasoning = reason.Reasoning()
+                rules_list = reasoning.getRulesFor(concept_index)
+
+                strToPrint = ""
+                for k in range(0, len(rules_list)):
+                    strToPrint += gl.KB.cp[rules_list[k]].mentstr
+                    strToPrint += " , "
+                print("{} matches {}".format(gl.WM.cp[concept_index].mentstr, strToPrint))
 
             tf.systemanswer[ri][:] = gl.WM.answer_question(starti,endi)[:]    # answer question and record concept indices
-        gl.test.write_result(ri)                    # write reult file
+        gl.test.write_result(ri)                    # write result file
         ri=ri+1
                
     
@@ -42,10 +50,7 @@ if gl.args.argnum == 2:
     gl.test.resultf.close()
 
 gl.KB.walk_db(24)                        # walk through parents of a concept, print them
-#gl.KB.search_for_rule()
 #gl.unittest.utest_read_concept()            # run read_concept unit test
-
-thisrule.jo_gyakorlat_caller()
 
 gl.log.logf.close()
 

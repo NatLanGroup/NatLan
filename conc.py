@@ -100,11 +100,10 @@ class Kbase:
                 print(self.cp[self.cp[curri].child[i]].mentstr)
                 dont_add = False
                 for j in range(0, len(res_list)):
-                    if self.rec_match(self.cp[self.cp[curri].child[i]], self.cp[self.cp[curri].child[j]]):
+                    if self.cp[self.cp[curri].child[i]].mentstr == res_list[j].mentstr:
                         dont_add = True
                 if dont_add == False:
-                    res_list.append(self.cp[self.cp[curri].child[i]].mentstr)
-                #res_list.append(self.cp[self.cp[curri].child[i]].mentstr)
+                    res_list.append(self.cp[self.cp[curri].child[i]])
             else:
                 self.get_children_implication(self.cp[curri].child[i], res_list)
 
@@ -115,12 +114,9 @@ class Kbase:
             self.get_children_implication(i, res_list)
         print('list of rules: ')
         print(str(res_list))
-
     #-------------------------------------------------
 
-    #def getRulesFor(self, start, end):
-    #    for i in range(start, end):
-            
+
 
     def copyto_kb(self,curri,lasti=-2):         # copy concept in WM on curri to KB with all parents
         while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
