@@ -51,6 +51,7 @@ if gl.args.argnum == 2:
 
 gl.KB.walk_db(24)                        # walk through parents of a concept, print them
 #gl.unittest.utest_read_concept()            # run read_concept unit test
+#gl.unittest.test_branch_functions()         # tests branch handling functions
 
 gl.log.logf.close()
 

@@ -3,9 +3,12 @@ import sys, gl
 class Concept:
     def __init__(self,rel=0):
         self.p = 0.5        # p value of concept
+        self.c = 1          # consistence of this concept and previous concepts
         self.relation = rel # relation code
         self.parent = []    # parents list
         self.child = []     # children list
+        self.previous = -1  # previous concept
+        self.next = []      # list of next concepts
         self.wordlink = []  # link to WL, if this is a word
         self.kblink = []    # link to KB, if this is in WM
         self.mentstr = ""   # string format of mentalese
@@ -13,6 +16,9 @@ class Concept:
 
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
+        
+    def is_leaf(self):
+        return len(self.next) == 0
 
 
 class Kbase:
@@ -40,7 +46,12 @@ class Kbase:
             if (len(kbl)>0):                                    #set word link if we have KB link
                 self.cp[self.ci].wordlink.append(gl.KB.cp[kbl[0]].wordlink[0])      # we have a single word link
                 self.cp[self.ci].mentstr = gl.KB.cp[kbl[0]].mentstr[:]
-        gl.log.add_log((self.name," add_concept index=",self.ci," p=",new_p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
+        if gl.args.rcodeBack[new_rel] == 'IM' : 
+            self.cp[self.ci].p = gl.args.pdef_unknown
+            for par in self.cp[self.ci].parent : 
+                self.cp[par].p = gl.args.pdef_unknown
+
+        gl.log.add_log((self.name," add_concept index=",self.ci," p=",self.cp[self.ci].p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
         return self.ci
 
     def remove_concept(self):
@@ -50,9 +61,13 @@ class Kbase:
             self.ci=self.ci-1   
         return self.ci
 
-    def rec_match(self, what1, inwhat):  # two concepts match? handles questions
+    def rec_match(self, what1, inwhat, castSecondKbase=0):  # two concepts match? handles questions
         # TODO should we use booleans instead numbers?
         # e.g. result = True
+        # castSecondKbase help to compare WM concept with KB concept
+        #       castSecondKbase = 0 -> no cast, both concepts are searched in the Kbase from which the function was called
+        #       castSecondKbase = 1 -> cast to KB, i.e. second concepts is searched in KB, whichever Kbase the function was called from
+        #       castSecondKbase = 2 -> cast to WM, i.e. second concepts is searched in WM, whichever Kbase the function was called from
 
         if what1.relation != -1 and inwhat.relation != -1 and what1.relation != inwhat.relation:
             return 0     # relation is neither same nor -1 -> not match
@@ -70,8 +85,15 @@ class Kbase:
             if what1.parent[pindex] == -1 or inwhat.parent[pindex] == -1 :     # handle -1 parents
                 continue    # -1 indicates question mark, this is considered as matching
 
-            if self.rec_match(self.cp[what1.parent[pindex]], self.cp[inwhat.parent[pindex]]) == 0:      # compare parent concepts for match
-                return 0    # if parent concept does not match -> no match
+            if castSecondKbase == 1 : 
+                if self.rec_match(self.cp[what1.parent[pindex]], gl.KB.cp[inwhat.parent[pindex]], castSecondKbase) == 0 : 
+                    return 0    # if parent concept does not match -> no match
+            elif castSecondKbase == 2 : 
+                if self.rec_match(self.cp[what1.parent[pindex]], gl.WM.cp[inwhat.parent[pindex]], castSecondKbase) == 0 : 
+                    return 0    # if parent concept does not match -> no match
+            else :
+                if self.rec_match(self.cp[what1.parent[pindex]], self.cp[inwhat.parent[pindex]]) == 0:      # compare parent concepts for match
+                    return 0    # if parent concept does not match -> no match
             
         return 1
 
@@ -153,6 +175,14 @@ class Kbase:
                 found.append(sindex)  # add to found list
             sindex = sindex + 1
         return found
+        
+    def get_previous_sentence(self, beforei):           # finds the previous full sentence concept (before the given id)
+        i = beforei - 1                                 # the previous sentence concept's id must be before the given id
+        while i >= 0:
+            if len(self.cp[i].child) == 0:              # a concept is a full sentence concept, if it doesn't have children
+                return i
+            i -= 1
+        return -1                                       # return -1 if no previous sentence concept available
 
     def rec_set_undefined_parents(self, childi):        # recursive function to replace ? words with parent=-1
         paridx=0
