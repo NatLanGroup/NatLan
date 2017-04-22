@@ -135,6 +135,7 @@ class Temptest:                                 # unit tests and other temporary
     def __init__(self):
         self.dog=gl.WL.add_word("dog")
 
+
     def utest_read_concept(self):               # unit test for conc: read_concept
         testcase=[]; testretain=[]; counter=0
         k0 = gl.KB.add_concept(1,2,[0])         # a test concept in KB which is not a word
@@ -164,6 +165,26 @@ class Temptest:                                 # unit tests and other temporary
             if (len(gl.WM.cp[i].wordlink)>0): w="word: "+gl.WL.wcp[gl.WM.cp[i].wordlink[0]].word
             print ("WM",i,"relation",gl.WM.cp[i].relation,"parents",gl.WM.cp[i].parent,"WLink",gl.WM.cp[i].wordlink,"KBlink",gl.WM.cp[i].kblink,"p=",gl.WM.cp[i].p,w)
             
+
+
+    def test_implication(self):
+        c0 = ["IM(AND(C(%1,%2),X(%2,%3)),X(%1,%3))"]
+
+        wrdlink1 = gl.WL.add_word("%1")
+        wrdlink2 = gl.WL.add_word("%2")
+        wrdlink3 = gl.WL.add_word("%3")
+        
+        ci1 = gl.WM.add_concept(1,1,[],[wrdlink1])  # %1
+        ci2 = gl.WM.add_concept(1,1,[],[wrdlink2])  # %2
+        ci3 = gl.WM.add_concept(1,1,[],[wrdlink3])  # %3
+        ciC = gl.WM.add_concept(1,4,new_parents=[ci1,ci2])    # C(%1,%2)
+        ciX1 = gl.WM.add_concept(1,-1,new_parents=[ci2,ci3])     # X(%2,%3)
+        ciX2 = gl.WM.add_concept(1,-1,new_parents=[ci1,ci3])    # X(%1, %3)
+
+        ciA = gl.WM.add_concept(1,16,new_parents=[ciC,ciX1])     # AND
+
+        #the implication itself:
+        gl.WM.add_concept(1,13,new_parents=[ciA,ciX2])
 
     def test_branch_functions(self):                # test for the branches
         for testconc in [(-1,[1]),(0,[2]),(1,[3,4]),(2,[5,6]),(2,[7]),(3,[8]),(3,[9]),(4,[10]),(5,[11,12]),(6,[]),
@@ -205,7 +226,6 @@ class Temptest:                                 # unit tests and other temporary
             print("\nDeleting branch starting from " + str(delbranch) + ":")
             branch.remove_branch(delbranch)
             branch.rec_print_tree(0, True)
-        
         
 
 if __name__ == "__main__":
