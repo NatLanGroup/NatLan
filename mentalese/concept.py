@@ -10,14 +10,13 @@ def merge_probability(p1:float, p2:float) -> float:
 
 
 class Concept:
-
-    def __init__(self, mentalese: str, relation: str, probability: float=1.0, is_processed: bool=False):
+    def __init__(self, mentalese: str, relation: str, probability: float=1.0, is_processed: bool=False, question: bool=False):
 
         self.mentalese = mentalese
         self.relation = relation
         self.probability = probability
         self.is_processed = is_processed
-
+        self.question_handled = question
     def __str__(self):     #print
         return "Concept(mentalese=%r,relation=%r,p=%r,proc_state=%r)" % \
                (self.mentalese, self.relation, self.probability, self.is_processed)
@@ -25,7 +24,13 @@ class Concept:
     def update_mentalese(self):
             if self.probability < 1.0:
                 self.mentalese += 'p='+str(self.probability)    
-            
+    
+    def set_question(self):
+        self.question_handled = True
+    
+    def get_question(self):
+        return self.question_handled
+    
     def set_mentalese(self, m1: str, m2: str= None, rel_type: str = 'W'):
         if rel_type == 'W':
             self.mentalese = m1
@@ -45,11 +50,7 @@ class Concept:
     def set_is_processed(self, value:bool) -> None:
         if self.is_processed != value:
             self.is_processed = value
-    
-    @staticmethod
-    def word(label: str) -> 'Concept':
-        return Concept(label, Relation.Word, [])
-
+            
     def is_question(self) -> bool:
         if self.mentalese == '?':
             return True
