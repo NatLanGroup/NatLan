@@ -3,9 +3,12 @@ import sys, gl
 class Concept:
     def __init__(self,rel=0):
         self.p = 0.5        # p value of concept
+        self.c = 1          # consistence of this concept and previous concepts
         self.relation = rel # relation code
         self.parent = []    # parents list
         self.child = []     # children list
+        self.previous = -1  # previous concept
+        self.next = []      # list of next concepts
         self.wordlink = []  # link to WL, if this is a word
         self.kblink = []    # link to KB, if this is in WM
         self.mentstr = ""   # string format of mentalese
@@ -13,6 +16,9 @@ class Concept:
 
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
+        
+    def is_leaf(self):
+        return len(self.next) == 0
 
 
 class Kbase:

@@ -1,4 +1,4 @@
-import gl, conc
+import gl, conc, branch
 
 def addspaces(ins,num):
     stt=""
@@ -165,7 +165,46 @@ class Temptest:                                 # unit tests and other temporary
             print ("WM",i,"relation",gl.WM.cp[i].relation,"parents",gl.WM.cp[i].parent,"WLink",gl.WM.cp[i].wordlink,"KBlink",gl.WM.cp[i].kblink,"p=",gl.WM.cp[i].p,w)
             
 
+    def test_branch_functions(self):                # test for the branches
+        for testconc in [(-1,[1]),(0,[2]),(1,[3,4]),(2,[5,6]),(2,[7]),(3,[8]),(3,[9]),(4,[10]),(5,[11,12]),(6,[]),
+                        (7,[13,14,15]),(8,[16]),(8,[17]),(10,[]),(10,[]),(10,[]),(11,[]),(12,[])]:
+            c = conc.Concept()
+            c.previous = testconc[0]
+            c.next.extend(testconc[1])
+            gl.WM.cp.append(c)
         
+        branch.rec_print_tree(0)
+        
+        for i in range(18):
+            print("\n" + "#" * 40)
+            print("\nGet leaves on branch starting from " + str(i) + ":")
+            print(branch.rec_get_leaves(i))
+            
+            print("\nGet previous concepts from " + str(i) + ":")
+            print(branch.get_previous_concepts(i))
+            
+            print("\nGet next concepts from " + str(i) + ":")
+            print(branch.rec_get_next_concepts(i))
+        
+        # should not cause error
+        for findonbranch in [(16,0),(0,2),(0,13),(6,0),(2,17),(8,3),(4,7),(11,5),(5,5)]:
+            assert branch.search_on_branch(findonbranch[0], findonbranch[1])
+        for notfindonbranch in [(3,4),(3,14),(4,6),(14,17),(13,14)]:
+            assert not branch.search_on_branch(notfindonbranch[0], notfindonbranch[1])
+        
+        for parentchild in [(0,12),(1,16),(2,6),(7,14),(4,10),(10,14),(2,9),(8,16)]:
+            gl.WM.cp[parentchild[0]].child.append(parentchild[1])
+            
+        # should not cause error
+        for qa in [(13,-1),(16,11),(11,5),(12,5),(5,3)]:
+            assert branch.get_previous_sentence_on_branch(qa[0]) == qa[1]
+        
+        print("\n" + "#" * 40 + "\n\nTest of deleting branches:\n\nOriginal tree:")
+        branch.rec_print_tree(0, True)
+        for delbranch in [12,3,14,7]:
+            print("\nDeleting branch starting from " + str(delbranch) + ":")
+            branch.remove_branch(delbranch)
+            branch.rec_print_tree(0, True)
         
         
 
