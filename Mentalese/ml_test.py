@@ -113,12 +113,12 @@ except:
 #print('Input file loaded')  
 #f_doc = f.read()
 #doc=nlp(f_doc)
-doc=nlp(u"What do people do?")
+#doc=nlp(u"What do people do?")
 #f.close()
 #f = open("ml_test_out.txt",'w') 
-for sent in doc.sents:
+#for sent in doc.sents:
     #mentalese_trans(sent.root)
     #print(get_concept(sent.root).mentalese, file=f)
-    to_nltk_tree(sent.root).pretty_print()
+    #to_nltk_tree(sent.root).pretty_print()
 #f.close()    
 #print('Output file generated')
