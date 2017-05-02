@@ -4,6 +4,7 @@ class Concept:
     def __init__(self,rel=0):
         self.p = 0.5        # p value of concept
         self.c = 1          # consistence of this concept and previous concepts
+        self.relevance = 1  # relevance of the concept
         self.relation = rel # relation code
         self.parent = []    # parents list
         self.child = []     # children list
@@ -44,6 +45,8 @@ class Kbase:
                 c.wordlink.append(gl.KB.cp[kbl[0]].wordlink[0])      # we have a single word link
                 c.mentstr = gl.KB.cp[kbl[0]].mentstr[:]
                 
+                self.activate_concepts(kbl[0])
+                
         if gl.args.rcodeBack[new_rel] == 'IM' : 
             c.p = gl.args.pdef_unknown
             for par in c.parent : 
@@ -63,6 +66,22 @@ class Kbase:
                 
         gl.log.add_log((self.name," add_concept index=",self.ci," p=",concept.p," rel=",concept.relation," parents=",concept.parent," wordlink=",concept.wordlink," mentstr=",concept.mentstr))      #content to be logged is tuple (( ))
         return self.ci
+        
+    def activate_concepts(self, kbi):
+        if gl.WL.wcp[gl.KB.cp[kbi].wordlink[0]].word != "?" and gl.WL.wcp[gl.KB.cp[kbi].wordlink[0]].word[0] != "%":
+            activated = self.rec_get_activated_children(kbi)
+            for a in activated:
+                conc = gl.KB.cp[a]
+                if conc.relation == gl.args.rcode["D"] and kbi in conc.parent:
+                    print("mapping opportunity: " + conc.mentstr)
+            
+    def rec_get_activated_children(self, kbi):
+        activated = []
+        for child in gl.KB.cp[kbi].child:
+            if gl.KB.cp[child].relevance == 1:
+                activated.append(child)
+                activated.extend(self.rec_get_activated_children(child))
+        return activated
 
     def remove_concept(self):
         gl.log.add_log((self.name," remove concept index=",self.ci))

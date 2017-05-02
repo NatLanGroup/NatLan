@@ -29,6 +29,8 @@ gl.unittest=testing.Temptest()              # initialize temporary tests
 
 thisrule=reason.Rule(2)
 
+#gl.unittest.test_mapping()
+
 if gl.args.argnum == 2:
     gl.test = testing.Testinput(sys.argv[1])
     gl.test.readtest()
