@@ -29,6 +29,8 @@ def rec_get_next_concepts(rooti):              # returns the id list of all next
         
 def rec_get_leaves(rooti):                     # returns the id list of leaf concepts (starting from rooti, inclusive)
     leaf_concepts = []
+    if rooti > gl.WM.ci:
+        return []
     if gl.WM.cp[rooti].is_leaf():
         leaf_concepts.append(rooti)
     else:
@@ -66,6 +68,31 @@ def get_previous_sentence_on_branch(beforei):       # finds the previous full se
         i = gl.WM.cp[i].previous
     return -1                                       # return -1 if no previous sentence concept available
                 
+def search_concept_on_branch(what, branchi):
+    found = []
+    possibleids = []
+    possibleids.extend(get_previous_concepts(branchi)[::-1])
+    possibleids.extend(rec_get_next_concepts(branchi)[1:])
+    
+    for conitemi in possibleids:
+        if gl.WM.rec_match(what, gl.WM.cp[conitemi]) == 1:
+            found.append(conitemi)  # add to found list
+            
+    return found
+    
+def add_concept_to_all_branches(concept):
+    added_concepts = []
+    leaves = rec_get_leaves(0)
+    if len(leaves) == 0:
+        added_concepts.append(gl.WM.add_concept_to_cp(concept))
+    for leafi in leaves:
+        concept.previous = leafi
+        added_i = gl.WM.add_concept_to_cp(concept)
+        added_concepts.append(added_i)
+        gl.WM.cp[leafi].next.append(added_i)
+        
+    return added_concepts
+    
                 
 if __name__ == "__main__":
     print("This is a module file, run natlan.py instead")

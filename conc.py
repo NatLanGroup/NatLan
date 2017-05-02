@@ -1,4 +1,4 @@
-import sys, gl
+import sys, gl, branch
 
 class Concept:
     def __init__(self,rel=0):
@@ -28,30 +28,40 @@ class Kbase:
         self.name = instancename          # the name of the instance can be used in the log file
 
     def add_concept(self, new_p, new_rel, new_parents,kbl=[]):        #add new concept to WM or KB. parents argument is list
-        self.cp.append(Concept(new_rel))                        #concept added
-        self.ci = len(self.cp) - 1                              #current index
-        self.cp[self.ci].p = new_p                              #set p value
-        self.cp[self.ci].add_parents(new_parents)               #set parents
-        self.cp[self.ci].kblink[:]=kbl[:]                       # set link to KB
+        c = Concept(new_rel)                        #concept added
+        c.p = new_p                              #set p value
+        c.add_parents(new_parents)               #set parents
+        c.kblink[:]=kbl[:]                       # set link to KB
+        
         if (new_rel != gl.args.rcode["W"]):                     # if this is not a word
-            for par in self.cp[self.ci].parent:                 #register new concept as the child of parents
-                self.cp[par].child.append(self.ci)
+            c.mentstr = gl.args.rcodeBack[new_rel] + "("     # set mentstr
+            for cind in c.parent:
+                c.mentstr = c.mentstr + self.cp[cind].mentstr + ","
+            c.mentstr = c.mentstr[:-1] + ")"
 
-            self.cp[self.ci].mentstr = gl.args.rcodeBack[new_rel] + "("     # set mentstr
-            for cind in self.cp[self.ci].parent:
-                self.cp[self.ci].mentstr = self.cp[self.ci].mentstr + self.cp[cind].mentstr + ","
-            self.cp[self.ci].mentstr = self.cp[self.ci].mentstr[:-1] + ")"
-            
         else:                                                   #this is a word
             if (len(kbl)>0):                                    #set word link if we have KB link
-                self.cp[self.ci].wordlink.append(gl.KB.cp[kbl[0]].wordlink[0])      # we have a single word link
-                self.cp[self.ci].mentstr = gl.KB.cp[kbl[0]].mentstr[:]
+                c.wordlink.append(gl.KB.cp[kbl[0]].wordlink[0])      # we have a single word link
+                c.mentstr = gl.KB.cp[kbl[0]].mentstr[:]
+                
         if gl.args.rcodeBack[new_rel] == 'IM' : 
-            self.cp[self.ci].p = gl.args.pdef_unknown
-            for par in self.cp[self.ci].parent : 
+            c.p = gl.args.pdef_unknown
+            for par in c.parent : 
                 self.cp[par].p = gl.args.pdef_unknown
-
-        gl.log.add_log((self.name," add_concept index=",self.ci," p=",self.cp[self.ci].p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
+                
+        if self.name == "WM":
+            return branch.add_concept_to_all_branches(c)
+        else:
+            return [self.add_concept_to_cp(c)]
+            
+    def add_concept_to_cp(self, concept):
+        self.cp.append(concept)
+        self.ci = len(self.cp) - 1
+        if (concept.relation != gl.args.rcode["W"]):
+            for par in self.cp[self.ci].parent:                 #register new concept as the child of parents
+                self.cp[par].child.append(self.ci)
+                
+        gl.log.add_log((self.name," add_concept index=",self.ci," p=",concept.p," rel=",concept.relation," parents=",concept.parent," wordlink=",concept.wordlink," mentstr=",concept.mentstr))      #content to be logged is tuple (( ))
         return self.ci
 
     def remove_concept(self):
@@ -130,7 +140,7 @@ class Kbase:
                     plist.append(self.cp[pari].kblink[0])   # append parent index valid in KB
                 kbl=gl.KB.get_child(self.cp[curri].relation,plist)   # search concept in KB as child of parent
                 if kbl==-1:                         # not found in KB
-                    kbl=gl.KB.add_concept(self.cp[curri].p,self.cp[curri].relation,plist)   # copy to KB
+                    kbl=gl.KB.add_concept(self.cp[curri].p,self.cp[curri].relation,plist)[0]   # copy to KB
                     gl.KB.cp[kbl].rulestr=gl.WM.cp[curri].rulestr                           # copy rule string like p=p1    
                 self.cp[curri].kblink.append(kbl)   # set KB link in WM
                 # print ("KB copy curri",curri,"KB index",kbl,"ment:",gl.KB.cp[kbl].mentstr)
@@ -220,7 +230,7 @@ class Kbase:
                 isWord=0
                 relType=gl.args.rcode[aStr[0:actPos]]
                 attrList[0]=str(aStr[actPos+1:]).strip()
-                parents.append(self.read_concept(attrList))
+                parents.extend(self.read_concept(attrList))
                 aStr=str(attrList[0]).strip()
                 actPos=0
                 continue
@@ -234,7 +244,7 @@ class Kbase:
                     return self.add_concept(1,1,[],[wl_ind])  #parent is empty, KB link is wl_ind
                 else:                               #if the concept is not a single word, register the embedded concept as parent, and read the next parent
                     attrList[0]=str(aStr[actPos+1:]).strip()
-                    parents.append(self.read_concept(attrList))
+                    parents.extend(self.read_concept(attrList))
                     aStr=str(attrList[0]).strip()
                     actPos=0
                     continue
@@ -267,12 +277,13 @@ class Kbase:
                     else:
                         actPos += 1
                     attrList[0]=str(aStr[actPos:]).strip()
-                    newindex=self.add_concept(pp,relType,parents)           # add the concept to WM
-                    self.cp[newindex].rulestr=rulStr                        # add the rule string
-                    return newindex
+                    newindexes=self.add_concept(pp,relType,parents)           # add the concept to WM
+                    for newindex in newindexes:
+                        self.cp[newindex].rulestr=rulStr                        # add the rule string
+                    return newindexes
                 
             actPos=actPos+1
-        return
+        return []
 
 
 if __name__ == "__main__":

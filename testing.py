@@ -137,7 +137,7 @@ class Temptest:                                 # unit tests and other temporary
 
     def utest_read_concept(self):               # unit test for conc: read_concept
         testcase=[]; testretain=[]; counter=0
-        k0 = gl.KB.add_concept(1,2,[0])         # a test concept in KB which is not a word
+        k0 = gl.KB.add_concept(1,2,[0])[0]         # a test concept in KB which is not a word
         c0 = ["A(boy,run)p=0.4"]                # mukodik
         c1 = ["A(boy,run)"]                     # mukodik de az inputban zarojel marad
         c2 = ["AND(A(boy,run)p=0.82,S(boy,girl))"]    # mukodik
@@ -172,6 +172,7 @@ class Temptest:                                 # unit tests and other temporary
             c.previous = testconc[0]
             c.next.extend(testconc[1])
             gl.WM.cp.append(c)
+            gl.WM.ci += 1
         
         branch.rec_print_tree(0)
         
@@ -194,6 +195,17 @@ class Temptest:                                 # unit tests and other temporary
         
         for parentchild in [(0,12),(1,16),(2,6),(7,14),(4,10),(10,14),(2,9),(8,16)]:
             gl.WM.cp[parentchild[0]].child.append(parentchild[1])
+        gl.WM.cp[16].relation = 3
+        gl.WM.cp[14].relation = 3
+        assert branch.search_concept_on_branch(gl.WM.cp[16], 0) == [16,14]
+        assert branch.search_concept_on_branch(gl.WM.cp[16], 2) == [16,14]
+        assert branch.search_concept_on_branch(gl.WM.cp[16], 11) == [16]
+        assert branch.search_concept_on_branch(gl.WM.cp[16], 12) == []
+        assert branch.search_concept_on_branch(gl.WM.cp[16], 4) == [14]
+        assert branch.search_concept_on_branch(gl.WM.cp[16], 16) == [16]
+        gl.WM.cp[16].relation = 4
+        assert branch.search_concept_on_branch(gl.WM.cp[16], 0) == [16]
+        
             
         # should not cause error
         for qa in [(13,-1),(16,11),(11,5),(12,5),(5,3)]:
