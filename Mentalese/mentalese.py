@@ -83,9 +83,17 @@ def lvl_4_rule_4(token): #ADV, NOUN -> Q(ADV,NOUN)
                 get_concept(token).set_mentalese(get_concept(child).mentalese,get_concept(token).mentalese,'Q')
                 get_concept(child).set_is_processed(True)
                 
-def lvl_5_rule_1(token): #A(nsubj, ROOT)
+def lvl_5_rule_1(token): #A(nsubj, ROOT) or I(nsubj,dobj) with question handling
     if token.head.dep_ == u'ROOT' and token.dep_== u'nsubj':
         if token.head.lemma_ != u'be':
+            for child in token.head.children:
+                if child.dep_ == u'dobj':
+                    if child.lemma_ == (u"what" or u"who"): str = 'A'
+                    else: str = 'I'
+                    get_concept(token.head).set_mentalese(get_concept(token).mentalese,get_concept(child).mentalese,str)
+                    get_concept(child).set_is_processed(True)
+                    get_concept(token).set_is_processed(True)
+                    return
             get_concept(token.head).set_mentalese(get_concept(token).mentalese,token.head.lemma_,'A')
             get_concept(token).set_is_processed(True)
 
@@ -113,7 +121,9 @@ def lvl_5_rule_4(token): # F(nsubj, acomp)
             if get_concept(child).is_processed == True:
                 continue
             if child.dep_ == u'acomp': 
-                get_concept(token.head).set_mentalese(get_concept(token).mentalese,get_concept(child).mentalese,'F')
+                if child.lemma_ == u"same": str = 'D'
+                else: str = 'F'
+                get_concept(token.head).set_mentalese(get_concept(token).mentalese,get_concept(child).mentalese,str)
                 get_concept(token).set_is_processed(True)
                 get_concept(child).set_is_processed(True)
 

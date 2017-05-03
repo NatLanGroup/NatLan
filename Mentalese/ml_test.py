@@ -113,7 +113,7 @@ except:
 #print('Input file loaded')  
 #f_doc = f.read()
 #doc=nlp(f_doc)
-#doc=nlp(u"Is the garden a place?")
+#doc=nlp(u"What do people do?")
 #f.close()
 #f = open("ml_test_out.txt",'w') 
 #for sent in doc.sents:
