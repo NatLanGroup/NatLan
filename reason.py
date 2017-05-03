@@ -94,19 +94,12 @@ class Reasoning:
             res_list = []
         for i in range(0, gl.KB.cp[kb_index].child.__len__()):
             if gl.KB.cp[gl.KB.cp[kb_index].child[i]].relation == 13:
-                print(gl.KB.cp[gl.KB.cp[kb_index].child[i]].mentstr)
-                dont_add = False
-                for j in range(0, len(res_list)):
-                    if gl.KB.rec_match(gl.KB.cp[gl.KB.cp[kb_index].child[i]], gl.KB.cp[gl.KB.cp[kb_index].child[j]]):
-                        dont_add = True
-                if dont_add == False:
-                    res_list.append(gl.KB.cp[gl.KB.cp[kb_index].child[i]].mentstr)
-                #res_list.append(self.cp[self.cp[curri].child[i]].mentstr)
+                res_list.append(gl.KB.cp[gl.KB.cp[kb_index].child[i]])
             else:
                 self.get_children_implication(gl.KB.cp[kb_index].child[i], res_list)
 
     def getCondition(self, impl):
-        return gl.KB.cp[impl.parent[0]]
+        return impl.parent[0]
 
     def getRulesFor(self, wm_pos):
         matching_rules = []
@@ -115,11 +108,20 @@ class Reasoning:
             match = self.do_they_match_for_rule(wm_pos, i)
             if match:
                 matching_rules.append(i)
+                print("match: " + gl.WM.cp[wm_pos].mentstr + " " + gl.KB.cp[i].mentstr)
+                res_list = []
+                self.get_children_implication(i, res_list)
 
-                #res_list = []
-                #gl.KB.get_children_implication(i, res_list)
-                #for j in range(len(res_list)):
-                #    condition = self.getCondition(res_list[j])
-        return matching_rules
+                #If we want to print:
+                #print("Concept : " + gl.KB.cp[i].mentstr + " + found implications: ")
+                #for j in range(0, res_list.__len__()):
+                #    print(res_list[j].mentstr)
 
+                #So currently we have wm_pos: the original concept, res_list: implications to reason with, i: the concept matched with the original
+                
+
+
+    def createRules(self):
+        for i in range(0, gl.WM.cp.__len__() - 1):
+            self.getRulesFor(i)
 
