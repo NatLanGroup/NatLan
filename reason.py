@@ -112,16 +112,63 @@ class Reasoning:
                 res_list = []
                 self.get_children_implication(i, res_list)
 
-                #If we want to print:
-                #print("Concept : " + gl.KB.cp[i].mentstr + " + found implications: ")
-                #for j in range(0, res_list.__len__()):
-                #    print(res_list[j].mentstr)
-
-                #So currently we have wm_pos: the original concept, res_list: implications to reason with, i: the concept matched with the original
-                
-
-
     def createRules(self):
         for i in range(0, gl.WM.cp.__len__() - 1):
             self.getRulesFor(i)
 
+    def createRule(self, wm_pos):
+        if wm_pos == -1:
+            return
+        for i in range(0, gl.KB.cp.__len__()):
+            matching_rules = []
+            if self.do_they_match_for_rule(wm_pos, i):
+                matching_rules.append(i)
+        return matching_rules
+
+    def createConceptRules(self, starti, endi):
+        # print('starti: ' + str(starti) + '  endi: ' + str(endi) + '  wm size: ' + str(gl.WM.cp.__len__()))
+
+        for wm_pos in range(starti, endi):
+            matching_rules = []
+            for kb_pos in range(0, gl.KB.cp.__len__()):
+                if self.do_they_match_for_rule(wm_pos, kb_pos):
+                    matching_rules.append(kb_pos)
+            gl.WM.cp[wm_pos].kb_rules = matching_rules
+
+    def generateNewConcepts(self, starti, endi):
+
+        for wm_pos in range(starti, endi):
+            for rule_nr in range(0, gl.WM.cp[wm_pos].kb_rules.__len__()):
+                # print('found rule: ' + gl.KB.cp[gl.WM.cp[wm_pos].kb_rules[rule_nr]].mentstr)
+                res_list = []
+                self.get_children_implication(gl.WM.cp[wm_pos].kb_rules[0], res_list)
+
+                for i in range(0, res_list.__len__()):
+                    if gl.KB.cp[res_list[i].parent[0]].relation == 16:
+                        andConcept = gl.KB.cp[res_list[i].parent[0]]
+                        condition1 = andConcept.parent[0]
+                        condition2 = andConcept.parent[1]
+
+                        outgoing = gl.KB.cp[res_list[i].parent[1]]
+
+                        if condition1 == gl.WM.cp[wm_pos].kb_rules[rule_nr]:
+                            rule_words = {}
+                            for j in range(0, gl.KB.cp[condition1].parent.__len__()):
+                                rule_words[ gl.KB.cp[gl.KB.cp[condition1].parent[j]].mentstr ] = gl.WM.cp[gl.WM.cp[wm_pos].parent[j]].mentstr
+                        # megvan, hogy %1 -> ez a rule, %2 -> másik, most keresni kell
+
+
+
+                        if condition2 == gl.WM.cp[wm_pos].kb_rules[rule_nr]:
+                            rule_words = {}
+                            for j in range(0, gl.KB.cp[condition2].parent.__len__()):
+                                rule_words[ gl.KB.cp[gl.KB.cp[condition2].parent[j]].mentstr ] = gl.WM.cp[gl.WM.cp[wm_pos].parent[j]].mentstr
+                        # megvan, hogy %1 -> ez a rule, %2 -> másik, most keresni kell
+
+
+
+                                # print('---------')
+                        # print('condition1: ' + str(gl.KB.cp[condition1].mentstr))
+                        # print('condition2: ' + str(gl.KB.cp[condition2].mentstr))
+                        # print('kb_rule: ' + str(gl.KB.cp[gl.WM.cp[wm_pos].kb_rules[rule_nr]].mentstr))
+                        # print('---------')

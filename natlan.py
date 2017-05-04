@@ -16,7 +16,9 @@ def process_testinput (tf):                  # input is the Testinput object
             tf.systemanswer[ri][:] = gl.WM.answer_question(starti,endi)[:]    # answer question and record concept indices
         gl.test.write_result(ri)                    # write result file
         ri=ri+1
-    #reasoning.createRules()
+        if starti > 0 and endi > 0:
+            reasoning.createConceptRules(starti, gl.WM.cp.__len__())
+            reasoning.generateNewConcepts(starti, gl.WM.cp.__len__())
 
 gl.args = gl.Arguments()  # initialize
 gl.WM = conc.Kbase("WM")  # WORKING MEMORY

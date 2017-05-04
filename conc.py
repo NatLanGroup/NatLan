@@ -13,6 +13,7 @@ class Concept:
         self.kblink = []    # link to KB, if this is in WM
         self.mentstr = ""   # string format of mentalese
         self.rulestr = ""   # string for rule-information like p=p1 or p=pclas
+        self.kb_rules = []  # list of rules in KB which match this concept
 
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
