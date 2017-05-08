@@ -154,10 +154,16 @@ class Reasoning:
                         if condition1 == gl.WM.cp[wm_pos].kb_rules[rule_nr]:
                             rule_words = {}
                             for j in range(0, gl.KB.cp[condition1].parent.__len__()):
-                                rule_words[ gl.KB.cp[gl.KB.cp[condition1].parent[j]].mentstr ] = gl.WM.cp[gl.WM.cp[wm_pos].parent[j]].mentstr
+                                rule_words[gl.KB.cp[gl.KB.cp[condition1].parent[j]].mentstr ] = gl.WM.cp[gl.WM.cp[wm_pos].parent[j]].mentstr
+
+                            for j in range(0, gl.WM.cp.__len__()):
+                                if (gl.WM.cp[j].parent.__len__() > 0):
+                                    first_parent = gl.WM.cp[gl.WM.cp[j].parent[0]].mentstr
+                                    second_parent = gl.WM.cp[gl.WM.cp[j].parent[1]].mentstr
+                                    if first_parent == rule_words['%2'] and gl.WM.cp[j].relation == gl.WM.cp[condition2].relation:
+                                        gl.WM.add_concept(1, gl.WM.cp[j].relation, [ gl.WM.cp[wm_pos].parent[0], gl.WM.cp[j].parent[1]])
+
                         # megvan, hogy %1 -> ez a rule, %2 -> másik, most keresni kell
-
-
 
                         if condition2 == gl.WM.cp[wm_pos].kb_rules[rule_nr]:
                             rule_words = {}
@@ -166,8 +172,7 @@ class Reasoning:
                         # megvan, hogy %1 -> ez a rule, %2 -> másik, most keresni kell
 
 
-
-                                # print('---------')
+                        # print('---------')
                         # print('condition1: ' + str(gl.KB.cp[condition1].mentstr))
                         # print('condition2: ' + str(gl.KB.cp[condition2].mentstr))
                         # print('kb_rule: ' + str(gl.KB.cp[gl.WM.cp[wm_pos].kb_rules[rule_nr]].mentstr))
