@@ -29,7 +29,7 @@ gl.unittest=testing.Temptest()              # initialize temporary tests
 
 thisrule=reason.Rule(2)
 
-#gl.unittest.test_mapping()
+gl.unittest.test_mapping_start()
 
 if gl.args.argnum == 2:
     gl.test = testing.Testinput(sys.argv[1])
@@ -41,6 +41,7 @@ if gl.args.argnum == 2:
 # gl.KB.walk_db(11)                        # walk through parents of a concept, print them                        
 #gl.unittest.utest_read_concept()            # run read_concept unit test
 #gl.unittest.test_branch_functions()         # tests branch handling functions
+gl.unittest.test_mapping_end()
 
 gl.log.logf.close()
 

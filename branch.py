@@ -1,4 +1,4 @@
-import gl
+import gl, copy
 
 def get_previous_concepts(beforei):            # returns the id list of previous concepts (inclusive)
     previous_concepts = []
@@ -22,27 +22,38 @@ def search_on_branch(whati, branchi):
     return search_previously(whati, branchi) or search_previously(branchi, whati)
 
 def rec_get_next_concepts(rooti):              # returns the id list of all next concepts (starting from rooti, inclusive)
+    if rooti == -1:
+        return []
     next_concepts = [rooti]
     for i in gl.WM.cp[rooti].next:
         next_concepts.extend(rec_get_next_concepts(i))
     return next_concepts
         
 def rec_get_leaves(rooti):                     # returns the id list of leaf concepts (starting from rooti, inclusive)
-    leaf_concepts = []
-    if rooti > gl.WM.ci:
+    if rooti > gl.WM.ci or rooti == -1:
         return []
+    leaf_concepts = []
     if gl.WM.cp[rooti].is_leaf():
         leaf_concepts.append(rooti)
     else:
+        if -1 in gl.WM.cp[rooti].next:
+            leaf_concepts.append(rooti)
         for i in gl.WM.cp[rooti].next:
             leaf_concepts.extend(rec_get_leaves(i))
     return leaf_concepts
     
-def rec_print_tree(rooti, printchildren = False, level = 0):          # prints the tree recursively (starting from rooti, inclusive) 
-    print("." * (level * 3) + str(rooti) + 
-        ((" (children: " + str(gl.WM.cp[rooti].child) + ")") if printchildren and len(gl.WM.cp[rooti].child)>0 else ""));
+def rec_print_tree(rooti, print_details = False, level = 0):          # prints the tree recursively (starting from rooti, inclusive) 
+    if rooti == -1: return
+    text = "." * (level * 3) + str(rooti)
+    if print_details:
+        text += " " + gl.WM.cp[rooti].mentstr
+        if len(gl.WM.cp[rooti].child) > 0:
+            text += " (children: " + str(gl.WM.cp[rooti].child) + ")"
+        if len(gl.WM.cp[rooti].parent) > 0:
+            text += " (parents: " + str(gl.WM.cp[rooti].parent) + ")"
+    print(text)
     for i in gl.WM.cp[rooti].next:
-        rec_print_tree(i, printchildren, level + 1)
+        rec_print_tree(i, print_details, level + 1)
         
 def remove_branch(branchi):
     # removes branch starting from branchi
@@ -80,17 +91,21 @@ def search_concept_on_branch(what, branchi):
             
     return found
     
-def add_concept_to_all_branches(concept):
+def add_concept_to_all_branches(original_concept):
     added_concepts = []
     leaves = rec_get_leaves(0)
     if len(leaves) == 0:
-        added_concepts.append(gl.WM.add_concept_to_cp(concept))
-    for leafi in leaves:
-        concept.previous = leafi
-        added_i = gl.WM.add_concept_to_cp(concept)
-        added_concepts.append(added_i)
-        gl.WM.cp[leafi].next.append(added_i)
-        
+        added_concepts.append(gl.WM.add_concept_to_cp(original_concept))
+    else:
+        for leafi in leaves:
+            concept = copy.deepcopy(original_concept)
+            concept.previous = leafi
+            concept.parent[:] = [x for x in concept.parent if search_previously(x, leafi)]
+            added_i = gl.WM.add_concept_to_cp(concept)
+            added_concepts.append(added_i)
+            gl.WM.cp[leafi].next.append(added_i)
+            if -1 in gl.WM.cp[leafi].next:
+                gl.WM.cp[leafi].next.remove(-1)
     return added_concepts
     
                 

@@ -1,0 +1,4 @@
+e/ Joe runs.                         m/ A(Joe,run)
+e/ The track is long.                m/ F(Q(the,track),long)
+e/ He is tired.                      m/ F(he,tired)
+e/ The sun sets.                     m/ A(Q(the,sun),set)

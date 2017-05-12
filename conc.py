@@ -34,46 +34,88 @@ class Kbase:
         c.add_parents(new_parents)               #set parents
         c.kblink[:]=kbl[:]                       # set link to KB
         
-        if (new_rel != gl.args.rcode["W"]):                     # if this is not a word
-            c.mentstr = gl.args.rcodeBack[new_rel] + "("     # set mentstr
-            for cind in c.parent:
-                c.mentstr = c.mentstr + self.cp[cind].mentstr + ","
-            c.mentstr = c.mentstr[:-1] + ")"
-
-        else:                                                   #this is a word
-            if (len(kbl)>0):                                    #set word link if we have KB link
-                c.wordlink.append(gl.KB.cp[kbl[0]].wordlink[0])      # we have a single word link
-                c.mentstr = gl.KB.cp[kbl[0]].mentstr[:]
-                
-                self.activate_concepts(kbl[0])
-                
-        if gl.args.rcodeBack[new_rel] == 'IM' : 
-            c.p = gl.args.pdef_unknown
-            for par in c.parent : 
-                self.cp[par].p = gl.args.pdef_unknown
-                
         if self.name == "WM":
-            return branch.add_concept_to_all_branches(c)
+            added_concepts = branch.add_concept_to_all_branches(c)
+            self.run_mapping(c, added_concepts)
         else:
-            return [self.add_concept_to_cp(c)]
+            added_concepts = [self.add_concept_to_cp(c)]
+            
+        return added_concepts
             
     def add_concept_to_cp(self, concept):
         self.cp.append(concept)
         self.ci = len(self.cp) - 1
+        
         if (concept.relation != gl.args.rcode["W"]):
             for par in self.cp[self.ci].parent:                 #register new concept as the child of parents
                 self.cp[par].child.append(self.ci)
                 
+            concept.mentstr = gl.args.rcodeBack[concept.relation] + "("     # set mentstr
+            for cind in concept.parent:
+                concept.mentstr = concept.mentstr + self.cp[cind].mentstr + ","
+            concept.mentstr = concept.mentstr[:-1] + ")"
+                
+            if gl.args.rcodeBack[concept.relation] == 'IM' : 
+                concept.p = gl.args.pdef_unknown
+                for par in concept.parent : 
+                    self.cp[par].p = gl.args.pdef_unknown
+
+        else:                                                   #this is a word
+            if (len(concept.kblink)>0):                                    #set word link if we have KB link
+                concept.wordlink.append(gl.KB.cp[concept.kblink[0]].wordlink[0])      # we have a single word link
+                concept.mentstr = gl.KB.cp[concept.kblink[0]].mentstr[:]
+                
         gl.log.add_log((self.name," add_concept index=",self.ci," p=",concept.p," rel=",concept.relation," parents=",concept.parent," wordlink=",concept.wordlink," mentstr=",concept.mentstr))      #content to be logged is tuple (( ))
         return self.ci
         
+    def run_mapping(self, c, added_concepts):
+        if (c.relation == gl.args.rcode["W"]):                     # if this is not a word
+            mapping_opportunities = self.activate_concepts(c.kblink[0])
+            
+            if len(mapping_opportunities) > 0:
+                for branchi in added_concepts:                                          # on every branch
+                    generated_mapping_concepts = []
+                    
+                    for mapping_opportunity in mapping_opportunities:                   # check every mapping opportunity
+                        curri = branchi
+                        
+                        if gl.KB.cp[mapping_opportunity].parent[0] == c.kblink[0]:           # decide which parent of the mapping concept to use as mapping's base
+                            mapping_base = gl.KB.cp[mapping_opportunity].parent[1]
+                        else:
+                            mapping_base = gl.KB.cp[mapping_opportunity].parent[0]
+                            
+                        max_mapping_distance = 20
+                        i = 0
+                        while i < max_mapping_distance and gl.WM.cp[curri].previous != -1:
+                            curri = gl.WM.cp[curri].previous
+                            
+                            if len(gl.WM.cp[curri].kblink) > 0:
+                                for kb_childi in gl.KB.cp[gl.WM.cp[curri].kblink[0]].child:
+                                    if ((gl.KB.cp[kb_childi].relation == gl.args.rcode["D"] and mapping_base in gl.KB.cp[kb_childi].parent) or
+                                    (gl.KB.cp[kb_childi].relation == gl.args.rcode["C"] and mapping_base == gl.KB.cp[kb_childi].parent[1])):
+                                        mapping_concept = Concept(gl.args.rcode["D"])
+                                        mapping_concept.add_parents([branchi, curri])
+                                        mapping_concept.previous = branchi
+                                        mapping_concept.mentstr = "D(" + gl.WM.cp[branchi].mentstr + "," + gl.WM.cp[curri].mentstr + ")"
+                                        generated_mapping_concepts.append(mapping_concept)
+                            
+                            i += 1
+                            
+                    if len(generated_mapping_concepts) > 0:
+                        gl.WM.cp[branchi].next.append(-1)
+                        for mapping_concept in generated_mapping_concepts:
+                            gl.WM.cp[branchi].next.append(self.add_concept_to_cp(mapping_concept))
+        
     def activate_concepts(self, kbi):
+        activated_filtered = []
         if gl.WL.wcp[gl.KB.cp[kbi].wordlink[0]].word != "?" and gl.WL.wcp[gl.KB.cp[kbi].wordlink[0]].word[0] != "%":
             activated = self.rec_get_activated_children(kbi)
             for a in activated:
                 conc = gl.KB.cp[a]
-                if conc.relation == gl.args.rcode["D"] and kbi in conc.parent:
+                if (conc.relation == gl.args.rcode["D"] and kbi in conc.parent) or (conc.relation == gl.args.rcode["C"] and kbi == conc.parent[0]):
                     print("mapping opportunity: " + conc.mentstr)
+                    activated_filtered.append(a)
+        return activated_filtered
             
     def rec_get_activated_children(self, kbi):
         activated = []
@@ -86,6 +128,7 @@ class Kbase:
     def remove_concept(self):
         gl.log.add_log((self.name," remove concept index=",self.ci))
         if (self.ci>-1):
+            self.cp[self.cp[self.ci].previous].next.clear()
             self.cp.pop()
             self.ci=self.ci-1   
         return self.ci

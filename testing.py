@@ -218,20 +218,27 @@ class Temptest:                                 # unit tests and other temporary
             branch.remove_branch(delbranch)
             branch.rec_print_tree(0, True)
             
-    def test_mapping(self):                             # works together with inp1.txt, must be called before processing inp1.txt
+    def test_mapping_start(self):                       # works together with inp1.txt or inp3.txt, must be called before processing input file
         gl.WL.wcp.clear()
         gl.WL.wi = -1
         gl.KB.cp.clear()
         gl.KB.ci = -1
-        gl.WL.add_word("Joe")                           # inp1.txt contains sentences about Joe, we want to see there mapping opportunities
+        gl.WL.add_word("Joe")                           # inp1.txt or inp3.txt contains sentences about Joe, we want to see there mapping opportunities
         gl.WL.add_word("run")
         gl.WL.add_word("male_person")
         gl.WL.add_word("female_person")
-        gl.KB.add_concept(1,gl.args.rcode["D"],[0,2])   # direct child, relevance = 1, relation = D -> mapping opportunity
-        gl.KB.add_concept(1,gl.args.rcode["D"],[0,3])   # relevance < 1 -> no mapping opportunity
+        gl.KB.add_concept(1,gl.args.rcode["C"],[0,2])   # direct child, relevance = 1, relation = C -> mapping opportunity
+        gl.KB.add_concept(1,gl.args.rcode["C"],[0,3])   # relevance < 1 -> no mapping opportunity
         gl.KB.cp[5].relevance = 0.8
-        gl.KB.add_concept(1,gl.args.rcode["A"],[0,3])   # relation != D -> no mapping opportunity
-        gl.KB.add_concept(1,gl.args.rcode["D"],[4,3])   # not direct child -> no mapping opportunity
+        gl.KB.add_concept(1,gl.args.rcode["A"],[0,3])   # relation != D or C -> no mapping opportunity
+        gl.KB.add_concept(1,gl.args.rcode["C"],[4,3])   # not direct child -> no mapping opportunity
+        gl.WL.add_word("he")
+        gl.KB.add_concept(1,gl.args.rcode["C"],[8,2])
+        
+    def test_mapping_end(self):                         # works together with inp1.txt or inp3.txt, must be called after processing input file
+        branch.rec_print_tree(0, True)
+        for conc in gl.WM.cp:
+            print(conc.mentstr)
         
         
 
