@@ -10,57 +10,6 @@ class Rule:
         self.matchvalue = []                # %1 %2 %3 matching concepts
         self.matchp = []                    # p1 p2 etc matching p values
 
-    # According to the e-mail of Zoltan, this is an exercise for the search:
-    def jo_gyakorlat_1(self, wm_index):
-        if gl.WM.cp[wm_index].relation == 1:
-            wordlink_num = gl.WM.cp[wm_index].wordlink[0]
-            for j in range(0, len(gl.KB.cp)):
-                if gl.KB.cp[j].relation == 1:
-                    if wordlink_num == gl.KB.cp[j].wordlink[0]:
-                        # I have found the word!
-                        print('Kblink for word in WM: ' + gl.WL.wcp[wordlink_num].word)
-                        return
-        else:
-            for k in range(0, len(gl.WM.cp[wm_index].parent)):
-                for j in range(0, len(gl.KB.cp)):
-                    if gl.KB.cp[j].relation == gl.WM.cp[wm_index].relation:
-                        for l in range(0, gl.WM.cp[wm_index].parent):
-                            self.jo_gyakorlat_1(l)
-                            # parent check
-
-                print('parent - ')
-                print(gl.WM.cp[gl.WM.cp[wm_index].parent[k]].mentstr)
-
-    def do_they_match(self, wm_index, kb_index):
-        if gl.WM.cp[wm_index].relation == 1 and gl.KB.cp[kb_index].relation == 1:
-            wordlink_num = gl.WM.cp[wm_index].wordlink[0]
-            if wordlink_num == gl.KB.cp[kb_index].wordlink[0]:
-                return True
-            else:
-                return False
-        elif gl.WM.cp[wm_index].relation == gl.KB.cp[kb_index].relation:
-            if len(gl.WM.cp[wm_index].parent) != len(gl.KB.cp[kb_index].parent):
-                return False
-            for j in range(0, len(gl.WM.cp[wm_index].parent)):
-                return self.do_they_match(gl.WM.cp[wm_index].parent[j], gl.KB.cp[kb_index].parent[j])
-
-
-
-
-
-
-    #def rule_find(self):
-        map_of_rules = {}
-    #    for j in range(0, len(gl.WM.cp)):
-    #        if gl.WM.cp[j].relation == 1:
-    #            #call function to get implication of children
-    #            print("Not implemented yet.")
-    #        if len(gl.WM.cp[j].par) > 1:
-                #compare, but only watch for types of parents, not the IDs.
-
-    #Return with the list of rules for the list.
-    #The params are indexes of the Working Memory.
-
 
 class Reasoning:
     def __init__(self):
@@ -79,15 +28,6 @@ class Reasoning:
                 return False
             for j in range(0, len(gl.WM.cp[wm_index].parent)):
                 return self.do_they_match_for_rule(gl.WM.cp[wm_index].parent[j], gl.KB.cp[kb_index].parent[j])
-
-    def jo_gyakorlat_caller(self):
-        map_of_eq = {}
-        for j in range(0, len(gl.WM.cp)):
-            for k in range(0, len(gl.KB.cp)):
-                equality = self.do_they_match(j, k)
-                if equality == True:
-                    map_of_eq[j] = k
-                    break
 
     def get_children_implication(self, kb_index, res_list = None):
         if res_list is None:
@@ -135,6 +75,15 @@ class Reasoning:
                     matching_rules.append(kb_pos)
             gl.WM.cp[wm_pos].kb_rules = matching_rules
 
+    def addReasonedConcept (self, j, wm_pos, condition1, condition2, implication, rule_words):
+        if (gl.WM.cp[j].parent.__len__() > 0):
+            first_parent = gl.WM.cp[gl.WM.cp[j].parent[0]].mentstr
+            second_parent = gl.WM.cp[gl.WM.cp[j].parent[1]].mentstr
+            #print (rule_words)
+            if len(rule_words)>0 and first_parent == rule_words['%2'] and gl.WM.cp[j].relation == gl.KB.cp[condition2].relation:
+               gl.WM.add_concept(1, gl.KB.cp[implication].relation, [ gl.WM.cp[wm_pos].parent[0], gl.WM.cp[j].parent[1]])
+        
+
     def generateNewConcepts(self, starti, endi):
 
         for wm_pos in range(starti, endi):
@@ -144,10 +93,11 @@ class Reasoning:
                 self.get_children_implication(gl.WM.cp[wm_pos].kb_rules[0], res_list)
 
                 for i in range(0, res_list.__len__()):
-                    if gl.KB.cp[res_list[i].parent[0]].relation == 16:
+                    if gl.KB.cp[res_list[i].parent[0]].relation == 16:  # the first parent of the IM rule is AND
                         andConcept = gl.KB.cp[res_list[i].parent[0]]
-                        condition1 = andConcept.parent[0]
-                        condition2 = andConcept.parent[1]
+                        condition1 = andConcept.parent[0]               # first concept in AND
+                        condition2 = andConcept.parent[1]               # second concept in AND
+                        implication = res_list[i].parent[1]             # the implication in IM rule
 
                         outgoing = gl.KB.cp[res_list[i].parent[1]]
 
@@ -157,11 +107,7 @@ class Reasoning:
                                 rule_words[gl.KB.cp[gl.KB.cp[condition1].parent[j]].mentstr ] = gl.WM.cp[gl.WM.cp[wm_pos].parent[j]].mentstr
 
                             for j in range(0, gl.WM.cp.__len__()):
-                                if (gl.WM.cp[j].parent.__len__() > 0):
-                                    first_parent = gl.WM.cp[gl.WM.cp[j].parent[0]].mentstr
-                                    second_parent = gl.WM.cp[gl.WM.cp[j].parent[1]].mentstr
-                                    if first_parent == rule_words['%2'] and gl.WM.cp[j].relation == gl.WM.cp[condition2].relation:
-                                        gl.WM.add_concept(1, gl.WM.cp[j].relation, [ gl.WM.cp[wm_pos].parent[0], gl.WM.cp[j].parent[1]])
+                                self.addReasonedConcept(j,wm_pos,condition1,condition2,implication,rule_words)
 
                         # megvan, hogy %1 -> ez a rule, %2 -> másik, most keresni kell
 
