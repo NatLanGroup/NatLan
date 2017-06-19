@@ -1,8 +1,6 @@
 import sys, gl, conc, wrd, testing, reason
 
 def process_testinput (tf):                  # input is the Testinput object
-    reasoning = reason.Reasoning()
-    wm_generated = 0
     for ri in range(len(tf.mentalese)):     # take mentalese items (rows in test input file)
         counter=0; tfment=[]
         tfment.append(tf.mentalese[ri])
@@ -16,15 +14,19 @@ def process_testinput (tf):                  # input is the Testinput object
             tf.systemanswer[ri][:] = gl.WM.answer_question(starti,endi)[:]    # answer question and record concept indices
         gl.test.write_result(ri)                    # write result file
         ri=ri+1
-        if starti > 0 and endi > 0:
-            reasoning.createConceptRules(starti, gl.WM.cp.__len__())
-            reasoning.generateNewConcepts(starti, gl.WM.cp.__len__())
+        gl.reasoning.actual=starti
+        while starti > 0 and starti!=gl.WM.ci:      # reason on new concept and on all reasoned concepts
+            startiremember=gl.WM.ci
+            gl.reasoning.createConceptRules(starti, gl.WM.cp.__len__())     #add initial kb_rules content
+            gl.reasoning.perform_Reason(starti, gl.WM.cp.__len__())         #convert kb_rules, add rule_match, add reasoned concepts
+            starti=startiremember
 
 gl.args = gl.Arguments()  # initialize
 gl.WM = conc.Kbase("WM")  # WORKING MEMORY
 gl.KB = conc.Kbase("KB")  # KNOWLEDGE BASE
 gl.WL = wrd.Wlist("WL")  # WORD LIST
 gl.log = gl.Logging()
+gl.reasoning = reason.Reasoning() #class instance for reasoning
 
 test1 = conc.Concept()
 test1.add_parents([-1, 17])
@@ -38,6 +40,14 @@ if gl.args.argnum == 2:
     gl.test = testing.Testinput(sys.argv[1])
     gl.test.readtest()
     process_testinput (gl.test)
+    i=0
+    for wmi in gl.WM.cp:
+        print (i,wmi.mentstr,wmi.p,wmi.parent,"kb_rules:",wmi.kb_rules,"rule_match",wmi.rule_match)
+        i+=1
+    i=0
+    for wmi in gl.KB.cp:
+        print (i,wmi.mentstr,wmi.parent)
+        i+=1
     gl.test.testf.close()
     gl.test.resultf.close()
 

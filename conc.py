@@ -14,6 +14,7 @@ class Concept:
         self.mentstr = ""   # string format of mentalese
         self.rulestr = ""   # string for rule-information like p=p1 or p=pclas
         self.kb_rules = []  # list of rules in KB which match this concept
+        self.rule_match = []  # list of WM concepts that match the respective rule of kb_rules
 
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
@@ -28,6 +29,16 @@ class Kbase:
         self.ci = -1
         self.name = instancename          # the name of the instance can be used in the log file
 
+    def search_fullmatch(self,pin,rel,parents):
+        found=0
+        for sindex in range(gl.reasoning.actual,self.ci+1):
+            con=self.cp[sindex]
+            if con.relation==rel:
+                if con.p==pin:
+                    if con.parent==parents:
+                        found=1
+        return found
+    
     def add_concept(self, new_p, new_rel, new_parents,kbl=[]):        #add new concept to WM or KB. parents argument is list
         self.cp.append(Concept(new_rel))                        #concept added
         self.ci = len(self.cp) - 1                              #current index
