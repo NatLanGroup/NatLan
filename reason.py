@@ -136,12 +136,13 @@ class Reasoning:
                 if rule_wmitem[0]==rule[0]:                         #same as our current rule for reasoning (on IM level)
                     condition=rule_wmitem[1]
                     #last condition will be taken if the concept has multiple items for same IM level rule
-            for cparenti in range(len(gl.WM.cp[condition].parent)):
-                for imparenti in range(len(gl.WM.cp[implication].parent)):  #combinations of condition and impl parents
+            for cparenti in range(len(gl.KB.cp[condition].parent)):
+                for imparenti in range(len(gl.KB.cp[implication].parent)):  #combinations of condition and impl parents
                     if len(newparent)<imparenti+1: newparent.append(-1)     #newparent elements must match implication parents
                     if gl.KB.cp[gl.KB.cp[condition].parent[cparenti]].mentstr==gl.KB.cp[gl.KB.cp[implication].parent[imparenti]].mentstr:
                         newparent[imparenti]=gl.WM.cp[wmitem].parent[cparenti]          #if %1=%1 get condition parent into implication
-        if len(newparent)==len(gl.KB.cp[implication].parent):                           #we have the full concept
+        condicount=len(gl.KB.cp[gl.KB.cp[rule[0]].parent[0]].parent)                     #how many conditions are there
+        if len(gl.WM.cp[old].rule_match[rulei][wmpi])+1==condicount and (-1 not in newparent):   #we have the full concept
             if 0==gl.WM.search_fullmatch(1,gl.KB.cp[implication].relation,newparent):   #concept not yet in WM
                 gl.WM.add_concept(1,gl.KB.cp[implication].relation,newparent)           #add vthe new concept to WM
                 gl.log.add_log(("REASON MultiConcept - new input:",new,"old:",old," reasoned:",gl.WM.cp[gl.WM.ci].mentstr," parents:",gl.WM.cp[gl.WM.ci].parent))
@@ -191,18 +192,35 @@ class Reasoning:
             if same==0:                                     #not the same condition
                 extended=gl.WM.cp[old].rule_match[orulei][wmpi][:]  #this pack will be extended with new
                 stored=extended[:]                          #need to remember before extension
-                extended.append(new)                        #add new to the pack
-                if extended not in gl.WM.cp[old].rule_match[orulei]:    #a wm pack that is not yet there
-                    gl.WM.cp[old].rule_match[orulei][wmpi].append(new)  #now we add new
-                    self.add_ReasonedConcept(new,orulei,old,wmpi)       #try add reasoned concept based on this exteded wm package
-                same=1                                                  #this was the 3-condition case
+                finalmatch=1                                #we see whether "new" matches every concept already in wm pack
+                for otheritem in stored:                    #all concepts already in wm pack
+                    otherrule=self.select_Rule(ruleold[0],gl.WM.cp[otheritem].kb_rules)     #tale its appropriate rule
+                    if len(otherrule)==0:
+                        finalmatch=0
+                    else:
+                        thismatch=self.final_RuleMatch(new,otheritem,rulenew,otherrule)     #compare "new" with the other concept
+                        if thismatch==0: finalmatch=0
+                if finalmatch==1:
+                    extended.append(new)                                    #add new to the pack
+                    if extended not in gl.WM.cp[old].rule_match[orulei]:    #a wm pack that is not yet there
+                        gl.WM.cp[old].rule_match[orulei][wmpi].append(new)  #now we add new
+                        self.add_ReasonedConcept(new,orulei,old,wmpi)       #try add reasoned concept based on this exteded wm package
+                same=1                                                      #this was the 3-condition case
             wmpi+=1
             if len(stored)>0 and stored not in gl.WM.cp[old].rule_match[orulei]:
                 gl.WM.cp[old].rule_match[orulei].append(stored)         #we keep the original package for future extensions
         if [new] not in gl.WM.cp[old].rule_match[orulei]:
             gl.WM.cp[old].rule_match[orulei].append([new])              #we also add a wm package containing "new" only
-            newpos=len(gl.WM.cp[old].rule_match)
+            newpos=len(gl.WM.cp[old].rule_match[orulei])
             self.add_ReasonedConcept(new,orulei,old,newpos-1)           #again try to add reasoned concept : 2-condition case
+
+    def select_Rule(self,imlevel,rulelist):                 #find the last matching rule
+        found=[]
+        for rule in rulelist:
+            if rule[0]==imlevel:
+                found=rule[:]
+        return found
+            
                 
     def enter_RuleMatch(self,new,old):
         orulei=0
