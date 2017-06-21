@@ -35,8 +35,20 @@ class Kbase:
             con=self.cp[sindex]
             if con.relation==rel:
                 if con.p==pin:
-                    if con.parent==parents:
-                        found=1
+                    pari=0; allsame=1                           #allsame will show if all parents are the same
+                    while pari<len(con.parent) and allsame==1:  #only check until first different parent found
+                        parent1wm=con.parent[pari]
+                        if len(parents)>pari:
+                            thisfound=self.rec_match(self.cp[parent1wm],self.cp[parents[pari]])     #parents are compared
+                            if thisfound==0: allsame=0
+                        else:
+                            allsame=0
+                        pari+=1
+                    if allsame==1: found=1
+                if con.relation==3 or con.relation==4:          # D() or C() relation: exclude D(x,x) and C(x,x)
+                    if len(parents)>1:
+                        if parents[0]==parents[1]: found=1      # not recursive , just a literal match
+                                                                #so we allow D(he,he) if this is two different occasions of he
         return found
     
     def add_concept(self, new_p, new_rel, new_parents,kbl=[]):        #add new concept to WM or KB. parents argument is list

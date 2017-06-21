@@ -68,7 +68,7 @@ class Reasoning:
     def createConceptRules(self, starti, endi):
         # print('starti: ' + str(starti) + '  endi: ' + str(endi) + '  wm size: ' + str(gl.WM.cp.__len__()))
 
-        for wm_pos in range(starti, endi):
+        for wm_pos in range(starti+1, endi):                #starti+1 not to go back. 21.6.2017.
             matching_rules = []
             for kb_pos in range(0, gl.KB.cp.__len__()):
                 if self.do_they_match_for_rule(wm_pos, kb_pos):
