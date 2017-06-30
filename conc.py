@@ -34,7 +34,7 @@ class Kbase:
         for sindex in range(gl.reasoning.actual,self.ci+1):
             con=self.cp[sindex]
             if con.relation==rel:
-                if con.p==pin:
+                if round(con.p,3)==round(self.convert_p(pin),3):# needs conversion
                     pari=0; allsame=1                           #allsame will show if all parents are the same
                     while pari<len(con.parent) and allsame==1:  #only check until first different parent found
                         parent1wm=con.parent[pari]
@@ -50,11 +50,31 @@ class Kbase:
                         if parents[0]==parents[1]: found=1      # not recursive , just a literal match
                                                                 #so we allow D(he,he) if this is two different occasions of he
         return found
+
+    def convert_p(self,newp):                       # convert p from 0..1 to 0,1,2,3,...
+        out=newp
+        if gl.args.pmax==gl.args.pgranu:            # this initiates conversion
+            if newp<=1:
+                out1=float(gl.args.pmax)/gl.args.pgranu
+                out=out1 * round(newp*gl.args.pmax)
+        if out>1: out=round(out)                    # this converts 1.1
+        return out
+
+    def getp_backward(self,swhat,pback):            # search earlier occurence of swhat and return p
+        sindex=swhat-1
+        found=0
+        while sindex>-1 and found==0:
+            if self.rec_match(self.cp[swhat], self.cp[sindex]) == 1:
+                found=1
+                pback=self.cp[sindex].p
+            sindex=sindex-1
+        return pback
+
     
     def add_concept(self, new_p, new_rel, new_parents,kbl=[]):        #add new concept to WM or KB. parents argument is list
         self.cp.append(Concept(new_rel))                        #concept added
         self.ci = len(self.cp) - 1                              #current index
-        self.cp[self.ci].p = new_p                              #set p value
+        self.cp[self.ci].p = self.convert_p(new_p)              #set p value
         self.cp[self.ci].add_parents(new_parents)               #set parents
         self.cp[self.ci].kblink[:]=kbl[:]                       # set link to KB
         if (new_rel != gl.args.rcode["W"]):                     # if this is not a word
@@ -70,10 +90,13 @@ class Kbase:
             if (len(kbl)>0):                                    #set word link if we have KB link
                 self.cp[self.ci].wordlink.append(gl.KB.cp[kbl[0]].wordlink[0])      # we have a single word link
                 self.cp[self.ci].mentstr = gl.KB.cp[kbl[0]].mentstr[:]
-        if gl.args.rcodeBack[new_rel] == 'IM' : 
-            self.cp[self.ci].p = gl.args.pdef_unknown
+        if new_rel == 13 :                                      # IM relation
+            pari=0
             for par in self.cp[self.ci].parent : 
-                self.cp[par].p = gl.args.pdef_unknown
+                self.cp[par].p = self.convert_p(gl.args.pdef_unknown)       #this is after concept is added. So log file is bad.
+                if pari==0:                                     # condition in IM
+                    self.cp[par].p = self.getp_backward(par,self.convert_p(gl.args.pdef_unknown))   # use the p value of earlier occurence of concept
+                pari+=1
 
         gl.log.add_log((self.name," add_concept index=",self.ci," p=",self.cp[self.ci].p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
         return self.ci

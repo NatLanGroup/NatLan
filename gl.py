@@ -9,9 +9,16 @@ class Arguments:
         self.pdefault=1         #default value of p
         self.pdef_unknown=0.5
         self.pgranu = 4         # granularity for p, pgranu+1 discrete values from 0
-
-        # pclas is the matrix for class reasoning. C(%1,%2)p1 and %X(%2,%3)p2 -> %x(%2,%3)pclas, pclas[p2,p1]
-        self.pclas = [[0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 1, 1, 2, 2], [0, 1, 2, 2, 3], [0, 1, 2, 3, 4]]
+        self.pmax = 4           # maximum p value. Like 1 for p=0..1, or 4 for p=0,1,2,3,4.
+                                # set pgranu=pmax for p=0,1,2,....pmax
+        
+        i=1.1                   # to be used instead of 1
+        self.im = [[0, 0, 0, 0, 0], [0, i, i, i, i], [0, i, i, 2, 2], [0, i, 2, 2, 3], [0, i, 2, 3, 4]]         # IM rule
+        self.pide1 = [0,i,2,3,4]                                                                                # D-rule single arg
+        self.pide2 = [[0, 0, 0, 0, 0], [0, i, i, i, i], [0, i, i, 2, 2], [0, i, 2, 2, 3], [0, i, 2, 3, 4]]      # D-rule IM(AND(D(),D()),D())
+        self.pclass = [[0, 0, 0, 0, 0], [0, i, i, i, i], [0, i, i, 2, 2], [0, i, 2, 2, 3], [0, i, 2, 3, 4]]
+        # pclass is the matrix for class reasoning. C(%1,%2)p1 and %X(%2,%3)p2 -> %x(%2,%3)pclas, pclass[p2,p1]
+        self.pmap = {"pide1":self.pide1,"pide2":self.pide2,"pclass":self.pclass}
 
         self.rcode = {
             "X":-1, "W": 1, "S": 2, "D": 3, "C": 4, "F": 5,
