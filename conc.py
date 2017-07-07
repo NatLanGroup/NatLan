@@ -12,7 +12,7 @@ class Concept:
         self.wordlink = []  # link to WL, if this is a word
         self.kblink = []    # link to KB, if this is in WM
         self.mentstr = ""   # string format of mentalese
-        self.rulestr = ""   # string for rule-information like p=p1 or p=pclas
+        self.rulestr = []   # strings for rule-information like p=p1 or p=pclas
         self.kb_rules = []  # list of rules in KB which match this concept
         self.rule_match = []  # list of WM concepts that match the respective rule of kb_rules
 
@@ -31,23 +31,26 @@ class Kbase:
 
     def search_fullmatch(self,pin,rel,parents):
         found=0
-        for sindex in range(gl.reasoning.actual,self.ci+1):
-            con=self.cp[sindex]
-            if con.relation==rel:
-                if round(con.p,3)==round(self.convert_p(pin),3):# needs conversion
-                    pari=0; allsame=1                           #allsame will show if all parents are the same
-                    while pari<len(con.parent) and allsame==1:  #only check until first different parent found
-                        parent1wm=con.parent[pari]
-                        if len(parents)>pari:
-                            thisfound=self.rec_match(self.cp[parent1wm],self.cp[parents[pari]])     #parents are compared
-                            if thisfound==0: allsame=0
-                        else:
-                            allsame=0
-                        pari+=1
-                    if allsame==1: found=1
-                if con.relation==3 or con.relation==4:          # D() or C() relation: exclude D(x,x) and C(x,x)
-                    if len(parents)>1:
-                        if parents[0]==parents[1]: found=1      # not recursive , just a literal match
+        if self.convert_p(pin) == self.convert_p(gl.args.pmax/2):   #p70.5 will not be reasoned
+            found=1
+        else:
+            for sindex in range(gl.reasoning.actual,self.ci+1):
+                con=self.cp[sindex]
+                if con.relation==rel:
+                    if 1==1:                                        # p value not checked currently
+                        pari=0; allsame=1                           #allsame will show if all parents are the same
+                        while pari<len(con.parent) and allsame==1:  #only check until first different parent found
+                            parent1wm=con.parent[pari]
+                            if len(parents)>pari:
+                                thisfound=self.rec_match(self.cp[parent1wm],self.cp[parents[pari]])     #parents are compared
+                                if thisfound==0: allsame=0
+                            else:
+                                allsame=0
+                            pari+=1
+                        if allsame==1: found=1
+                    if con.relation==3 or con.relation==4:          # D() or C() relation: exclude D(x,x) and C(x,x)
+                        if len(parents)>1:
+                            if parents[0]==parents[1]: found=1      # not recursive , just a literal match
                                                                 #so we allow D(he,he) if this is two different occasions of he
         return found
 
@@ -96,6 +99,7 @@ class Kbase:
                 self.cp[par].p = self.convert_p(gl.args.pdef_unknown)       #this is after concept is added. So log file is bad.
                 if pari==0:                                     # condition in IM
                     self.cp[par].p = self.getp_backward(par,self.convert_p(gl.args.pdef_unknown))   # use the p value of earlier occurence of concept
+                    gl.log.add_log(("PVALUE modification in add_concept. WM index:",par," new p value:",self.cp[par].p))
                 pari+=1
 
         gl.log.add_log((self.name," add_concept index=",self.ci," p=",self.cp[self.ci].p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
@@ -162,30 +166,6 @@ class Kbase:
         print ("walk",self.name,"current concept",curri,"parents",self.cp[curri].parent,"mentalese",self.cp[curri].mentstr,"rule:"[:5*len(self.cp[curri].rulestr)],self.cp[curri].rulestr)
         return curri
 
-    #2. feladat -------------------------------------
-    def get_children_implication(self, curri, res_list):
-        for i in range(0, self.cp[curri].child.__len__()):
-            if self.cp[self.cp[curri].child[i]].relation == 13:
-                print(self.cp[self.cp[curri].child[i]].mentstr)
-                dont_add = False
-                for j in range(0, len(res_list)):
-                    if self.cp[self.cp[curri].child[i]].mentstr == res_list[j].mentstr:
-                        dont_add = True
-                if dont_add == False:
-                    res_list.append(self.cp[self.cp[curri].child[i]])
-            else:
-                self.get_children_implication(self.cp[curri].child[i], res_list)
-
-    #new one
-    def search_for_rule(self):
-        res_list = []
-        for i in range(0, self.cp.__len__()):
-            self.get_children_implication(i, res_list)
-        print('list of rules: ')
-        print(str(res_list))
-    #-------------------------------------------------
-
-
 
     def copyto_kb(self,curri,lasti=-2):         # copy concept in WM on curri to KB with all parents
         while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
@@ -203,15 +183,20 @@ class Kbase:
                 kbl=gl.KB.get_child(self.cp[curri].relation,plist)   # search concept in KB as child of parent
                 if kbl==-1:                         # not found in KB
                     kbl=gl.KB.add_concept(self.cp[curri].p,self.cp[curri].relation,plist)   # copy to KB
-                    gl.KB.cp[kbl].rulestr=gl.WM.cp[curri].rulestr                           # copy rule string like p=p1    
                 self.cp[curri].kblink.append(kbl)   # set KB link in WM
-                # print ("KB copy curri",curri,"KB index",kbl,"ment:",gl.KB.cp[kbl].mentstr)
         return curri
             
     def move_rule(self,tf,ri,starti):           # if this is a rule then move it to KB
         if ("%1" in tf.mentalese[ri]):          # if this is a rule
             gl.WM.copyto_kb(gl.WM.ci)           # copy last concept in WM, which should be the rule, to KLB
-            for i in range(gl.WM.ci-starti): gl.WM.remove_concept()     # remove rule from WM
+            kblink=gl.WM.cp[gl.WM.ci].kblink
+            for i in range(gl.WM.ci-starti):
+                try:
+                    if len(gl.WM.cp[gl.WM.ci].rulestr)>0:   #rule string like p=p0 is there
+                        #record rule string info on the IM level of the rule:
+                        gl.KB.cp[kblink[0]].rulestr.append(str(gl.WM.cp[gl.WM.ci].kblink[0])+gl.WM.cp[gl.WM.ci].rulestr)
+                except: gl.log.add_log(("ERROR in move_rule in conc.py: could not assemble rule string. KB index:",kblink[0]," WM index:",gl.WM.ci)) 
+                gl.WM.remove_concept()     # remove rule from WM
         
 
     def search_inlist(self, swhat):
@@ -251,7 +236,7 @@ class Kbase:
             if -1 not in gl.WM.cp[endi].parent:         # question not for parent but for p Z(a,b)?
                 starti=endi                              # we keep the question as answer
                 answerlist.append(endi)
-                gl.WM.cp[endi].p=gl.args.pdef_unknown   # p is set to unknown value, 0.5
+                gl.WM.cp[endi].p=self.convert_p(gl.args.pdef_unknown)   # p is set to unknown value, 0.5
         for i in range(endi-starti): gl.WM.remove_concept()     # remove question from WM
         return answerlist
     

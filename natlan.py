@@ -13,7 +13,7 @@ def process_testinput (tf):                  # input is the Testinput object
         if (tf.question[ri]==1):                    # if yes, then on endi we assume a question
             tf.systemanswer[ri][:] = gl.WM.answer_question(starti,endi)[:]    # answer question and record concept indices
         gl.test.write_result(ri)                    # write result file
-        gl.reasoning.actual=starti
+        gl.reasoning.actual=starti+1
         while starti > 0 and starti!=gl.WM.ci:      # reason on new concept and on all reasoned concepts
             startiremember=gl.WM.ci
             gl.reasoning.createConceptRules(starti, gl.WM.cp.__len__())     #add initial kb_rules content

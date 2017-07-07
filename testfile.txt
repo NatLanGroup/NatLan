@@ -1,32 +1,48 @@
+// Rules
+m/ IM(AND(D(%1,%2)p=p0,C(%2,%3)p=p1),C(%1,%3))p=pclass
+m/ IM(AND(D(%1,%2)p=p0,A(%2,%3)p=p1),A(%1,%3))p=pclass
+m/ IM(D(%1,%2)p=p0,D(%2,%1))p=pide1
+m/ IM(D(%1,%2)p=p0,C(%1,%2))p=pide1
+m/ IM(AND(D(%1,%2)p=p0,D(%2,%3)p=p1),D(%1,%3))p=pide2
+m/ IM(AND(C(%1,%2)p=p0,A(%2,%3)p=p1),A(%1,%3))p=pclass
+m/ IM(AND(C(%1,%2)p=p0,F(%2,%3)p=p1),F(%1,%3))p=pclass    // this replaces the python code for C-reasoning. This uses a (p1,p2)->pc grid to calculate p.
+m/ IM(AND(F(%1,%2)p=p0,A(%1,%3)p=p1),A(F(%1,%2),%3))p=pclass
+m/ IM(AND(XOR(%1,%2)p=p0,F(%1,%3)p=p1),F(%2,%3))p=pxor	  // XOR reasoning
+m/ IM(A(AND(%1,%2),%3)p=p0,A(%1,%2))p=pide1				  // AND reasoning
+m/ IM(IM(%1,%2),%2)p=im									  // IM reasoning
+// IM(N(%1,%2P1)p2,%1)p=cond			// reasoning rule for N relation - necessary condition.
+
+m/ F(dummy)
 e/ A garden is a place.              m/ C(garden,place)
 e/ Persons are the same as people.   m/ D(person,people)
 e/ Animals are not people.           m/ C(animal,people)p=0
 e/ People are not animals.           m/ C(people,animal)p=0
-e/ What is a garden?                 m/ C(garden,?)              a/ C(garden,place)p=1
+e/ What is a garden?                 m/ C(garden,?)              a/ C(garden,place)p=4
 e/ What is a place?                  m/ C(place,?)               a/ not found:C(place,?)
 e/ What is a toy?                    m/ C(toy,?)                 a/ not found:C(toy,?)
 e/ What is a person?                 m/ C(person,?)              a/ not found:C(person,?)
-e/ Who are persons?                  m/ D(person,?)              a/ D(person,people)p=1
+e/ Who are persons?                  m/ D(person,?)              a/ D(person,people)p=4
 e/ Who are people?                   m/ D(people,?)              a/ not found:D(people,?)
-e/ Is the garden a place?            m/ C(garden,place)?         a/ C(garden,place)p=1
-e/ Is the place a garden?            m/ C(place,garden)?         a/ C(place,garden)p=0.5        
-e/ Are toys dogs?                    m/ C(toy,dog)?              a/ C(toy,dog)p=0.5
-e/ Are people same as persons?       m/ D(people,person)?        a/ D(people,person)p=0.5
-e/ Are persons same as people?       m/ D(person,people)?        a/ D(person,people)p=1
+e/ Is the garden a place?            m/ C(garden,place)?         a/ C(garden,place)p=4
+e/ Is the place a garden?            m/ C(place,garden)?         a/ C(place,garden)p=2        
+e/ Are toys dogs?                    m/ C(toy,dog)?              a/ C(toy,dog)p=2
+e/ Are people same as persons?       m/ D(people,person)?        a/ D(people,person)p=4
+e/ Are persons same as people?       m/ D(person,people)?        a/ D(person,people)p=4
 e/ Are people animals?               m/ C(people,animal)?        a/ C(people,animal)p=0
 e/ What are people?                  m/ C(people,?)              a/ C(people,animal)p=0
 e/ Dogs are animals.                 m/ C(dog,animal)
 e/ What are animals?                 m/ C(animal,?)              a/ not found:C(animal,?)
-e/ What animals are there?           m/ C(?,animal)              a/ C(people,animal)p=0 C(dog,animal)p=1
+e/ What animals are there?           m/ C(?,animal)              a/ C(people,animal)p=0 C(dog,animal)p=4
 e/ People walk.                      m/ A(people,walk)
 e/ People talk.                      m/ A(people,talk)
-e/ What do people do?                m/ A(people,?)              a/ A(people,walk)p=1 A(people,talk)p=1
-e/ Who walks?                        m/ A(?,walk)                a/ A(people,walk)p=1
-e/ Do people walk?                   m/ A(people,walk)?          a/ A(people,walk)p=1
-e/ Do people sing?                   m/ A(people,sing)?          a/ A(people,sing)p=0.5
+e/ Animals don`t talk.				 m/ A(animal,talk)p=0
+e/ What do people do?                m/ A(people,?)              a/ A(people,walk)p=4 A(people,talk)p=4
+e/ Who walks?                        m/ A(?,walk)                a/ A(people,walk)p=4
+e/ Do people walk?                   m/ A(people,walk)?          a/ A(people,walk)p=4
+e/ Do people sing?                   m/ A(people,sing)?          a/ A(people,sing)p=2
 e/ What do dogs do?                  m/ A(dog,?)                 a/ not found:A(dog,?)
 e/ Dogs are not the same as people.  m/ D(dog,people)p=0
-e/ Do dogs walk?                     m/ A(dog,walk)?             a/ A(dog,walk)p=0.5
+e/ Do dogs walk?                     m/ A(dog,walk)?             a/ A(dog,walk)p=2
 e/ Tired dogs walk slowly.           m/ F(A(F(dog,tired),walk),slowly)
 e/ How do tired dogs walk?           m/ F(A(F(dog,tired),walk),?)       a/ F(A(F(dog,tired),walk),slowly)p=1
 e/ Do tired dogs walk slowly?        m/ F(A(F(dog,tired),walk),slowly)? a/ F(A(F(dog,tired),walk),slowly)p=1
@@ -34,53 +50,52 @@ e/ What dogs walk slowly?            m/ F(A(F(dog,?),walk),slowly)      a/ F(A(F
 e/ What do tired dogs do slowly?     m/ F(A(F(dog,tired),?),slowly)     a/ F(A(F(dog,tired),walk),slowly)p=1
 
 // D-reasoning
-m/ IM(AND(D(%1,%2),C(%2,%3)),C(%1,%3))
-m/ IM(AND(D(%1,%2),A(%2,%3)),A(%1,%3))
-m/ IM(D(%1,%2),D(%2,%1))
-e/ Who are people?                   m/ D(people,?)              a/ D(people,person)p=1
-e/ Are people same as persons?       m/ D(people,person)?        a/ D(people,person)p=1
-e/ Do persons walk?                  m/ A(person,walk)?          a/ A(person,walk)p=1
+
+e/ Who are people?                   m/ D(people,?)              a/ D(people,person)p=4
+e/ Are people same as persons?       m/ D(people,person)?        a/ D(people,person)p=4
+e/ Do persons walk?                  m/ A(person,walk)?          a/ A(person,walk)p=4
 e/ Are persons animals?              m/ C(person,animal)?        a/ C(person,animal)p=0
 
 // generating C from D
-e/ What are people?                  m/ C(people,?)              a/ C(people,animal)p=0 C(people,person)p=1
-e/ What are persons?                 m/ C(person,?)              a/ C(person,animal)p=0 C(person,people)p=1
+e/ What are people?                  m/ C(people,?)              a/ C(people,animal)p=0 C(people,person)p=4
+e/ What are persons?                 m/ C(person,?)              a/ C(person,animal)p=0 C(person,people)p=4
 
 // C-reasoning. In the fox example we see an implicit C relation.
-m/ IM(AND(C(%1,%2),X(%2,%3)),X(%1,%3))
+
 e/ Animals move.                     m/ A(animal,move)
-e/ What do dogs do?                  m/ A(dog,?)                 a/ A(dog,move)p=1
-e/ What moves?                       m/ A(?,move)                a/ A(animal,move)p=1 A(dog,move)p=1
-e/ Do dogs move?                     m/ A(dog,move)?             a/ A(dog,move)p=1
-e/ Do dogs walk?                     m/ A(dog,walk)?             a/ A(dog,walk)p=0.5
+e/ What do dogs do?                  m/ A(dog,?)                 a/ A(dog,move)p=4
+e/ What moves?                       m/ A(?,move)                a/ A(animal,move)p=4 A(dog,move)p=4
+e/ Do dogs move?                     m/ A(dog,move)?             a/ A(dog,move)p=4
+e/ Do dogs walk?                     m/ A(dog,walk)?             a/ A(dog,walk)p=2
 e/ Joe is a person.                  m/ C(Joe,person)
 e/ Mary is a girl.                   m/ C(Mary,girl)
-e/ Does Joe walk?                    m/ A(Joe,walk)?             a/ A(Joe,walk)p=1
-e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)p=0.5
-e/ Girls are people. 		     m/ C(girl,people)  
-e/ Boys are people.		     m/ C(boy,people)              
-e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)p=1
+e/ Does Joe walk?                    m/ A(Joe,walk)?             a/ A(Joe,walk)p=4
+e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)p=2
+e/ Girls are people. 		     	m/ C(girl,people)  
+e/ Boys are people.		     		m/ C(boy,people)            
+m/ F(fox,brown)
+e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)p=2 A(Mary,walk)p=4  //bad eval code
 e/ The fox hunts in the forest.      m/ F(A(fox,hunt),R(in,forest))
-e/ Does the brown fox hunt?          m/ A(F(fox,brown),hunt)?    a/ A(F(fox,brown),hunt)p=1
+e/ Does the brown fox hunt?          m/ A(F(fox,brown),hunt)?    a/ A(F(fox,brown),hunt)p=4
 
 // IM-reasoning
 e/ If a person runs, then that person moves. m/ IM(A(person,run),A(person,move))
-e/ Does a person run?                m/ A(person,run)?           a/ A(person,run)p=0.5
-e/ Does a person move?               m/ A(person,move)?          a/ A(person,move)p=0.5
-e/ Who moves?                        m/ A(?,move)                a/ A(person,move)p=0.5
+e/ Does a person run?                m/ A(person,run)?           a/ A(person,run)p=2
+e/ Does a person move?               m/ A(person,move)?          a/ A(person,move)p=2
+e/ Who moves?                        m/ A(?,move)                a/ A(person,move)p=2   //bad eval code
 e/ People run.                       m/ A(people,run)    
-e/ Who moves?                        m/ A(?,move)                a/ A(person,move)p=1
-e/ Do animals walk?                  m/ A(animal,walk)?          a/ A(animal,walk)p=0.5
+e/ Who moves?                        m/ A(?,move)                a/ A(person,move)p=4
+e/ Do animals walk?                  m/ A(animal,walk)?          a/ A(animal,walk)p=2
 e/ If animals are people, then animals walk.  m/ IM(C(animal,people),A(animal,walk))
 e/ Are animals people?               m/ C(animal,people)?        a/ C(animal,people)p=0
-e/ Do animals walk?                  m/ A(animal,walk)?          a/ A(animal,walk)p=0.5
+e/ Do animals walk?                  m/ A(animal,walk)?          a/ A(animal,walk)p=2
 e/ Joe sits.                         m/ A(Joe,sit)
-e/ If people sit, then people do not move.  m/ IM(A(people,sit),A(people,move)p=0)
-e/ Do people sit?                    m/ A(people,sit)?           a/ A(people,sit)p=0.5
-e/ Does Joe sit?                     m/ A(Joe,sit)?              a/ A(Joe,sit)p=1
+e/ If people sit, then people do not move.  m/ IM(A(people,sit),NOT(A(people,move)))
+e/ Do people sit?                    m/ A(people,sit)?           a/ A(people,sit)p=2
+e/ Does Joe sit?                     m/ A(Joe,sit)?              a/ A(Joe,sit)p=4
 e/ Does Joe move?                    m/ A(Joe,move)?             a/ A(Joe,move)p=0
-e/ If a person does not move, then the person stays.   m/ IM(A(person,move)p=0,A(person,stay))
-e/ Does Joe stay?                    m/ A(Joe,stay)?             a/ A(Joe,stay)p=1
+e/ If a person does not move, then the person stays.   m/ IM(NOT(A(person,move)),A(person,stay))
+e/ Does Joe stay?                    m/ A(Joe,stay)?             a/ A(Joe,stay)p=4
 
 // AND-reasoning
 e/ Mary and Joe walk.                m/ A(AND(Mary,Joe),walk)
@@ -94,10 +109,7 @@ e/ Does Joe run?                     m/ A(Joe,run)?              a/ A(Joe,run)p=
 e/ Does Joe run and sit?             m/ A(Joe,AND(run,sit))?     a/ A(Joe,AND(run,sit))p=0.5
 
 // %-reasoning
-m/ IM(AND(C(%1,%2)p1,%(%2,%3)p2),%(%1,%3)p=pclas)p=1    // this replaces the python code for C-reasoning. This uses a (p1,p2)->pc grid to calculate p.
-m/ IM(XOR(%1p1,%2)p2,%2p=pxor)
-m/ IM(XOR(%1,%2p1)p2,%1p=pxor)                       // these replace the XOR-reasoning
-m/ IM(%(AND(%x,%2)p1,%3)p2,%(%2,%3)p=pand)           // this replaces AND-reasoning
+
 e/ If %1 consists of %2, then %2 is part of %1.    m/ IM(F(A(%1,consist),R(of,%2)),P(%2,%1))
 e/ The family consists of father, mother and Joe.  m/ F(A(family,consist),R(of,AND(father,mother,Joe))
 e/ Is Joe part of the family?        m/ P(Joe,family)?           a/ P(Joe,family)p=1
@@ -127,7 +139,6 @@ e/ Does Joe run?                     m/ A(Joe,run)?              a/ A(Joe,run)p=
 e/ The fox is either red or white.   m/ F(fox,XOR(red,white))    // this is contradiction, not yet understood
 e/ Is the fox red?                   m/ F(fox,red)?              a/ F(fox,red)p=1
 e/ Is the fox white?                 m/ F(fox,white)?            a/ F(fox,white)p=1
-m/ D(XOR(%(%1,%2),%(%1,%3)),%(%1,XOR(%2,%3))           // this is a general XOR-transformation
 
 
 // understanding dimensions
@@ -159,7 +170,7 @@ e/ Do little girls talk?             m/ A(F(girl,little),talk)?       a/ A(F(gir
 
 // Split word meaning using XOR reasoning
 e/ Are flies animals?                m/ C(fly,animal)?                a/ C(fly,animal)p=0.5
-e/ Fly means either a kind of move or a kind of animal.    m/ XOR(C(fly,move)p=1,C(fly,animal)p=1)
+e/ Fly means either a kind of move or a kind of animal.    m/ XOR(C(fly,move),C(fly,animal))
                                      // XOR-reasoning generates two meanings for fl 1:move 2:animal and creates the C-concepts
 e/ Is fly a kind of move?            m/ C(fly,move)?                  a/ C(fly,move)p=1
 e/ Are flies animals?                m/ C(fly,animal)?                a/ C(fly,animal)p=0     // XOR reasoning generates this!!
@@ -193,7 +204,7 @@ e/ What are flies?                   m/ C(fly,?)                      a/ C(fly,m
 
 
 // Quantifiers, unique instance versus general
-m/ IM(
+
 m/ D(Q(all,%1),%1)p=1                           // this defines 'all' as general
 m/ D(F(%1,general),%1)p=1 			// this defines "general" to mean general
 m/ D(F(%1,R(in,general)),%1)p=1 		// this defines "in general" to mean general
@@ -225,12 +236,12 @@ e/ Is the fox slow?                  m/ F(Q(the,fox),slow)?          a/ F(Q(the,
 
 
 // %-rules for mean and may
-m/ IM(A(%1,I(mean,%2)),D(%1,%2))                    // explains mean
-m/ IM(A(%1,I(Q(may,%2),%3)),A(%1,I(%2,%3))p=0.5)    // explains may
+// IM(A(%1,I(mean,%2)),D(%1,%2))                    // explains mean
+// IM(A(%1,I(Q(may,%2),%3)),A(%1,I(%2,%3)))p=0.5    // explains may
 
 
 // reasoning on necessary condition (N)
-e/ IM(N(%1,%2p1)p2,%1p=pcond)			// reasoning rule for N relation - necessary condition.
+
 e/ Mary eats muffins if Mary is hungry.		m/ N(A(Mary,I(eat,muffin)),F(Mary,hungry))
 e/ Mary is not hungry.				m/ F(Mary,hungry)p=0
 e/ Does Mary eat muffins?			m/ A(Mary,I(eat,muffin))?		a/ A(Mary,I(eat,muffin))p=0
@@ -250,12 +261,12 @@ e/ She must always be identified with a person. m/ N(D(she,%1)r=1,C(%1,person)) 
 session/
 e/ Joe is a boy.				m/ C(Joe,boy)
 e/ Mary and Joe are playing in the garden.  	m/ F(A(AND(Mary,Joe),play),R(in,garden))
-e/ She is pretty.				m/ F(she,pretty)		r/ D(she,Mary)
-e/ He is a knight.				m/ C(he,knight)			r/ D(he,Joe)
-e/ What is Mary like?				m/ F(Mary,?)			a/ F(Mary,pretty)p=1
-e/ What is Joe like?				m/ F(Joe,?)			a/ Not found: F(Joe,?)
-e/ What is Mary?				m/ C(Mary,?)			a/ C(Mary,person) C(Mary,people) C(Mary,girl)
-e/ What is Joe?					m/ C(Joe,?)			a/ C(Joe,person) C(Joe,people) C(Joe,boy) C(Joe,knight)
+e/ She is pretty.				m/ F(she,pretty)		// D(she,Mary)
+e/ He is a knight.				// C(he,knight)			// D(he,Joe)
+e/ What is Mary like?				// F(Mary,?)			// F(Mary,pretty)p=1
+e/ What is Joe like?				// F(Joe,?)			// not found: F(Joe,?)
+e/ What is Mary?				// C(Mary,?)			// C(Mary,person) C(Mary,people) C(Mary,girl)
+e/ What is Joe?					// C(Joe,?)			// C(Joe,person) C(Joe,people) C(Joe,boy) C(Joe,knight)
 session/
 
 
