@@ -4,6 +4,7 @@ class Concept:
     def __init__(self,rel=0):
         self.p = 0.5        # p value of concept
         self.c = 1          # consistence of this concept and previous concepts
+        self.relevance = 1  # relevance of the concept
         self.relation = rel # relation code
         self.parent = []    # parents list
         self.child = []     # children list
@@ -262,13 +263,36 @@ class Kbase:
             out=out+aStr[pos]
             pos +=1
         return out
+        
+    def get_numeric_value(self, aStr, actPos):
+        n_end=actPos+4
+        while n_end <= len(aStr):
+            try:
+                value=float(aStr[actPos+3:n_end])
+            except:
+                n_end -= 1
+                break
+            else:
+                n_end += 1
+        value=float(aStr[actPos+3:n_end])
+        return (value, n_end)
+        
+    def get_p(self, aStr, actPos):
+        try: 
+            numeric_result=self.get_numeric_value(aStr, actPos)
+            return numeric_result + ([],)
+        except:                                             # rule, like p=p1
+            rulStr=self.get_rulestr(aStr,actPos)            # process the rule-string
+            return (gl.args.pdef_unknown, actPos+1+len(rulStr), rulStr)
+        
+    def get_r(self, aStr, actPos):
+        return self.get_numeric_value(aStr, actPos)               # explicit r value like r=0.1
             
     def read_concept(self,attrList):                # recursive function to read concepts from Mentalese input
         aStr=str(attrList[0]).strip()               # parameter is passed in a wrapping list to be able to use recursion
         rulStr=""                                   # string for rule-information like p=p1
         actPos=0
         relType=0
-        pp=gl.args.pdefault                         #default p is set to 0.5
         parents=[]
         isWord=1
         while (actPos<len(aStr)):
@@ -304,28 +328,34 @@ class Kbase:
                         wl_ind = gl.WL.add_word(ss)
                     return self.add_concept(1,1,[],[wl_ind])
                 else:                               #if the concept is not a single word, register the embedded concept as parent, and read the next parent
-                    if actPos+2 < len(aStr) and aStr[actPos+1]=='p' and aStr[actPos+2]=='=':
-                        n_end=actPos+4
-                        while n_end <= len(aStr):
-                            try:
-                                newp=float(aStr[actPos+3:n_end])
-                            except:
-                                n_end -= 1
-                                break
-                            else:
-                                n_end += 1
-                        try: newp=float(aStr[actPos+3:n_end])               # explicit p value like p=0.1
-                        except:                                             # rule, like p=p1
-                            newp=gl.args.pdef_unknown
-                            rulStr=self.get_rulestr(aStr,actPos)            # process the rule-string
-                            n_end=actPos+1+len(rulStr)
-                        pp=newp
-                        actPos=n_end
+                    p_result = None
+                    r_result = None
+                    if actPos+2 < len(aStr) and aStr[actPos+1:actPos+3]=='p=':
+                        p_result = self.get_p(aStr, actPos)
+                        actPos = p_result[1]
+                        if actPos+2 < len(aStr) and aStr[actPos:actPos+3]==',r=':
+                            r_result = self.get_r(aStr, actPos)
+                            actPos = r_result[1]
+                    elif actPos+2 < len(aStr) and aStr[actPos+1:actPos+3]=='r=':
+                        r_result = self.get_r(aStr, actPos)
+                        actPos = r_result[1]
+                        if actPos+2 < len(aStr) and aStr[actPos:actPos+3]==',p=':
+                            p_result = self.get_p(aStr, actPos)
+                            actPos = p_result[1]
                     else:
                         actPos += 1
+                        
                     attrList[0]=str(aStr[actPos:]).strip()
-                    newindex=self.add_concept(pp,relType,parents)           # add the concept to WM
-                    self.cp[newindex].rulestr=rulStr                        # add the rule string
+                    
+                    if p_result is not None:
+                        newindex=self.add_concept(p_result[0],relType,parents)           # add the concept to WM
+                        self.cp[newindex].rulestr=p_result[2]                        # add the rule string
+                    else:
+                        newindex=self.add_concept(gl.args.pdefault,relType,parents)           # add the concept to WM
+                        
+                    if r_result is not None:
+                        self.cp[newindex].relevance=r_result[0]
+                        
                     return newindex
                 
             actPos=actPos+1
