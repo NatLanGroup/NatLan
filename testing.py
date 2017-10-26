@@ -92,6 +92,8 @@ class Testinput:
             endi=gl.WM.ci                               # final index in WM
             finalanswers[:]=self.goodanswer_list(starti,endi)[:]    # get indices of good answers
             sysamatch=[0]*len(self.systemanswer[rowindex])          # all system answer has 1 element, initially 0
+            goodamatch=[0]*len(finalanswers)            # all good answers have 1 element, which is initially 0
+            goodindex=0
             for gooda in finalanswers:                  # take all good answers
                 sysindex=0; goodmatch=0
                 for sysa in self.systemanswer[rowindex]:    # and take all system answers
@@ -100,11 +102,14 @@ class Testinput:
                         goodmatch=1
                         if (gl.WM.cp[gooda].p == gl.WM.cp[sysa].p):     # p value is the same
                             sysamatch[sysindex]=1
-                        else: eval="***BADP"                # p value mismatch
+                            goodamatch[goodindex]=1
                     sysindex=sysindex+1
                 if (goodmatch==0): eval="***MISS"           # good answer missing, override p mismatch
+                goodindex+=1
+            if (eval=="OK     " and (0 in goodamatch)):      # concept match OK but some p values do not match
+                eval="***BADP"
             if (eval=="OK     " and (0 in sysamatch)):      # too many system answers
-                eval="***MORE"
+                eval="OK MORE"
             for i in range(endi-starti):                # good answer concepts in WM
                 gl.WM.remove_concept()                  # remove them from WM
         return eval

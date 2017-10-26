@@ -1,5 +1,5 @@
-m/ IM(D(%1,%2),D(%2,%1))
-m/ IM(AND(C(%1,%2)p=p1,A(%2,%3)p=p2),A(%1,%3)p=pclas)
+m/ IM(D(%1,%2)p=p1,D(%2,%1))p=pide1
+m/ IM(AND(C(%1,%2)p=p1,A(%2,%3)p=p2),A(%1,%3))p=pclass
 e/ People walk.                      m/ A(people,walk)
 e/ Dogs are animals.                 m/ C(dog,animal)
 m/ D(Joe,he)

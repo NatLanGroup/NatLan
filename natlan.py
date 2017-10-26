@@ -32,8 +32,6 @@ test1.add_parents([-1, 17])
 result = gl.WM.search_inlist(test1)
 gl.unittest=testing.Temptest()              # initialize temporary tests
 
-thisrule=reason.Rule(2)
-
 if gl.args.argnum == 2:
     #gl.unittest.test_implication()
     gl.test = testing.Testinput(sys.argv[1])

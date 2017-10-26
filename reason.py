@@ -1,19 +1,16 @@
 import gl, conc
 
-class Rule:
-    def __init__(self,actualconcept):       # an instance represents a single rule to apply for the actual concept
-        self.actual = actualconcept         # index of concept in WM for which we found a rule
-        self.rule = -1                      # index of rule in KB, an IM(g,k) concept
-        self.condition = []                 # indices (in KB) of a,b,c in IM(Z(a,b),k)  . here c=Z(a,b)
-        self.match=[]                       # indices of m,n,q in WM, where m matches a, n matches b etc
-        self.matchrelation=-2               # if for example b=X(%2,%3) and n matches b, then we store the relation found in m
-        self.matchvalue = []                # %1 %2 %3 matching concepts
-        self.matchp = []                    # p1 p2 etc matching p values
-
+# TO DO: X-relation
+# TO DO: XOR((%1)p=p1,%2) this p value should work
+# TO DO: NOT() relation
+# TO DO: N() rule - necessary condition
+#TO DO: make uniconcept work for compound concepts
 
 class Reasoning:
     def __init__(self):
         self.actual=0
+        self.reason_processed=0         # last indec in gl:WM.cp that was processed for reasoning
+        self.mapping_processed=0
 
     #This method checks if the 2 indexes from WM and KB matches (in syntax, not in each word).
     def do_they_match_for_rule(self, wm_index, kb_index):
@@ -35,6 +32,7 @@ class Reasoning:
                 res_list.append(gl.KB.cp[gl.KB.cp[kb_index].child[i]])
             else:
                 self.get_children_implication(gl.KB.cp[kb_index].child[i], res_list)
+
 
     def getCondition(self, impl):
         return impl.parent[0]
@@ -73,6 +71,15 @@ class Reasoning:
                     matching_rules.append(kb_pos)
             gl.WM.cp[wm_pos].kb_rules = matching_rules
 
+
+    def ruleargs_wordmatch(self,new,ruleindex):         # see if word matches rule in D(%1,elephant)
+        parenti=0; matching=1
+        for rparent in gl.KB.cp[ruleindex].parent:
+            if "%" not in gl.KB.cp[rparent].mentstr:
+                if (gl.KB.cp[rparent].mentstr != gl.WM.cp[gl.WM.cp[new].parent[parenti]].mentstr):      # word in KB does not match WM
+                    matching=0
+            parenti+=1
+        return matching
         
     def convert_KBrules(self,new,enable):           #converts the rule fractions in kb_rules to [imlevel,condition] list
         imcombined=[]                               #finds first arg of rule and records all potential matches
@@ -81,18 +88,20 @@ class Reasoning:
             for child in gl.KB.cp[ruleindex].child:
                 if gl.KB.cp[child].relation==13 and gl.KB.cp[ruleindex].relation!=1:    #IM relation, single condition, condition not word
                     if ruleindex==gl.KB.cp[child].parent[0]:    #this is the condition, not the implication
-                        im.append(child)            #rule on IM level
-                        im.append(ruleindex)        #rule condition
-                        if im not in imcombined: imcombined.append(im)
-                        im=[]
+                        if (self.ruleargs_wordmatch(new,ruleindex)==1):     #word in rule matches WM
+                            im.append(child)            #rule on IM level
+                            im.append(ruleindex)        #rule condition
+                            if im not in imcombined: imcombined.append(im)
+                            im=[]
                 if gl.KB.cp[child].relation==16:                #this is the AND-relation of the rule condition
                     for andchild in gl.KB.cp[child].child:      #at least 1 child of AND should be IM relation
                         if gl.KB.cp[andchild].relation==13:     #this is the IM relation
                             if child==gl.KB.cp[andchild].parent[0]:     #AND concept is the condition, not implication in IM
-                                im.append(andchild)             #rule on IM level
-                                im.append(ruleindex)            #rule condition
-                                if im not in imcombined: imcombined.append(im)
-                                im=[]                                
+                                if (self.ruleargs_wordmatch(new,ruleindex)==1):     #word in rule matches WM
+                                    im.append(andchild)             #rule on IM level
+                                    im.append(ruleindex)            #rule condition
+                                    if im not in imcombined: imcombined.append(im)
+                                    im=[]                                
         gl.WM.cp[new].kb_rules=[]                               #delete old kb_rules content
         for rulei in range(len(imcombined)):                    #copy imcombined to kb_rules and add resoned concept (single condition)
             gl.WM.cp[new].kb_rules.append(imcombined[rulei])
@@ -207,7 +216,7 @@ class Reasoning:
                     reasoned_concept = gl.WM.cp[new].parent[1]      # the second parent of IM is the implication that we want to reason now.
                     matching=0
                     if condi_p!=-1:                     # if we found the condition, we may not add the implication again
-                        matching = gl.WM.search_fullmatch(reasoned_p, gl.WM.cp[reasoned_concept].relation, gl.WM.cp[reasoned_concept].parent)  #TO DO: this is wrong: we may not reason in case we would have a new p value!!
+                        matching = gl.WM.search_fullmatch(reasoned_p, gl.WM.cp[reasoned_concept].relation, gl.WM.cp[reasoned_concept].parent)  #this is probably ok: we may not reason in case we would have a new p value!!
                     if 0==matching and reasoned_p!=gl.WM.convert_p(gl.args.pmax/2):     # we do not reason if p will be 0.5
                         gl.WM.add_concept(reasoned_p, gl.WM.cp[reasoned_concept].relation, gl.WM.cp[reasoned_concept].parent)
                         gl.log.add_log(("REASON generate_IMconcept. IM:",new," WM pos:",gl.WM.ci," condition p=",condi_p," im table indices:",index1,index2," reasoned concept:",gl.WM.cp[gl.WM.ci].mentstr," p=",reasoned_p))
@@ -226,7 +235,7 @@ class Reasoning:
         except: print ("ERROR: RULES MUST HAVE TABLE!",gl.KB.cp[rule[0]].mentstr)
         reasoned_p=1
         newparent=[]                                        #this will hold the parents of the reasoned concept
-        for cparenti in range(len(cpalist)):                #take %1 %2 etc arguments of the condition
+        for cparenti in range(len(cpalist)):                #TO DO: make work for compound concepts. take %1 %2 etc arguments of the condition
             for imparenti in range(len(impalist)):          #all combinations with %1 %2 etc of implication
                 if len(newparent)<imparenti+1: newparent.append(-1)     #implication parents placeholder
                 if gl.KB.cp[cpalist[cparenti]].mentstr==gl.KB.cp[impalist[imparenti]].mentstr:      #we found %1==%1
@@ -320,16 +329,16 @@ class Reasoning:
                                         try: gl.WM.cp[checkwm].rule_match[rmi].remove(new)  #try remove new because of nonmatch
                                         except: y=0
                                         
-                else:           # this might be the condition of an earlier IM concept. This has nothing in kb_rules for this.
-                    if gl.KB.cp[ruleold[1]].relation==13:       #for old, the matching rule's condition is IM, as in IM(IM(%1,%2),%2)
-                        if gl.WM.cp[old].relation==13:          #redundant for WM
-                            if gl.WM.cp[new].relation==gl.WM.cp[gl.WM.cp[old].parent[0]].relation:  #condition in old IM() matches the new concept's relation
-                                if gl.WM.rec_match(gl.WM.cp[new],gl.WM.cp[gl.WM.cp[old].parent[0]]):    # this is exactly the condition
-                                    gl.WM.cp[old].rule_match[orulei].append([new])   # for debugging and logging, remember the condition now found in "old"
-                                    implication=gl.KB.cp[ruleold[0]].parent[1]       # implication part of the rule for "old"
-                                    condition=gl.KB.cp[ruleold[0]].parent[0]         # condition part of the rule
-                                    condi_p = gl.WM.cp[new].p                        # p value of teh condition, which was found now
-                                    self.generate_IMconcept(old,ruleold,implication,condition,condi_p)  # reason the implication now
+                # this might be the condition of an earlier IM concept. This has nothing in kb_rules for this.
+            if gl.KB.cp[ruleold[1]].relation==13:       #for old, the matching rule's condition is IM, as in IM(IM(%1,%2),%2)
+                if gl.WM.cp[old].relation==13:          #redundant for WM
+                    if gl.WM.cp[new].relation==gl.WM.cp[gl.WM.cp[old].parent[0]].relation:  #condition in old IM() matches the new concept's relation
+                        if gl.WM.rec_match(gl.WM.cp[new],gl.WM.cp[gl.WM.cp[old].parent[0]]):    # this is exactly the condition
+                            gl.WM.cp[old].rule_match[orulei].append([new])   # for debugging and logging, remember the condition now found in "old"
+                            implication=gl.KB.cp[ruleold[0]].parent[1]       # implication part of the rule for "old"
+                            condition=gl.KB.cp[ruleold[0]].parent[0]         # condition part of the rule
+                            condi_p = gl.WM.cp[new].p                        # p value of teh condition, which was found now
+                            self.generate_IMconcept(old,ruleold,implication,condition,condi_p)  # reason the implication now
                                     
             orulei+=1
                         
@@ -338,17 +347,17 @@ class Reasoning:
         try: nextrelation = gl.WM.cp[lasti-1].relation      # to test if this is an argument of an IM relation
         except: nextrelation=-2                             # because if YES we may want to disable reasoning
         for wm_pos in range(starti,lasti):
-            enable=0; is_same_as_parent=0
+            enable=0; is_a_parent=0
             if nextrelation == 13:                          # next concept is IM()
-                try:                                        # compare wm_pos with parents of this IM. TO DO:DOES NOT WORK FOR A PORTION OF THE PARENT!!
-                    is_same_as_parent = gl.WM.rec_match(gl.WM.cp[wm_pos],gl.WM.cp[gl.WM.cp[lasti-1].parent[0]])
-                    if is_same_as_parent==0: gl.WM.rec_match(gl.WM.cp[wm_pos],gl.WM.cp[gl.WM.cp[lasti-1].parent[1]])
-                except: is_same_as_parent=0
-            if nextrelation!=13 or is_same_as_parent==0:    # this is not the argument of an IM relation
+                if gl.WM.cp[wm_pos].relation!=1:            # not a word
+                    is_a_parent=1                           # this is a portion of the latestbrelation
+            if nextrelation!=13 or is_a_parent==0:          # this is not the argument of an IM relation
                 enable=1                                    # we enable reasoning now
-                    
-            self.convert_KBrules(wm_pos,1)                  #converts the rule fractions in kb_rules to [imlevel,condition] list
+            if wm_pos>gl.reasoning.reason_processed:       # not yet processed for reasoning
+                gl.reasoning.reason_processed=wm_pos        # set as processed TO DO: remember separatly for branches
+                
+                self.convert_KBrules(wm_pos,1)              #converts the rule fractions in kb_rules to [imlevel,condition] list
                                                             #also calls the addition of reasoned concept to WM if condition is not AND
-            for allwm in range(0,wm_pos):                   #for all old concepts try to get a match for rules with multiple condition
-                self.enter_RuleMatch(wm_pos,allwm,1)        #1.completes rule_match list  2.adds new reasoned concept to WM
+                for allwm in range(0,wm_pos):                   #for all old concepts try to get a match for rules with multiple condition
+                    self.enter_RuleMatch(wm_pos,allwm,1)        #1.completes rule_match list  2.adds new reasoned concept to WM
             
