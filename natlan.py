@@ -1,4 +1,4 @@
-import sys, gl, conc, wrd, testing, reason
+import sys, gl, conc, wrd, testing, reason, branch
 
 def process_testinput (tf):                  # input is the Testinput object
     for ri in range(len(tf.mentalese)):     # take mentalese items (rows in test input file)
@@ -9,6 +9,7 @@ def process_testinput (tf):                  # input is the Testinput object
             gl.WM.read_concept(tfment)              # store concepts in WM
             counter=counter+1
         gl.WM.move_rule(tf,ri,starti)               # if this is a rule, move to KB
+        if gl.WM.ci>=0: gl.WM.move_relevant(starti) # if this is top relevant, r=4, move it to KB
         endi = gl.WM.ci                             # end position in WM
         if (tf.question[ri]==1):                    # if yes, then on endi we assume a question
             tf.systemanswer[ri][:] = gl.WM.answer_question(starti,endi)[:]    # answer question and record concept indices
@@ -45,6 +46,12 @@ if gl.args.argnum == 2:
     for wmi in gl.KB.cp:
         print (i,wmi.mentstr,wmi.parent)
         i+=1
+    for br in gl.WM.branch:
+        bro=branch.Branch(0)
+        thisbr=bro.get_previous_concepts(br)
+        for wmi in reversed(thisbr):
+            print (wmi,gl.WM.cp[wmi].mentstr)
+        print ("BRANCH:",br,thisbr)
     gl.test.testf.close()
     gl.test.resultf.close()
 

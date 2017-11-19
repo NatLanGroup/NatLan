@@ -30,5 +30,12 @@ class Wlist:
                 return self.wcp[index].wchild[0]
         return -1
 
+    def find_word(self,new_word):
+        for index in range(len(self.wcp)):
+            if self.wcp[index].word==new_word:
+                return index
+        return -1
+    
+
 if __name__ == "__main__":
     print("This is a module file, run natlan.py instead")

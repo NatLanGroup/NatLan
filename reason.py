@@ -1,4 +1,4 @@
-import gl, conc
+import gl, conc, branch
 
 # TO DO: X-relation
 # TO DO: XOR((%1)p=p1,%2) this p value should work
@@ -10,6 +10,8 @@ class Reasoning:
     def __init__(self):
         self.actual=0
         self.reason_processed=0         # last indec in gl:WM.cp that was processed for reasoning
+        self.brancho = []               # here we store the current branching object
+        self.relevant_branch = []       # list of branches for current reasoning
         self.mapping_processed=0
 
     #This method checks if the 2 indexes from WM and KB matches (in syntax, not in each word).
@@ -123,6 +125,27 @@ class Reasoning:
             if gl.KB.cp[firstarg].relation==16:     #AND relation
                 self.generate_MultiConcept(new,old,rulei,wmpi)
 
+    def finaladd_Concept(self,conclist,reasoned_p,relation,newparent,rule):     # single function to add reasoned concept to WM
+        #TO DO: generate_IMconcept should call this too
+        new=conclist[0]         #new concept of reasoning basis - the latest reason used
+        self.relevant_branch = self.brancho[0].select_Relevant(new)     #collect branches on which new can be found
+        for leaf in self.relevant_branch:       # on all leafs where the reasoned concept must be added
+            thisbranch = self.brancho[0].get_previous_concepts(leaf)    #next entire branch
+            found = gl.WM.search_fullmatch(reasoned_p, relation,newparent, thisbranch)      #see whether the concept is already on the branch
+            if found == 0:
+                gl.WM.add_concept(reasoned_p, relation,newparent)       #add the reasoned concept
+                gl.WM.cp[gl.WM.ci].previous = leaf
+                if leaf in gl.WM.branch:                #we may need to update global leaf list
+                    gl.WM.branch.remove(leaf)
+                    gl.WM.branch.append(gl.WM.ci)       #upadted
+                if gl.WM.ci>0 and gl.WM.cp[gl.WM.ci-1].next == gl.WM.ci:    #earlier concept is also pointing here, ERROR
+                    if gl.WM.cp[gl.WM.ci].previous != gl.WM.ci-1:           #next needs to be corrected
+                        gl.WM.cp[gl.WM.ci-1].next = []  #that needs to be a leaf
+                gl.log.add_log(("REASONED concept added! input new,old:",conclist," on branch leaf:",leaf," on index:",gl.WM.ci," rule:",rule," reasoned concept:",gl.WM.cp[gl.WM.ci].mentstr, " p=",reasoned_p," parents:",gl.WM.cp[gl.WM.ci].parent))
+                gl.WM.cp[leaf].next = [gl.WM.ci]        #old leaf continued
+                
+    
+
     def lookup_Rtable(self,new,old,rulei,wmpi,implication,newparent):   #read p value from reasoning table for multi condition
         rule=gl.WM.cp[old].kb_rules[rulei][:]
         try: rtable = gl.KB.cp[rule[0]].rulestr[0][:]                   # the first string is the table name
@@ -159,7 +182,22 @@ class Reasoning:
             gl.log.add_log(("ERROR in lookup_Rtable: could not read p,map reasoning table. Table name not given or wrong, no =, too many indices, or too big index values. Rule:",gl.KB.cp[rule[0]].mentstr," Table name:",rtable," indexc attempted:",indexlist))
         return reasoned_p
 
-            
+    def reason_Inhibit (self,reasoned_p,reasoned_rel,reasoned_parents):     #check reasoned concept to stop stupid reasoning
+        inhibit=0
+        parent1=reasoned_parents[0]
+        allsame=1
+        for parent in reasoned_parents:
+            if parent != parent1: allsame=0            #if not very same concept then not same
+        if allsame==1:
+            if reasoned_rel==2 or reasoned_rel==3 or reasoned_rel==4:   #S,D,C relation
+                inhibit=1
+        if reasoned_rel==4:                             #C relation, even if parents are different
+            inhibit=1
+            for parent in reasoned_parents:
+                if gl.WM.cp[parent1].relation==1 and gl.WM.cp[parent].relation==1:      #C parents are words
+                    if gl.WM.cp[parent1].kblink[0] != gl.WM.cp[parent].kblink[0]:       #not same words
+                        inhibit=0
+        return inhibit
 
     def generate_MultiConcept(self,new,old,rulei,wmpi):     #create reasoned concept if condition is AND()
         # rulei is the index to be used both in kb_rules and rule_match
@@ -193,15 +231,16 @@ class Reasoning:
                     if gl.KB.cp[celem[cparenti]].mentstr==gl.KB.cp[gl.KB.cp[implication].parent[imparenti]].mentstr:
                         condiinstance=gl.WM.cp[wmitem].parent[:]
                         condiinstance.append(wmitem)
-                        newparent[imparenti]=condiinstance[cparenti]            #if %1=%1 get condition parent into implication
-        condicount=len(gl.KB.cp[gl.KB.cp[rule[0]].parent[0]].parent)            #how many conditions are there
-        if len(gl.WM.cp[old].rule_match[rulei][wmpi])+1==condicount and (-1 not in newparent):   #we have the full concept
-            reasoned_p=self.lookup_Rtable(new,old,rulei,wmpi,implication,newparent[:])  #read p value from reasoning table
-            if 0==gl.WM.search_fullmatch(reasoned_p,gl.KB.cp[implication].relation,newparent):   #concept not yet in WM
-                gl.WM.add_concept(reasoned_p,gl.KB.cp[implication].relation,newparent)           #add vthe new concept to WM
-                gl.log.add_log(("REASON MultiConcept - new input:",new,"old:",old," rule:",rule," reasoned:",gl.WM.cp[gl.WM.ci].mentstr," p=",reasoned_p," parents:",gl.WM.cp[gl.WM.ci].parent))
+                        newparent[imparenti]=condiinstance[cparenti]                            #if %1=%1 get condition parent into implication
+        condicount=len(gl.KB.cp[gl.KB.cp[rule[0]].parent[0]].parent)                            #how many conditions are there
+        if len(gl.WM.cp[old].rule_match[rulei][wmpi])+1==condicount and (-1 not in newparent):  #we have the full concept
+            reasoned_p=self.lookup_Rtable(new,old,rulei,wmpi,implication,newparent[:])          #read p value from reasoning table
+            inhibit = self.reason_Inhibit(reasoned_p, gl.KB.cp[implication].relation,newparent) # inhibit reasoning of D(x,x) etc
+            if 0==inhibit:                                                                      #concept not inhibited (found is investigated in finaladd_Concept)
+                self.finaladd_Concept([new,old],reasoned_p,gl.KB.cp[implication].relation,newparent,rule)           #add the new concept to WM
 
-    def generate_IMconcept(self,new,rule,implication,condition,condi_p=-1): # handle the rule IM(IM(%1,%2),%2) normal implication
+
+    def generate_IMconcept(self,new,rule,implication,condition,condi_p=-1): # handle the rule IM(IM(%1,%2),%2) normal implication. TO DO: call finaladd.
         if len(gl.KB.cp[condition].parent)==2:          # IM() has a single condition and a single implication TO DO: multiple implications
             if "%" in gl.KB.cp[gl.KB.cp[condition].parent[0]].mentstr:      # % in IM(%1,%2)
                 if gl.KB.cp[gl.KB.cp[condition].parent[1]].mentstr == gl.KB.cp[implication].mentstr:  # %2 in IM(IM(%1,%2),%2). The rule is now identified.
@@ -215,9 +254,10 @@ class Reasoning:
                     except: gl.log.add_log(("ERROR in generate_IMconcept: reasoning table gl.args.im could not be accessed. Indices attempted:",index1,index2))
                     reasoned_concept = gl.WM.cp[new].parent[1]      # the second parent of IM is the implication that we want to reason now.
                     matching=0
+                    inhibit = self.reason_Inhibit(reasoned_p,gl.KB.cp[implication].relation,gl.WM.cp[reasoned_concept].parent)      #inhibit if needed
                     if condi_p!=-1:                     # if we found the condition, we may not add the implication again
                         matching = gl.WM.search_fullmatch(reasoned_p, gl.WM.cp[reasoned_concept].relation, gl.WM.cp[reasoned_concept].parent)  #this is probably ok: we may not reason in case we would have a new p value!!
-                    if 0==matching and reasoned_p!=gl.WM.convert_p(gl.args.pmax/2):     # we do not reason if p will be 0.5
+                    if 0==inhibit and 0==matching and reasoned_p!=gl.WM.convert_p(gl.args.pmax/2):     # we do not reason if p will be 0.5
                         gl.WM.add_concept(reasoned_p, gl.WM.cp[reasoned_concept].relation, gl.WM.cp[reasoned_concept].parent)
                         gl.log.add_log(("REASON generate_IMconcept. IM:",new," WM pos:",gl.WM.ci," condition p=",condi_p," im table indices:",index1,index2," reasoned concept:",gl.WM.cp[gl.WM.ci].mentstr," p=",reasoned_p))
                         if condi_p==-1:                 # IM was the last concept we found
@@ -246,11 +286,9 @@ class Reasoning:
                 try: reasoned_p=gl.args.pmap[rtable[(rtable.find("=")+1):]][int(gl.WM.cp[new].p)]   #index is p value of condition in WM
                 except:
                     gl.log.add_log(("ERROR generate_Uniconcept: could not read pmap reasoning table. Rule:",gl.KB.cp[rule[0]].mentstr," table name:",rtable," index attempted:",int(gl.WM.cp[new].p)))
-                    
-            matching=gl.WM.search_fullmatch(reasoned_p,gl.KB.cp[implication].relation,newparent)
-            if 0==matching:   #this concept is not yet in WM
-                gl.WM.add_concept(reasoned_p,gl.KB.cp[implication].relation,newparent)           #add it to WM
-                gl.log.add_log(("REASON UniConcept - new input:",new," reason table:",rtable," index:",int(gl.WM.cp[new].p)," reasoned:",gl.WM.cp[gl.WM.ci].mentstr," p=",reasoned_p," parents:",gl.WM.cp[gl.WM.ci].parent))
+            inhibit = self.reason_Inhibit(reasoned_p, gl.KB.cp[implication].relation,newparent)
+            if 0==inhibit:   #this concept is not inhibited
+                self.finaladd_Concept([new],reasoned_p,gl.KB.cp[implication].relation,newparent,rule)           #add it to WM
         if len(newparent) == 0 and gl.KB.cp[rule[1]].relation == 13:    # rule portion is IM, the implication in rule is just %2
             self.generate_IMconcept(new,rule,implication,condition)     # this is hard-wired for rule: IM(IM(%1,%2),%2)
 
@@ -354,10 +392,15 @@ class Reasoning:
             if nextrelation!=13 or is_a_parent==0:          # this is not the argument of an IM relation
                 enable=1                                    # we enable reasoning now
             if wm_pos>gl.reasoning.reason_processed:       # not yet processed for reasoning
-                gl.reasoning.reason_processed=wm_pos        # set as processed TO DO: remember separatly for branches
-                
+                gl.reasoning.reason_processed=wm_pos        # set as processed 
+                self.brancho = [branch.Branch(wm_pos)]      # store the branch object
+                self.brancho[0].perform_Branching()         # perform mapping
+                thisbranch = self.brancho[0].get_previous_concepts(wm_pos)   #all concepts in the branch
                 self.convert_KBrules(wm_pos,1)              #converts the rule fractions in kb_rules to [imlevel,condition] list
                                                             #also calls the addition of reasoned concept to WM if condition is not AND
-                for allwm in range(0,wm_pos):                   #for all old concepts try to get a match for rules with multiple condition
-                    self.enter_RuleMatch(wm_pos,allwm,1)        #1.completes rule_match list  2.adds new reasoned concept to WM
+                cnum = len(thisbranch)-1                    # counter backwards
+                while cnum>=0:                   #for all old concepts in branch try to get a match for rules with multiple condition
+                    self.enter_RuleMatch(wm_pos,thisbranch[cnum],1)        #1.completes rule_match list  2.adds new reasoned concept to WM
+                    cnum-=1
+                self.brancho[0].evaluate_Branches()         # calculate consistency for branches
             

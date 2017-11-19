@@ -2,9 +2,9 @@ import sys, gl
 
 class Concept:
     def __init__(self,rel=0):
-        self.p = 0.5        # p value of concept
+        self.p = int(gl.args.pmax/2)        # p value of concept
         self.c = 1          # consistence of this concept and previous concepts
-        self.relevance = 1  # relevance of the concept
+        self.relevance = int(gl.args.rmax/2)  # relevance of the concept
         self.relation = rel # relation code
         self.parent = []    # parents list
         self.child = []     # children list
@@ -28,17 +28,18 @@ class Kbase:
     def __init__(self, instancename):
         self.cp = []                    # CONCEPT LIST CP
         self.ci = -1
+        self.branch=[]                  #list of living branches
         self.name = instancename          # the name of the instance can be used in the log file
 
-    def search_fullmatch(self,pin,rel,parents):
+    def search_fullmatch(self,pin,rel,parents,branch=[]):
         found=0
         if self.convert_p(pin) == self.convert_p(gl.args.pmax/2):   #p70.5 will not be reasoned
             found=1
         else:
             for sindex in range(gl.reasoning.actual,self.ci+1):
                 con=self.cp[sindex]
-                if con.relation==rel:
-                    if 1==1:                                        # p value not checked currently
+                if con.relation==rel and (branch==[] or sindex in branch):   #only match to concepts in branch
+                    if con.p==pin:                                        # p value checked currently
                         pari=0; allsame=1                           #allsame will show if all parents are the same
                         while pari<len(con.parent) and allsame==1:  #only check until first different parent found
                             parent1wm=con.parent[pari]
@@ -78,6 +79,10 @@ class Kbase:
     def add_concept(self, new_p, new_rel, new_parents,kbl=[]):        #add new concept to WM or KB. parents argument is list
         self.cp.append(Concept(new_rel))                        #concept added
         self.ci = len(self.cp) - 1                              #current index
+        self.cp[self.ci].previous=self.ci-1                     #set previous
+        if self.ci>0:
+            if self.cp[self.ci-1].next==[]:
+                self.cp[self.ci-1].next.append(self.ci)         #set next
         self.cp[self.ci].p = self.convert_p(new_p)              #set p value
         self.cp[self.ci].add_parents(new_parents)               #set parents
         self.cp[self.ci].kblink[:]=kbl[:]                       # set link to KB
@@ -110,7 +115,8 @@ class Kbase:
         gl.log.add_log((self.name," remove concept index=",self.ci))
         if (self.ci>-1):
             self.cp.pop()
-            self.ci=self.ci-1   
+            self.ci=self.ci-1
+            if self.ci>-1: self.cp[self.ci].next=[]     #this becomes leaf
         return self.ci
 
     def rec_match(self, what1, inwhat, castSecondKbase=0):  # two concepts match? handles questions
@@ -184,6 +190,7 @@ class Kbase:
                 kbl=gl.KB.get_child(self.cp[curri].relation,plist)   # search concept in KB as child of parent
                 if kbl==-1:                         # not found in KB
                     kbl=gl.KB.add_concept(self.cp[curri].p,self.cp[curri].relation,plist)   # copy to KB
+                    gl.KB.cp[kbl].relevance = self.cp[curri].relevance  #copy relevance
                 self.cp[curri].kblink.append(kbl)   # set KB link in WM
         return curri
             
@@ -199,6 +206,12 @@ class Kbase:
                 except: gl.log.add_log(("ERROR in move_rule in conc.py: could not assemble rule string. KB index:",kblink[0]," WM index:",gl.WM.ci)) 
                 gl.WM.remove_concept()     # remove rule from WM
         
+
+    def move_relevant(self, starti):                # if this is top relevant knowledge, move it to KB
+        if (gl.WM.cp[gl.WM.ci].relevance==gl.args.rmax):    #r=rmax
+            gl.WM.copyto_kb(gl.WM.ci)               #copy the relevant concept to KB
+            for i in range(gl.WM.ci-starti):        #entire group of moved concept
+                gl.WM.remove_concept()              #remove copied concept from WM
 
     def search_inlist(self, swhat):
         found = []

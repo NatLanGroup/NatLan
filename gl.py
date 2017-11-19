@@ -10,6 +10,7 @@ class Arguments:
         self.pdef_unknown=0.5
         self.pgranu = 4         # granularity for p, pgranu+1 discrete values from 0
         self.pmax = 4           # maximum p value. Like 1 for p=0..1, or 4 for p=0,1,2,3,4.
+        self.rmax = 4           # maximum relevance
                                 # set pgranu=pmax for p=0,1,2,....pmax
         
         i=1.1                   # to be used instead of 1

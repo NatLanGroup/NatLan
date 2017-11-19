@@ -1,0 +1,403 @@
+        /e  /m  /a  /s []
+// Rules
+
+        /e  /m IM(AND(D(%1,%2)p=p0,C(%2,%3)p=p1),C(%1,%3))p=pclass /a  /s []
+        /e  /m IM(AND(D(%1,%2)p=p0,A(%2,%3)p=p1),A(%1,%3))p=pclass /a  /s []
+        /e  /m IM(D(%1,%2)p=p0,D(%2,%1))p=pide1 /a  /s []
+        /e  /m IM(D(%1,%2)p=p0,C(%1,%2))p=pide1 /a  /s []
+        /e  /m IM(AND(D(%1,%2)p=p0,D(%2,%3)p=p1),D(%1,%3))p=pide2 /a  /s []
+        /e  /m IM(AND(C(%1,%2)p=p0,A(%2,%3)p=p1),A(%1,%3))p=pclass /a  /s []
+        /e  /m  IM(AND(C(%1,%2)p=p0,F(%2,%3)p=p1),F(%1,%3))p=pclass     /a  /s []
+        /e  /m IM(AND(F(%1,%2)p=p0,A(%1,%3)p=p1),A(F(%1,%2),%3))p=pclass /a  /s []
+        /e  /m  IM(AND(XOR(%1,%2)p=p0,F(%1,%3)p=p1),F(%2,%3))p=pxor	   /a  /s []
+        /e  /m  IM(A(AND(%1,%2),%3)p=p0,A(%1,%2))p=pide1				   /a  /s []
+        /e  /m  IM(IM(%1,%2),%2)p=im									   /a  /s []
+        /e  /m  /a  /s []
+// reasoning rule for N relation - necessary condition.
+
+        /e  /m  /a  /s []
+        /e  /m F(dummy) /a  /s []
+        /e  A garden is a place.               /m C(garden,place) /a  /s []
+        /e  Persons are the same as people.    /m D(person,people) /a  /s []
+        /e  Animals are not people.            /m C(animal,people)p=0 /a  /s []
+        /e  People are not animals.            /m C(people,animal)p=0 /a  /s []
+OK      /e  What is a garden?                  /m  C(garden,?)               /a C(garden,place)p=4 /s [4]C(garden,place)4 
+OK      /e  What is a place?                   /m  C(place,?)                /a not found:C(place,?) /s []
+OK      /e  What is a toy?                     /m  C(toy,?)                  /a not found:C(toy,?) /s []
+OK MORE /e  What is a person?                  /m  C(person,?)               /a not found:C(person,?) /s [9, 17]C(person,people)4 C(person,animal)0.0 
+OK      /e  Who are persons?                   /m  D(person,?)               /a D(person,people)p=4 /s [7]D(person,people)4 
+OK MORE /e  Who are people?                    /m  D(people,?)               /a not found:D(people,?) /s [8]D(people,person)4 
+OK      /e  Is the garden a place?             /m  C(garden,place)?          /a C(garden,place)p=4 /s [4]C(garden,place)4 
+OK      /e  Is the place a garden?             /m  C(place,garden)?          /a C(place,garden)p=2 /s [20]C(place,garden)2 
+OK      /e  Are toys dogs?                     /m  C(toy,dog)?               /a C(toy,dog)p=2 /s [23]C(toy,dog)2 
+OK      /e  Are people same as persons?        /m  D(people,person)?         /a D(people,person)p=4 /s [8]D(people,person)4 
+OK      /e  Are persons same as people?        /m  D(person,people)?         /a D(person,people)p=4 /s [7]D(person,people)4 
+OK      /e  Are people animals?                /m  C(people,animal)?         /a C(people,animal)p=0 /s [16]C(people,animal)0.0 
+OK MORE /e  What are people?                   /m  C(people,?)               /a C(people,animal)p=0 /s [10, 16]C(people,person)4 C(people,animal)0.0 
+        /e  Dogs are animals.                  /m C(dog,animal) /a  /s []
+OK MORE /e  What are animals?                  /m  C(animal,?)               /a not found:C(animal,?) /s [13]C(animal,people)0.0 
+OK MORE /e  What animals are there?            /m  C(?,animal)               /a C(people,animal)p=0 C(dog,animal)p=4 /s [16, 17, 26]C(people,animal)0.0 C(person,animal)0.0 C(dog,animal)4 
+        /e  People walk.                       /m A(people,walk) /a  /s []
+        /e  People talk.                       /m A(people,talk) /a  /s []
+        /e  Animals don`t talk.				  /m A(animal,talk)p=0 /a  /s []
+OK      /e  What do people do?                 /m  A(people,?)               /a A(people,walk)p=4 A(people,talk)p=4 /s [29, 33]A(people,walk)4 A(people,talk)4 
+OK MORE /e  Who walks?                         /m  A(?,walk)                 /a A(people,walk)p=4 /s [29, 30]A(people,walk)4 A(person,walk)4 
+OK      /e  Do people walk?                    /m  A(people,walk)?           /a A(people,walk)p=4 /s [29]A(people,walk)4 
+OK      /e  Do people sing?                    /m  A(people,sing)?           /a A(people,sing)p=2 /s [41]A(people,sing)2 
+OK MORE /e  What do dogs do?                   /m  A(dog,?)                  /a not found:A(dog,?) /s [38]A(dog,talk)0.0 
+        /e  Dogs are not the same as people.   /m D(dog,people)p=0 /a  /s []
+OK      /e  Do dogs walk?                      /m  A(dog,walk)?              /a A(dog,walk)p=2 /s [54]A(dog,walk)2 
+        /e  Tired dogs walk slowly.            /m F(A(F(dog,tired),walk),slowly) /a  /s []
+OK      /e  How do tired dogs walk?            /m  F(A(F(dog,tired),walk),?)        /a F(A(F(dog,tired),walk),slowly)p=1 /s [61]F(A(F(dog,tired),walk),slowly)4 
+OK      /e  Do tired dogs walk slowly?         /m  F(A(F(dog,tired),walk),slowly)?  /a F(A(F(dog,tired),walk),slowly)p=1 /s [61]F(A(F(dog,tired),walk),slowly)4 
+OK      /e  What dogs walk slowly?             /m  F(A(F(dog,?),walk),slowly)       /a F(A(F(dog,tired),walk),slowly)p=1 /s [61]F(A(F(dog,tired),walk),slowly)4 
+OK      /e  What do tired dogs do slowly?      /m  F(A(F(dog,tired),?),slowly)      /a F(A(F(dog,tired),walk),slowly)p=1 /s [61]F(A(F(dog,tired),walk),slowly)4 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// D-reasoning
+
+        /e  /m  /a  /s []
+OK MORE /e  Who are people?                    /m  D(people,?)               /a D(people,person)p=4 /s [8, 45]D(people,person)4 D(people,dog)0.0 
+OK      /e  Are people same as persons?        /m  D(people,person)?         /a D(people,person)p=4 /s [8]D(people,person)4 
+OK      /e  Do persons walk?                   /m  A(person,walk)?           /a A(person,walk)p=4 /s [30]A(person,walk)4 
+OK      /e  Are persons animals?               /m  C(person,animal)?         /a C(person,animal)p=0 /s [17]C(person,animal)0.0 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// generating C from D
+
+OK MORE /e  What are people?                   /m  C(people,?)               /a C(people,animal)p=0 C(people,person)p=4 /s [10, 16, 47]C(people,person)4 C(people,animal)0.0 C(people,dog)0.0 
+OK MORE /e  What are persons?                  /m  C(person,?)               /a C(person,animal)p=0 C(person,people)p=4 /s [9, 17, 49]C(person,people)4 C(person,animal)0.0 C(person,dog)0.0 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// C-reasoning. In the fox example we see an implicit C relation.
+
+        /e  /m  /a  /s []
+        /e  Animals move.                      /m A(animal,move) /a  /s []
+OK MORE /e  What do dogs do?                   /m  A(dog,?)                  /a A(dog,move)p=4 /s [38, 54, 66]A(dog,talk)0.0 A(dog,walk)2 A(dog,move)4 
+OK MORE /e  What moves?                        /m  A(?,move)                 /a A(animal,move)p=4 A(dog,move)p=4 /s [65, 66, 67]A(animal,move)4 A(dog,move)4 A(F(dog,tired),move)4 
+OK      /e  Do dogs move?                      /m  A(dog,move)?              /a A(dog,move)p=4 /s [66]A(dog,move)4 
+OK      /e  Do dogs walk?                      /m  A(dog,walk)?              /a A(dog,walk)p=2 /s [54]A(dog,walk)2 
+        /e  Joe is a person.                   /m C(Joe,person) /a  /s []
+        /e  Mary is a girl.                    /m C(Mary,girl) /a  /s []
+OK      /e  Does Joe walk?                     /m  A(Joe,walk)?              /a A(Joe,walk)p=4 /s [71]A(Joe,walk)4 
+OK      /e  Does Mary walk?                    /m  A(Mary,walk)?             /a A(Mary,walk)p=2 /s [78]A(Mary,walk)2 
+        /e  Girls are people. 		     	 /m C(girl,people) /a  /s []
+        /e  Boys are people.		     		 /m C(boy,people) /a  /s []
+        /e  /m F(fox,brown) /a  /s []
+OK      /e  Does Mary walk?                    /m  A(Mary,walk)?             /a  A(Mary,walk)p=2 A(Mary,walk)p=4   /s [78, 84]A(Mary,walk)2 A(Mary,walk)4 
+        /e  The fox hunts in the forest.       /m F(A(fox,hunt),R(in,forest)) /a  /s []
+OK      /e  Does the brown fox hunt?           /m  A(F(fox,brown),hunt)?     /a A(F(fox,brown),hunt)p=4 /s [101]A(F(fox,brown),hunt)4 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// IM-reasoning
+
+        /e  If a person runs, then that person moves.  /m IM(A(person,run),A(person,move)) /a  /s []
+OK      /e  Does a person run?                 /m  A(person,run)?            /a A(person,run)p=2 /s [104]A(person,run)2 
+OK      /e  Does a person move?                /m  A(person,move)?           /a A(person,move)p=2 /s [107]A(person,move)2 
+OK MORE /e  Who moves?                         /m  A(?,move)                 /a  A(person,move)p=2    /s [65, 66, 67, 107]A(animal,move)4 A(dog,move)4 A(F(dog,tired),move)4 A(person,move)2 
+        /e  People run.                        /m A(people,run) /a  /s []
+OK MORE /e  Who moves?                         /m  A(?,move)                 /a A(person,move)p=4 /s [65, 66, 67, 107, 116, 118, 119, 120, 121, 122]A(animal,move)4 A(dog,move)4 A(F(dog,tired),move)4 A(person,move)2 A(person,move)4 A(people,move)4 A(Joe,move)4 A(girl,move)4 A(boy,move)4 A(Mary,move)4 
+OK      /e  Do animals walk?                   /m  A(animal,walk)?           /a A(animal,walk)p=2 /s [125]A(animal,walk)2 
+        /e  If animals are people, then animals walk.   /m IM(C(animal,people),A(animal,walk)) /a  /s []
+OK      /e  Are animals people?                /m  C(animal,people)?         /a C(animal,people)p=0 /s [13, 128]C(animal,people)0.0 C(animal,people)0.0 
+OK      /e  Do animals walk?                   /m  A(animal,walk)?           /a A(animal,walk)p=2 /s [125, 131]A(animal,walk)2 A(animal,walk)2 
+        /e  Joe sits.                          /m A(Joe,sit) /a  /s []
+        /e  If people sit, then people do not move.   /m IM(A(people,sit),NOT(A(people,move))) /a  /s []
+OK      /e  Do people sit?                     /m  A(people,sit)?            /a A(people,sit)p=2 /s [138]A(people,sit)2 
+OK      /e  Does Joe sit?                      /m  A(Joe,sit)?               /a A(Joe,sit)p=4 /s [135]A(Joe,sit)4 
+***BADP /e  Does Joe move?                     /m  A(Joe,move)?              /a A(Joe,move)p=0 /s [119, 147]A(Joe,move)4 A(Joe,move)4 
+        /e  If a person does not move, then the person stays.    /m IM(NOT(A(person,move)),A(person,stay)) /a  /s []
+***BADP /e  Does Joe stay?                     /m  A(Joe,stay)?              /a A(Joe,stay)p=4 /s [164]A(Joe,stay)2 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// AND-reasoning
+
+        /e  Mary and Joe walk.                 /m A(AND(Mary,Joe),walk) /a  /s []
+OK MORE /e  Does Mary walk?                    /m  A(Mary,walk)?             /a A(Mary,walk)p=1 /s [78, 84]A(Mary,walk)2 A(Mary,walk)4 
+        /e  Mary plays.                        /m A(Mary,play) /a  /s []
+        /e  Joe plays.                         /m A(Joe,play) /a  /s []
+***BADP /e  Do Mary and Joe play?              /m  A(AND(Mary,Joe),play)?    /a A(AND(Mary,Joe),play)p=1 /s [180]A(AND(Mary,Joe),play)2 
+***BADP /e  What does Joe do?                  /m  A(Joe,?)                  /a A(Joe,walk)p=1 A(Joe,talk)p=1 A(Joe,play)p=1 A(Joe,run)p=0.5 A(Joe,move)p=0.5 A(Joe,sit)p=1 /s [71, 72, 115, 119, 135, 147, 158, 164, 175]A(Joe,walk)4 A(Joe,talk)4 A(Joe,run)4 A(Joe,move)4 A(Joe,sit)4 A(Joe,move)4 A(Joe,move)4 A(Joe,stay)2 A(Joe,play)4 
+***BADP /e  Does Joe sit and play?             /m  A(Joe,AND(sit,play))?     /a A(Joe,AND(sit,play))p=1 /s [185]A(Joe,AND(sit,play))2 
+***BADP /e  Does Joe run?                      /m  A(Joe,run)?               /a A(Joe,run)p=0.5 /s [115]A(Joe,run)4 
+OK      /e  Does Joe run and sit?              /m  A(Joe,AND(run,sit))?      /a A(Joe,AND(run,sit))p=0.5 /s [190]A(Joe,AND(run,sit))2 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// %-reasoning
+
+        /e  /m  /a  /s []
+        /e  If %1 consists of %2, then %2 is part of %1.     /m IM(F(A(%1,consist),R(of,%2)),P(%2,%1)) /a  /s []
+        /e  The family consists of father, mother and Joe.   /m F(A(family,consist),R(of,AND(father,mother,Joe)) /a  /s []
+***BADP /e  Is Joe part of the family?         /m  P(Joe,family)?            /a P(Joe,family)p=1 /s [202]P(Joe,family)2 
+OK      /e  Is Mary part of the family?        /m  P(Mary,family)?           /a P(Mary,family)p=0.5 /s [205]P(Mary,family)2 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Features
+
+        /e  Foxes are animals.                 /m C(fox,animal) /a  /s []
+        /e  The fox is red.                    /m F(fox,red) /a  /s []
+        /e  The fox is white.                  /m F(fox,white) /a  /s []
+        /e  The fox is smart.                  /m F(fox,smart) /a  /s []
+        /e  The fox hunts in the forest.       /m F(A(fox,hunt),R(in,forest)) /a  /s []
+        /e  The fox hunts in the forest at dawn.   /m F(A(fox,hunt),R(in,forest),R(at,dawn)) /a  /s []
+OK MORE /e  What are foxes like?               /m  F(fox,?)                  /a F(fox,red)p=1 F(fox,white)p=1 F(fox,smart)p=1 /s [93, 215, 221, 227]F(fox,brown)4 F(fox,red)4 F(fox,white)4 F(fox,smart)4 
+***MISS /e  How do foxes hunt?                 /m  F(A(fox,hunt),?)          /a F(A(fox,hunt),R(in,forest),R(at,dawn))p=1 /s [100, 237]F(A(fox,hunt),R(in,forest))4 F(A(fox,hunt),R(in,forest))4 
+OK      /e  Where do foxes hunt?               /m  F(A(fox,hunt),R(in,?))    /a F(A(fox,hunt),R(in,forest))p=1 /s [100, 237]F(A(fox,hunt),R(in,forest))4 F(A(fox,hunt),R(in,forest))4 
+OK MORE /e  When do foxes hunt?                /m  F(A(fox,hunt),T(?))       /a not found:F(A(fox,hunt),T(?)) /s [261]F(A(fox,hunt),T(?))2 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+//C-reasoning for feature
+
+OK      /e  Does the Red Fox hunt?             /m  A(F(fox,red),hunt)?       /a A(F(fox,red),hunt)p=1 /s [216, 239, 253, 263]A(F(fox,red),hunt)4 A(F(fox,red),hunt)4 A(F(fox,red),hunt)4 A(F(fox,red),hunt)4 
+OK      /e  Does the brown fox hunt?           /m  A(F(fox,brown),hunt)?     /a  A(F(fox,brown),hunt)p=1      /s [101, 238, 252, 262]A(F(fox,brown),hunt)4 A(F(fox,brown),hunt)4 A(F(fox,brown),hunt)4 A(F(fox,brown),hunt)4 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// XOR-reasoning Understanding exclusive features and any kind of exclusive concepts
+
+***BADP /e  Does Joe run?                      /m  A(Joe,run)?               /a A(Joe,run)p=0.5 /s [115]A(Joe,run)4 
+        /e  People either sit or run.          /m A(people,XOR(sit,run)) /a  /s []
+***BADP /e  Does Joe run?                      /m  A(Joe,run)?               /a A(Joe,run)p=0 /s [115]A(Joe,run)4 
+        /e  The fox is either red or white.    /m  F(fox,XOR(red,white))     /a  /s []
+OK      /e  Is the fox red?                    /m  F(fox,red)?               /a F(fox,red)p=1 /s [215]F(fox,red)4 
+OK      /e  Is the fox white?                  /m  F(fox,white)?             /a F(fox,white)p=1 /s [221]F(fox,white)4 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// understanding dimensions
+
+        /e  Every object has a shape.          /m P(shape,object) /a  /s []
+        /e  The shape of an object can be a circle, a trianlge, a square, a sphere, or a cube.  /m C(P(shape,object),XOR(circle,triangle,square,sphere,cube)) /a  /s []
+        /e  The color of a toy can be either red, green, blue, or yellow.       /m F(P(color,toy),XOR(red,green,blue,yellow)) /a  /s []
+        /e  The button is an object.           /m C(button,object) /a  /s []
+        /e  The button`s shape is a circle.    /m C(P(shape,button),circle) /a  /s []
+OK      /e  What shape is the button?          /m  C(P(shape,button),?)           /a C(P(shape,button),circle)p=1 /s [313]C(P(shape,button),circle)4 
+OK      /e  Is the button`s shape a circle?    /m  C(P(shape,button),circle)?     /a C(P(shape,button),circle)p=1 /s [313]C(P(shape,button),circle)4 
+***BADP /e  Is the button`s shape a cube?      /m  C(P(shape,button),cube)?       /a C(P(shape,button),cube)p=0 /s [318]C(P(shape,button),cube)2 
+OK      /e  Is the button a circle?            /m  C(button,circle)?              /a C(button,circle)p=0.5 /s [321]C(button,circle)2 
+        /e  Shape is a feature.                /m C(shape,feature) /a  /s []
+        /e  Shape is a dimension.              /m C(shape,dimension) /a  /s []
+        /e  If %1 is a dimension and %2`s %1 is %3, then %2 is %3.   /m IM(AND(C(%1,dimension),F(P(%1,%2),%3)),F(%2,%3)) /a  /s []
+***BADP /e  Is the button a circle?            /m  C(button,circle)?              /a C(button,circle)p=1 /s [321]C(button,circle)2 
+        /e  Color is a feature.                /m C(color,feature) /a  /s []
+        /e  The toy`s color is red.            /m F(P(color,toy),red) /a  /s []
+***BADP /e  Is the toy`s color green?          /m  F(P(color,toy),green)?         /a F(P(color,toy),green)p=0 /s [340]F(P(color,toy),green)2 
+***BADP /e  Is the toy yellow?                 /m  F(toy,yellow)?                 /a F(toy,yellow)p=0 /s [343]F(toy,yellow)2 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Implicit C-reasoning for features
+
+        /e  Bob is a nice person.              /m C(bob,F(person,nice)) /a  /s []
+OK      /e  Does Bob talk?                     /m  A(bob,talk)?                   /a A(bob,talk)p=1 /s [364]A(bob,talk)4 
+        /e  Girls are people.                  /m C(girl,people) /a  /s []
+***BADP /e  Do little girls talk?              /m  A(F(girl,little),talk)?        /a A(F(girl,little),talk)p=1 /s [422]A(F(girl,little),talk)2 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Split word meaning using XOR reasoning
+
+OK      /e  Are flies animals?                 /m  C(fly,animal)?                 /a C(fly,animal)p=0.5 /s [437]C(fly,animal)2 
+        /e  Fly means either a kind of move or a kind of animal.     /m XOR(C(fly,move),C(fly,animal)) /a  /s []
+        /e  /m  /a  /s []
+// XOR-reasoning generates two meanings for fl 1:move 2:animal and creates the C-concepts
+
+OK      /e  Is fly a kind of move?             /m  C(fly,move)?                   /a C(fly,move)p=1 /s [440]C(fly,move)4 
+***BADP /e  Are flies animals?                 /m  C(fly,animal)?                 /a  C(fly,animal)p=0      /s [437, 443]C(fly,animal)2 C(fly,animal)4 
+        /e  Birds fly.                         /m  A(bird,fly)                    /a  /s []
+***BADP /e  Do birds move?                     /m  A(bird,move)?                  /a  A(bird,move)p=1       /s [452]A(bird,move)2 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// C-reasoning to detect disjunct classes - not necessary for this specific example
+
+        /e  /m  /a  /s []
+// If two classes have no (very few) common members then they are disjunct
+
+***BADP /e  Are flies animals?                 /m  C(fly,animal)?                 /a  C(fly,animal)p=0     /s [437, 443]C(fly,animal)2 C(fly,animal)4 
+        /e  /m  /a  /s []
+// the system could reason that XOR(C(%1,move)p=1,C(%1,animal)p=1)
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// split the meaning of "the" using XOR reasoning
+
+        /e  The fox is big.                    /m F(Q(the,fox),big) /a  /s []
+OK      /e  Is the fox big?                    /m  F(Q(the,fox),big)?             /a F(Q(the,fox),big)p=1 /s [457]F(Q(the,fox),big)4 
+OK      /e  Are foxes big?                     /m  F(fox,big)?                    /a  F(fox,big)p=0.5        /s [460]F(fox,big)2 
+        /e  The %1 is either the same as %1, or is a kind of %1.     /m XOR(D(Q(the,%1),%1)p=1,C(Q(the,%1),%1)p=1) /a  /s []
+        /e  /m  /a  /s []
+// XOR-reasoning generates two meanings of "the" and creates the D and C concepts
+
+        /e  The fox is big.                    /m  F(Q(the,fox),big)                                       /a  /s []
+***BADP /e  Are foxes big?                     /m  F(fox,big)?                    /a  F(fox,big)p=1          /s [460]F(fox,big)2 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Word sense disambiguation using assumption branches and likelihood.
+
+        /e  Foxes are either big or small.     /m F(fox,XOR(big,small)) /a  /s []
+        /e  The fox is small.                  /m  F(Q(the,fox),small)                                     /a  /s []
+***BADP /e  Are foxes small?                   /m  F(fox,small)?                  /a  F(fox,small)p=0        /s [481]F(fox,small)2 
+***BADP /e  Are flies people?                  /m  C(fly,people)?                 /a C(fly,people)p=0 /s [484]C(fly,people)2 
+        /e  /m  /a  /s []
+// two assumptions are taken for 'fly' meaning. In 1 we generate C(fly,move), in 2 we generate C(fly,animal)p=1 and C(fly,people)p=0.
+
+OK MORE /e  What are flies?                    /m  C(fly,?)                       /a  C(fly,move)p=1         /s [437, 440, 443, 484]C(fly,animal)2 C(fly,move)4 C(fly,animal)4 C(fly,people)2 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Quantifiers, unique instance versus general
+
+        /e  /m  /a  /s []
+        /e  /m  D(Q(all,%1),%1)p=1                            /a  /s []
+        /e  /m  D(F(%1,general),%1)p=1 			 /a  /s []
+        /e  /m  D(F(%1,R(in,general)),%1)p=1 		 /a  /s []
+        /e  /m  D(F(Q(%2,%1),R(in,general)),%1)p=1 		 /a  /s []
+        /e  /m  D(F(Q(%2,%1),general),%1)p=1 		 /a  /s []
+        /e  /m  D(F(Q(%2,%1),specific),%1)p=0		 /a  /s []
+        /e  /m  C(F(Q(%2,%1),specific),%1)p=1		 /a  /s []
+        /e  /m  D(Q(some,%1),%1)p=0.5                         /a  /s []
+        /e  /m  D(Q(all,%1),%1)p=1				 /a  /s []
+        /e  /m  D(Q(the,%1),F(Q(a,%1),specific))     /a  /s []
+        /e  /m  /a  /s []
+// we already should have D(Q(the2,%1),%1)p=0  which means that the second meaning of 'the' is instance, not generalizing.
+
+OK      /e  Are foxes smart?                   /m  F(fox,smart)?                 /a F(fox,smart)p=1 /s [227]F(fox,smart)4 
+***BADP /e  Is the fox smart?                  /m  F(Q(the,fox),smart)?          /a F(Q(the,fox),smart)p=1 /s [489]F(Q(the,fox),smart)2 
+        /e  Foxes are fast.                    /m F(fox,fast) /a  /s []
+OK      /e  Are foxes fast?                    /m  F(fox,fast)?                  /a F(fox,fast)p=1 /s [492]F(fox,fast)4 
+OK      /e  Are foxes slow?                    /m  F(fox,slow)?                  /a F(fox,slow)p=0.5 /s [498]F(fox,slow)2 
+        /e  An animal is either fast or slow.   /m F(animal, XOR(fast,slow)) /a  /s []
+OK      /e  Are foxes fast?                    /m  F(fox,fast)?                  /a F(fox,fast)p=1 /s [492]F(fox,fast)4 
+***BADP /e  Are foxes slow?                    /m  F(fox,slow)?                  /a F(fox,slow)p=0 /s [498]F(fox,slow)2 
+        /e  The fox is slow.                   /m  F(Q(the,fox),slow)            /a  /s []
+        /e  If the fox is slow then the fox runs slowly.    /m IM(F(Q(the,fox),slow),F(A(Q(the,fox),run),slowly)) /a  /s []
+        /e  The fox runs slowly.               /m F(A(Q(the,fox),run),slowly) /a  /s []
+        /e  If the fox runs slowly then the fox is slow.   /m IM(F(A(Q(the,fox),run),slowly),F(Q(the,fox),slow)) /a  /s []
+OK      /e  Are foxes fast?                    /m  F(fox,fast)?                  /a F(fox,fast)p=1 /s [492]F(fox,fast)4 
+***BADP /e  Are foxes slow?                    /m  F(fox,slow)?                  /a F(fox,slow)p=0 /s [498]F(fox,slow)2 
+***BADP /e  Is the fox fast?                   /m  F(Q(the,fox),fast)?           /a  F(Q(the,fox),fast)p=1    /s [569]F(Q(the,fox),fast)2 
+OK      /e  Is the fox slow?                   /m  F(Q(the,fox),slow)?           /a  F(Q(the,fox),slow)p=1    /s [520, 525, 559, 564]F(Q(the,fox),slow)4 F(Q(the,fox),slow)4 F(Q(the,fox),slow)4 F(Q(the,fox),slow)4 
+        /e  /m  /a  /s []
+// because we know the fox runs slowly, so we have 2 sources of the fox being slow, this will add likelihood.
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// %-rules for mean and may
+
+        /e  /m  /a  /s []
+// explains mean
+
+        /e  /m  /a  /s []
+// explains may
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// reasoning on necessary condition (N)
+
+        /e  /m  /a  /s []
+        /e  Mary eats muffins if Mary is hungry.		 /m N(A(Mary,I(eat,muffin)),F(Mary,hungry)) /a  /s []
+        /e  Mary is not hungry.				 /m F(Mary,hungry)p=0 /a  /s []
+***BADP /e  Does Mary eat muffins?			 /m  A(Mary,I(eat,muffin))?		 /a A(Mary,I(eat,muffin))p=0 /s [574]A(Mary,I(eat,muffin))4 
+        /e  Mary is hungry.				 /m F(Mary,hungry)p=1 /a  /s []
+***BADP /e  Does Mary eat muffins?			 /m  A(Mary,I(eat,muffin))?		 /a A(Mary,I(eat,muffin))p=0.5 /s [574]A(Mary,I(eat,muffin))4 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Mapping: assign referents to pronouns and other references
+
+        /e  /m  /a  /s []
+// from now on we may use sessions to show text boundaries for mapping
+
+        /e  He may mean a boy. 			 /m D(he,boy)p=0.5 /a  /s []
+        /e  She in general may mean a girl.	 /m D(F(she,R(in,general)),girl)p=0.5 /a  /s []
+        /e  He does not mean a girl.		 /m D(he,girl)p=0 /a  /s []
+        /e  She does not mean a boy.		 /m D(she,boy)p=0 /a  /s []
+        /e  He must always be identified with a person.   /m  N(D(he,%1)r=1,C(%1,person))        /a  /s []
+        /e  She must always be identified with a person.  /m  N(D(she,%1)r=1,C(%1,person))       /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  Joe is a boy.				 /m C(Joe,boy) /a  /s []
+        /e  Mary and Joe are playing in the garden.  	 /m F(A(AND(Mary,Joe),play),R(in,garden)) /a  /s []
+        /e  She is pretty.				 /m  F(she,pretty)		 /a  /s []
+        /e  He is a knight.				// C(he,knight)			 /m  /a  /s []
+        /e  What is Mary like?				// F(Mary,?)			 /m  /a  /s []
+        /e  What is Joe like?				// F(Joe,?)			 /m  /a  /s []
+        /e  What is Mary?				// C(Mary,?)			 /m  /a  /s []
+        /e  What is Joe?					// C(Joe,?)			 /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Updating p-value based on multiple statements and various degrees of certainity and generality (some, most, approximately, ...)
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Inductive reasoning, generalization (propagate knowledge from instances to general concept)
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Unify word meaning
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Understanding groups
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Family example
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Understanding child story, personalization, real and unreal
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Understanding people talking, knowing, thinking, assuming, denying
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Understanding goal, intention, ability, plan, ask, promise, obligation, permission etc
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Understanding comparisons, more, less, earlier, later
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Understanding time
+
+OK MORE /e  When do foxes hunt?                /m  F(A(fox,hunt),T(?))       /a not found:F(A(fox,hunt),T(?)) /s [261]F(A(fox,hunt),T(?))2 
+        /e  "at dawn" means a time.            /m C(R(at,dawn),time) /a  /s []
+        /e  If %1 is a time, then the time is %1.  /m IM(C(%1,time),T(%1)) /a  /s []
+***BADP /e  When do foxes hunt?                /m  F(A(fox,hunt),T(?))       /a F(A(fox,hunt),T(R(at,dawn))) /s [261]F(A(fox,hunt),T(?))2 
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Understanding space and movements
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Updating relevance (r-values) of concepts: make unused concepts less relevant so that they dont become activated.
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Activate concepts to determine limited range of reasoning.
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Increased activation (elaboration) if understanding is too low.
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Learn - partial copy of WM to KB.
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
+// Understanding numbers
+
+        /e  /m  /a  /s []
+        /e  /m  /a  /s []
