@@ -13,6 +13,7 @@ class Testinput:
         self.mentalese = []     # mentalese version of english
         self.goodanswer = []    # expected answer (if english is a question)
         self.question = []      # flag to indicate questions
+        self.next_question = [] # store mentalese of question in the row before the question
         self.systemanswer = []  # output of the system
         self.evaluation = []    # evaluation of system output includinmg mentalese translation
         self.comment = []       # comment
@@ -35,6 +36,7 @@ class Testinput:
             self.mentalese.append("")  # each list must have a new item
             self.goodanswer.append("");
             self.question.append(0)
+            self.next_question.append("")
             self.systemanswer.append([]);
             self.evaluation.append("")
             self.comment.append("")
@@ -49,6 +51,9 @@ class Testinput:
                     self.question[rowi] = 1
                     if mpos > -1: self.mentalese[rowi] = line[mpos + 2:apos]
                     if mpos == -1 and epos > -1: self.eng[rowi] = line[epos + 2:apos]
+                    prerow = rowi-1
+                    while prerow>0 and self.mentalese[prerow]=="": prerow-=1    # find previous nonempty row
+                    if prerow >=0: self.next_question [prerow] = self.mentalese[rowi][:]    # store question mentalese
                 if "//" in line[i:i + 2]:
                     comment = i
                     self.comment[rowi]=line[comment:]
@@ -87,7 +92,7 @@ class Testinput:
             if "not found" not in tfment[0]: notfound=0
             else: notfound=1
             while (notfound==0 and len(tfment[0])>3 and counter<20):
-                gl.WM.read_concept(tfment)              # store good answer in WM temporarliy
+                gl.WM.read_concept(tfment,0)              # store good answer in WM temporarliy
                 counter=counter+1
             endi=gl.WM.ci                               # final index in WM
             finalanswers[:]=self.goodanswer_list(starti,endi)[:]    # get indices of good answers
@@ -96,8 +101,9 @@ class Testinput:
             goodindex=0
             for gooda in finalanswers:                  # take all good answers
                 sysindex=0; goodmatch=0
-                for sysa in self.systemanswer[rowindex]:    # and take all system answers
-#                    if (conc.match(gl.WM.cp[gooda],gl.WM.cp[sysa])==1): # relation and parents match
+                for sysalist in self.systemanswer[rowindex]:        # and take all system answers
+                    if type(sysalist) is list: sysa=sysalist[1]     #backward compatibility
+                    else: sysa=sysalist
                     if (gl.WM.rec_match(gl.WM.cp[gooda],gl.WM.cp[sysa])==1): # relation and parents match
                         goodmatch=1
                         if (gl.WM.cp[gooda].p == gl.WM.cp[sysa].p):     # p value is the same
@@ -127,12 +133,14 @@ class Testinput:
         self.resultf.write(" /a ")
         self.resultf.write(self.goodanswer[rowindex])
         self.resultf.write(" /s ")
-        self.resultf.write(str(self.systemanswer[rowindex]))
         if (len(self.eng[rowindex])==0 and len(self.mentalese[rowindex])==0 and len(self.comment[rowindex])>0):
             self.resultf.write("\n")
             self.resultf.write(self.comment[rowindex])
-        for sysa in self.systemanswer[rowindex]:
+        for sysalist in self.systemanswer[rowindex]:
+            if type(sysalist) is list: sysa=sysalist[1]
+            else: sysa=sysalist
             self.resultf.write(gl.WM.cp[sysa].mentstr + str(gl.WM.cp[sysa].p)+" ")   # write answer string
+        self.resultf.write(str(self.systemanswer[rowindex]))
         self.resultf.write("\n")
         
 

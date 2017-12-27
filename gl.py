@@ -6,12 +6,15 @@ import sys
 class Arguments:
     def __init__(self):
         self.argnum = len(sys.argv)
-        self.pdefault=1         #default value of p
-        self.pdef_unknown=0.5
-        self.pgranu = 4         # granularity for p, pgranu+1 discrete values from 0
+        self.pdefault=4         #default value of p
+        self.pdef_unknown=2
+        self.pgranu = 4         # granularity for p, pgranu+1 discrete values from 0 set pgranu=pmax for p=0,1,2,....pmax
+        self.cmax = 4           # max for consistency
         self.pmax = 4           # maximum p value. Like 1 for p=0..1, or 4 for p=0,1,2,3,4.
         self.rmax = 4           # maximum relevance
-                                # set pgranu=pmax for p=0,1,2,....pmax
+        self.gmax = 1           # max for generality
+        self.gmin = 0           # threshold for generality for concept to be specific
+                                
         
         i=1.1                   # to be used instead of 1
         self.im = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 3, 3], [2, 2, 2, 3, 4]]         # IM rule
@@ -20,6 +23,9 @@ class Arguments:
         self.pclass = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [i, i, 2, 2, 3], [0, i, 2, 3, 4]]
         self.pxor = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, i, i], [2, 2, 2, i, 0]]
         # pclass is the matrix for class reasoning. C(%1,%2)p1 and %X(%2,%3)p2 -> %x(%2,%3)pclas, pclass[p2,p1]
+        self.consist = [[4,4,4,3,0],[4,4,4,3,3],[4,4,4,4,4],[3,3,4,4,4],[0,3,4,4,4]]        #consistency conversion for pair of concepts
+        self.branchvalue = [[0,0,0,0,0],[0,1,1,1,1],[0,2,2,2,2],[0,2,3,3,3],[0,3,4,4,4]]   #consistency conversion for entire branch
+        self.branch_kill = [0,i,2,3,3]   # index = best branch value. output=limit below which branch is killed.
         self.pmap = {"pide1":self.pide1,"pide2":self.pide2,"pclass":self.pclass,"pxor":self.pxor}
 
         self.rcode = {
