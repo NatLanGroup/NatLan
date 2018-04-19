@@ -1,5 +1,5 @@
 import gl
-
+from timeit import default_timer as timer
 
 class Word:
     def __init__(self, wordstring):
@@ -26,15 +26,19 @@ class Wlist:
         return gl.KB.ci
 
     def find(self,new_word):
+        s=timer()
         for index in range(len(self.wcp)):
             if self.wcp[index].word == new_word:
                 return self.wcp[index].wchild[0]
+        gl.args.settimer("word_01: find_word",timer()-s)
         return -1
 
     def find_word(self,new_word):
+        s=timer()
         for index in range(len(self.wcp)):
             if self.wcp[index].word==new_word:
                 return index
+        gl.args.settimer("word_01: find_word",timer()-s)
         return -1
     
 

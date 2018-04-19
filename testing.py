@@ -104,15 +104,21 @@ class Testinput:
                 for sysalist in self.systemanswer[rowindex]:        # and take all system answers
                     if type(sysalist) is list: sysa=sysalist[1]     #backward compatibility
                     else: sysa=sysalist
-                    if (gl.WM.rec_match(gl.WM.cp[gooda],gl.WM.cp[sysa])==1): # relation and parents match
+                    if (gl.WM.rec_match(gl.WM.cp[gooda],gl.WM.cp[sysa],goodanswer=1)==1): # relation and parents match
                         goodmatch=1
                         if (gl.WM.cp[gooda].p == gl.WM.cp[sysa].p):     # p value is the same
                             sysamatch[sysindex]=1
                             goodamatch[goodindex]=1
+                        else:
+                            if gl.WM.cp[sysa].p != gl.args.pmax/2:
+                                if sysamatch[sysindex]==0:      # p mismatch, no perfect match earlier, may mean BADP
+                                    sysamatch[sysindex]=2
                     sysindex=sysindex+1
                 if (goodmatch==0): eval="***MISS"           # good answer missing, override p mismatch
                 goodindex+=1
             if (eval=="OK     " and (0 in goodamatch)):      # concept match OK but some p values do not match
+                eval="***BADP"
+            if (eval=="OK     " and (2 in sysamatch)):      # concept match mulétiple cases, some p mismatching
                 eval="***BADP"
             if (eval=="OK     " and (0 in sysamatch)):      # too many system answers
                 eval="OK MORE"
@@ -140,7 +146,7 @@ class Testinput:
             if type(sysalist) is list: sysa=sysalist[1]
             else: sysa=sysalist
             self.resultf.write(gl.WM.cp[sysa].mentstr + str(gl.WM.cp[sysa].p)+" ")   # write answer string
-        self.resultf.write(str(self.systemanswer[rowindex]))
+        if self.systemanswer[rowindex]!=[]: self.resultf.write(str(self.systemanswer[rowindex]))
         self.resultf.write("\n")
         
 

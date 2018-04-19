@@ -1,10 +1,12 @@
 import sys, gl
+from timeit import default_timer as timer
 
 class Concept:
     def __init__(self,rel=0):
         self.p = int(gl.args.pmax/2)        # p value of concept
         self.c = int(gl.args.cmax)          # consistence of this concept and previous concepts
         self.g = int(gl.args.gmax)          # generality: how specific (0) or general (1) is the concept
+        self.each = int(gl.args.eachmax/2)  # each property: 0 means exception, 4 means each=no exception for sure
         self.relevance = int(gl.args.rmax/2)  # relevance of the concept
         self.relation = rel # relation code
         self.parent = []    # parents list
@@ -13,7 +15,12 @@ class Concept:
         self.next = []      # list of next concepts
         self.wordlink = []  # link to WL, if this is a word
         self.kblink = []    # link to KB, if this is in WM
+        self.mapto = -1     # another concept in WM where this one is mapped to
         self.wmuse = [-1]   # what concepts were used to get this one by reasoning. Or -1 if original input.
+        self.reasonuse = [] # rule and concepts directly used for reasoning
+        self.usedby = set() # new concepts that use this old concept for reasoning
+        self.general = set([])  # set of lists of concepts more general than this one
+        self.same = set()   # set of concepts being the same
         self.mentstr = ""   # string format of mentalese
         self.rulestr = []   # strings for rule-information like p=p1 or p=pclas
         self.kb_rules = []  # list of rules in KB which match this concept
@@ -27,7 +34,6 @@ class Concept:
 
 
 class Kbase:
-    #TO DO: move_rule and move_relevant should work on branches !!
     
     def __init__(self, instancename):
         self.cp = []                    # CONCEPT LIST CP
@@ -37,30 +43,62 @@ class Kbase:
         self.paragraph = []             # concepts where the latest paragraph ended on all branches
         self.name = instancename          # the name of the instance can be used in the log file
 
-    def search_fullmatch(self,pin,rel,parents,branch=[]):
-        found=0
+    def check_Contradiction(self,sindex,rule,pin,conclist):     # process contradiction
+        if self.cp[sindex].p == pin:                        # no contradiction
+            return 1                                        # match found
+        elif pin==gl.args.pmax/2 or self.cp[sindex].p==gl.args.pmax/2:   # one of the concepts is unknown
+            return 0                                        # no match
+        else:                                               # contradiction found
+            try:
+                if rule[0] in gl.KB.cp[self.cp[sindex].reasonuse[0]].general:   # the new concept's rule is more general than used for old
+                    gl.log.add_log(("CONTRADICTION: inhibit reasoning in check_Contra: based on more general rule. Specific rule based old  index=",sindex," general rule:",rule[0]))
+                    return 1                                # match found, inhibits reasoning
+                if self.cp[sindex].reasonuse[0] in gl.KB.cp[rule[0]].general:   # the contradicting old concept used a more general rule
+                    gl.log.add_log(("CONTRADICTION: PVALUE OVERRIDE in check_Contra because p was based on general rule. index=",sindex," old p=",self.cp[sindex].p," new p=",pin," used by:",self.cp[sindex].usedby))
+                    self.cp[sindex].p=pin                   # override p in old
+                    for used in self.cp[sindex].usedby:     # concepts that used this sindex
+                        gl.log.add_log(("CONTRADICTION: PVALUE OVERRIDE TO MAX/2 in check_Contra because based on p-overriden concept. index=",used," old p=",self.cp[used].p," overriden concept:",sindex))
+                        self.cp[used].p=gl.args.pmax/2      # set p value to unknown
+            except: a=0
+        if len(conclist)>0:                                 # list of concepts used for the new reasoning
+            alluse=set()
+            for newuse in conclist:
+                alluse.add(newuse)
+                alluse.update(self.cp[newuse].same)         # add those concepts same as used concept to all used concepts
+            general_newconc = alluse & self.cp[sindex].general  # set of used concepts that are general to the old concept
+            if len(general_newconc)>0:                      # new concept would use input that is more general than the old concept
+                gl.log.add_log(("CONTRADICTION: inhibit reasoning in check_Contra: more general input. Specific old index=",sindex," too general input=",general_newconc))
+                return 1                                    # found=1 will inhibit reasoning
+        # TO DO: if new concept is more specific, than input used for the old concept, override p value of old !!!!! MISSING
+        return 0
+
+    def search_fullmatch(self,pin,rel,parents,rule,branch=[],conclist=[]):
+        found=0; s=timer()
         if self.convert_p(pin) == self.convert_p(gl.args.pmax/2):   #p70.5 will not be reasoned
             found=1
         else:
-            for sindex in range(gl.reasoning.actual,self.ci+1):
+            for sindex in range(0,self.ci+1):                       # search for match in entire WM (on branch)
                 con=self.cp[sindex]
                 if con.relation==rel and (branch==[] or sindex in branch):   #only match to concepts in branch
-                    if con.p==pin:                                        # p value checked currently
+                    if len(con.parent)==len(parents) and (1==1 or con.p==pin):    # p value not checked here but in check_Contra                                        # p value checked currently
                         pari=0; allsame=1                           #allsame will show if all parents are the same
                         while pari<len(con.parent) and allsame==1:  #only check until first different parent found
                             parent1wm=con.parent[pari]
                             if len(parents)>pari:
                                 p1=parent1wm; p2=parents[pari]
                                 thisfound=self.rec_match(self.cp[p1],self.cp[p2],[p1,p2])     #parents are compared
-                                if thisfound==0: allsame=0
+                                if thisfound!=1: allsame=0
                                 else:                               #exception for D( , ) relation for mapping
                                     if con.relation==3 and len(parents)==2 and len(con.parent)==2 and parents[0]!=con.parent[0]:
                                         allsame=0                   #direct index comparison
                             else:
                                 allsame=0
                             pari+=1
-                        if allsame==1: found=1
-        return found
+                        if allsame==1:
+                            found=self.check_Contradiction(sindex,rule,pin,conclist)    # check whether we have contradiction and resolve it
+        gl.args.settimer("concep_902: search_fullmatch",timer()-s)
+        return found    # TO DO: feed back allsame in found, to populate .general in reasoned concept in finaladd
+
 
     def convert_p(self,newp):                       # convert p from 0..1 to 0,1,2,3,...
         out=newp
@@ -72,13 +110,14 @@ class Kbase:
         return out
 
     def getp_backward(self,swhat,pback):            # search earlier occurence of swhat and return p
-        sindex=swhat-1
+        sindex=self.cp[swhat].previous              # proceed on branch
         found=0
         while sindex>-1 and found==0:
             if self.rec_match(self.cp[swhat], self.cp[sindex], [swhat,sindex]) == 1:
                 found=1
                 pback=self.cp[sindex].p
-            sindex=sindex-1
+                self.cp[swhat].wmuse=[sindex]       #set wmuse to see whjere we get the p value from
+            sindex=self.cp[sindex].previous
         return pback
 
     
@@ -92,6 +131,8 @@ class Kbase:
         self.cp[self.ci].p = self.convert_p(new_p)              #set p value
         self.cp[self.ci].add_parents(new_parents)               #set parents
         self.cp[self.ci].kblink[:]=kbl[:]                       # set link to KB
+        if kbl==[] and self.name=="KB" and new_rel==1:          # word addition in KB
+            self.cp[self.ci].kblink.append(self.ci)             # add own index in KB
         if (new_rel != gl.args.rcode["W"]):                     # if this is not a word
             for par in self.cp[self.ci].parent:                 #register new concept as the child of parents
                 self.cp[par].child.append(self.ci)
@@ -121,9 +162,18 @@ class Kbase:
     def remove_concept(self):
         gl.log.add_log((self.name," remove concept index=",self.ci))
         if (self.ci>-1):
+            newleaf=self.cp[self.ci].previous
             self.cp.pop()
             self.ci=self.ci-1
-            if self.ci>-1: self.cp[self.ci].next=[]     #this becomes leaf
+            if self.ci>-1: self.cp[newleaf].next=[]     #this becomes leaf
+            if self.name=="WM" and self.ci+1 in gl.WM.branch:
+                gl.WM.branch.remove(self.ci+1)          # old leaf needs update
+                gl.WM.branch.appenmd(newleaf)
+                try:
+                    value=self.branchvalue[self.ci+1]
+                    del self.branchvalue[self.ci+1]     #branbchvaljue needs update
+                    self.branchvalue[newleaf]=value
+                except: a=0
         return self.ci
 
     def get_branch_concepts(self, beforei):             #returns the id list of previous concepts on branch (inclusive)
@@ -147,19 +197,49 @@ class Kbase:
                 sindex = sindex-1
         return found
 
-    def rec_match(self, what1, inwhat, wmindex=[], castSecondKbase=0):  # two concepts match? handles questions
-        # TODO should we use booleans instead numbers?
-        # e.g. result = True
+
+    def isword_Special(self,what1,inwhat):          # compare two words to see if one word is a special case of the other
+        is_special=0                # one of the words may be a specific one, the other %1, then %1 is more general
+        end1=gl.KB.cp[what1.kblink[0]].mentstr[1:]
+        end2=gl.KB.cp[inwhat.kblink[0]].mentstr[1:]
+        if gl.KB.cp[what1.kblink[0]].mentstr[0]=="%":
+            try:
+                float(end1)                         # check that the word after the % is numeric
+                if gl.KB.cp[inwhat.kblink[0]].mentstr[0]!="%":
+                    is_special=2                    # the inwhat word is special
+            except: is_special=is_special
+        if gl.KB.cp[inwhat.kblink[0]].mentstr[0]=="%":
+            try:
+                float(end2)                         # check that the word after the % is numeric
+                if gl.KB.cp[what1.kblink[0]].mentstr[0]!="%":
+                    is_special=3                    # the what1 word is special
+            except: is_special=is_special
+        return is_special
+            
+
+    def rec_match(self, what1, inwhat, wmindex=[], castSecondKbase=0, goodanswer=0):  # two concepts match? handles questions
         # castSecondKbase help to compare WM concept with KB concept
         #       castSecondKbase = 0 -> no cast, both concepts are searched in the Kbase from which the function was called
         #       castSecondKbase = 1 -> cast to KB, i.e. second concepts is searched in KB, whichever Kbase the function was called from
         #       castSecondKbase = 2 -> cast to WM, i.e. second concepts is searched in WM, whichever Kbase the function was called from
-
+        # wmindex is the concept index pair in WM for g=0 comparison
+        # goodanswer is a flag to show that we are doing expected good answer vs system answer comaprison from eval_test
+        s=timer()
+        match=1
         if what1.relation != -1 and inwhat.relation != -1 and what1.relation != inwhat.relation:
+            if len(wmindex)==2 and wmindex[0] in inwhat.general: return 2   # indicates special case concept of inwhat
+            if len(wmindex)==2 and wmindex[1] in what1.general: return 3    # indicates special case concept of what1
+            if what1.relation==1 and what1.mentstr[0]=="%": return 2        # indicates special case concept of inwhat
+            if inwhat.relation==1 and inwhat.mentstr[0]=="%": return 3        # indicates special case concept of what1
+    # check that the compound concept is rfeally a special case of word: C(compond,word) or compound=F(word,feature)
             return 0     # relation is neither same nor -1 -> not match
 
         if what1.relation == 1:     # comparing two word concepts. Handle specific words differently as general ones.
-            if what1.kblink == inwhat.kblink :
+            if what1.kblink == inwhat.kblink and what1.g==gl.args.gmax and inwhat.g==gl.args.gmax:
+                return 1                                                    # two words are the same, both are general
+            if len(wmindex)==2 and wmindex[0] in inwhat.general: return 2
+            if len(wmindex)==2 and wmindex[1] in what1.general: return 3
+            if what1.kblink == inwhat.kblink:
                 if self.name=="WM" and (castSecondKbase==0 or castSecondKbase==2):   # two WM concepts compared
                     if what1.g>gl.args.gmin and inwhat.g>gl.args.gmin:      # both concepts are general
                         return 1
@@ -167,32 +247,40 @@ class Kbase:
                         if len(wmindex)==2 and wmindex[0]==wmindex[1]:      # compare concept index directly
                             return 1                                        # match only if indices are the same.
                         else:                                               
-                            if len(wmindex)!=2: return 1                    # indices not provided, match
+                            if goodanswer==1: return 1                    # match if this is answer goodness evaluation
                             else: return 0                                  # probably some error.
+                else: return 1                                              # for KB comparison return 1
             else: 
-                return 0
+                return self.isword_Special(what1,inwhat)                    # see whether %1 and specific word are given
         
         if len(what1.parent) != len(inwhat.parent):
             return 0     # if number of parents are not equal -> not match
             
         for pindex in range(0, len(what1.parent)):
             p1 = what1.parent[pindex]; p2 = inwhat.parent[pindex]
+            allpis2=0; allpis3=0                                            # will indicate if what1 or inwhat is special case
             if what1.parent[pindex] == -1 or inwhat.parent[pindex] == -1 :     # handle -1 parents
                 continue    # -1 indicates question mark, this is considered as matching
-
             if castSecondKbase == 1 : 
-                if self.rec_match(self.cp[p1], gl.KB.cp[p2], [p1,p2], castSecondKbase) == 0 : 
-                    return 0    # if parent concept does not match -> no match
+                pm = self.rec_match(self.cp[p1], gl.KB.cp[p2], [p1,p2], castSecondKbase)
             elif castSecondKbase == 2 : 
-                if self.rec_match(self.cp[p1], gl.WM.cp[p2], [p1,p2], castSecondKbase) == 0 : 
-                    return 0    # if parent concept does not match -> no match
+                pm = self.rec_match(self.cp[p1], gl.WM.cp[p2], [p1,p2], castSecondKbase)
             else :
-                if self.rec_match(self.cp[p1], self.cp[p2], [p1,p2]) == 0:      # compare parent concepts for match
-                    return 0    # if parent concept does not match -> no match
-            
-        return 1
+                pm = self.rec_match(self.cp[p1], self.cp[p2], [p1,p2],goodanswer=goodanswer)      # compare parent concepts for match
+            if pm==0: return 0                          # if parent concept does not match -> no match
+            if pm == 2:
+                self.cp[p2].general.add(p1)             # record general relation for parent
+                if match == 3: return 0                 # cross special
+            if pm == 3:
+                self.cp[p1].general.add(p2)             # record general relation
+                if match==2: return 0                   # cross special
+            if pm>1 and match==1: match=pm              # special 2 or 3
+        if match==2 and len(wmindex)==2 : inwhat.general.add(wmindex[0])    # remember that what1 is general of inwhat
+        if match==3 and len(wmindex)==2: what1.general.add(wmindex[1])      # remember that inwhat is general of what1
+        gl.args.settimer("concep_901: rec_match",timer()-s)    
+        return match
 
-    def get_child(self,rel,parents=[]):                      # search concept as child of parent
+    def get_child(self,rel,parents=[]):                 # search concept as child of parent
         found=-1
         for child in self.cp[parents[0]].child:         # in children of the first parent
             if (self.cp[child].relation==rel):          # relation must match
@@ -201,6 +289,7 @@ class Kbase:
         return found
 
     def walk_db(self,curri,lasti=-2):                   # recursive walk over WM or KB from curri towards all parents. Call without lasti.
+        # jumps over identical items !!!!!!
         while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
             try: nextp=self.cp[curri].parent.index(lasti)+1
             except:
@@ -210,6 +299,12 @@ class Kbase:
         print ("walk",self.name,"current concept",curri,"parents",self.cp[curri].parent,"mentalese",self.cp[curri].mentstr,"rule:"[:5*len(self.cp[curri].rulestr)],self.cp[curri].rulestr)
         return curri
 
+    def visit_db(self,db,curri,visitmap,nextp=0):       #demo a recursive walk that is not jumping over identical items
+        while (len(db.cp[curri].parent)>0 and nextp<len(db.cp[curri].parent)):  # walk over parents of same level
+            self.visit_db(db,db.cp[curri].parent[nextp],visitmap,0)             # one level down
+            nextp=nextp+1
+        visitmap.append([curri,db.cp[curri].mentstr])       # actual data manipulation
+        return
 
     def copyto_kb(self,curri,lasti=-2):         # copy concept in WM on curri to KB with all parents
         while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
@@ -231,11 +326,31 @@ class Kbase:
                     gl.KB.cp[kbl].g = self.cp[curri].g  # copy generality
                 self.cp[curri].kblink.append(kbl)   # set KB link in WM
         return curri
+
+    def check_Children(self,db,curri,what,result,nextp=0):  # recursive check towards children to compare concepts
+        while len(db.cp[curri].child)>0 and nextp<len(db.cp[curri].child):  # walk over children of same level
+            self.check_Children(db,db.cp[curri].child[nextp],what,result,0)
+            nextp+=1                                                        # next child
+        if db.cp[curri].relation==13 and len(db.cp[curri].child)==0:        # we are on IM level
+            match = db.rec_match(db.cp[what],db.cp[curri])                  # compoare rules
+            if match==2 and [what,curri] not in result: result.append([what,curri])     # curri is special
+            if match==3 and [curri,what] not in result: result.append([curri,what])     # kblink[0] is special
+        else: return 0
+        return match
+
+    def check_Specialrule(self,kblink):         # compare new rule to old ones
+        i1 = gl.WL.find_word("%1")
+        speclist=[]
+        self.check_Children(gl.KB,gl.WL.wcp[i1].wchild[0],kblink[0],speclist)   # in KB we take all children of the first meaning of word %1
+        return speclist
             
     def move_rule(self,tf,ri,starti):           # if this is a rule then move it to KB
         if ("%1" in tf.mentalese[ri]):          # if this is a rule
             gl.WM.copyto_kb(gl.WM.ci)           # copy last concept in WM, which should be the rule, to KLB
             kblink=gl.WM.cp[gl.WM.ci].kblink
+            speclist = self.check_Specialrule(kblink)   # is this rule a special case of a more general one, or vicxe versa?
+            for sp in speclist:                 # record special and general cases
+                gl.KB.cp[sp[1]].general.add(sp[0])   # in the special concept, add the general index
             for i in range(gl.WM.ci-starti):
                 try:
                     if len(gl.WM.cp[gl.WM.ci].rulestr)>0:   #rule string like p=p0 is there
@@ -317,7 +432,7 @@ class Kbase:
 
 
     def answer_question(self,starti,endi):          #answer a question now stored in WM
-        answerlist=[]                           # TO DO: if answer has g=0 concept, cannot be matched to good answers via rec_match.
+        answerlist=[]                           
         self.rec_set_undefined_parents(endi)        #sets -1 parents instead of ? character
         qcount=[0]                                   #counter for ? parents
         self.find_undefined_parents(endi,qcount)    #recursive search for -1. qcount gets updated.
@@ -417,6 +532,7 @@ class Kbase:
                                 rulecount+=1
         return maplist
 
+
     def override_Parent(self, isq, wordpos, leaf):  # perform default mapping for question argument and for g=0 concepts
         overparent = wordpos                        # wordpos is the original parent, initially we have no override
         qsw = gl.reasoning.question_specific_words[:]   # copy words of the question to be mapped and g=0
@@ -433,10 +549,59 @@ class Kbase:
                     if con in self.paragraph: break   # stop if paragraph border exceeded
                     if gl.WM.cp[con].g==gl.args.gmin and gl.WM.cp[con].mentstr==gl.WM.cp[wordpos].mentstr:    # TO DO is this general?
                         overparent = con            # override parent, repeatedly up to the first occurence in paragraph
+        if wordpos!=overparent:                     # override happens
+            gl.reasoning.currentmapping[gl.WM.cp[wordpos].mentstr]=overparent   # collect mappings based on word
         return overparent
-                
+
+    def override_Old(self,contralist):              # override old p if new input is more special
+        for contraitem in contralist:               # contradictions
+            newi=contraitem[0]; old=contraitem[1]
+            genset=set()
+            for gen in self.cp[newi].general:       # collect general items, including same items to general ones
+                genset.add(gen)
+                genset.update(self.cp[gen].same)
+            gen_used=set(self.cp[old].reasonuse) & genset   # general items that were used to reason old
+            if len(gen_used)>0:                     # any used: p needs override
+                gl.log.add_log(("CONTRADICTION: PVALUE OVERRIDE from set_General: old p was based on more general input. index=",old," old p=",self.cp[old].p," new index=",newi," new p=",self.cp[newi].p))
+                self.cp[old].p = self.cp[newi].p    # override old p
+                for used in self.cp[old].usedby:    # reasoned concepts that use this old
+                    gl.log.add_log(("CONTRADICTION: PVALUE OVERRIDE TO MAX/2 from set_General: make concept unknown. This concept used a too general input. index=",used," old p=",self.cp[used].p," contradicting concept:",old))
+                    self.cp[used].p=gl.args.pmax/2  # set this concept to unknown
+
+    def set_General(self,startpos):                 # investigate if latest input concepts involve a generality relation
+        s=timer()
+        contralist=[]
+        for newi in range(startpos+1,self.ci+1):    # on all newly added inputs including self.ci
+            con=self.cp[newi]                       # current concept
+            old=newi
+            while self.cp[old].previous!=-1:        # entire WM on current branch backward
+                old=self.cp[old].previous           # next item on branch
+                match = self.rec_match(con,self.cp[old],[newi,old])
+                if match==1:
+                    self.cp[newi].general.update(self.cp[old].general)  # if concept is the same make general list the same
+                    self.cp[newi].same.add(old)     # same gets extended
+                    self.cp[old].same.add(newi)     # same gets extended
+                    if self.cp[newi].p!=self.cp[old].p:   # we seem to have contradiction
+                        if self.cp[newi].p!=gl.args.pmax/2 and self.cp[old].p!=gl.args.pmax/2:  #contradiction
+                            contralist.append([newi,old])   # collect contradictions for override
+            if con.relation==5:                     # F relation
+                if len(con.parent)>1:
+                    con.general.add(con.parent[0])  # x is more general than F(x,y)
+                    con.general.update(self.cp[con.parent[0]].same)  # concepts same to x are also general to F(x,y)
+                    con.general.update(self.cp[con.parent[0]].general)  # concepts general to x are also general to F(x,y)
+            if con.relation==4:                     # C relation
+                if len(con.parent)>1:
+                    cla=1
+                    while cla<len(con.parent):     # C(x,y,z) y and z are more general than x
+                        self.cp[con.parent[0]].general.add(con.parent[cla])
+                        self.cp[con.parent[0]].general.update(self.cp[con.parent[cla]].same)
+                        self.cp[con.parent[0]].general.update(self.cp[con.parent[cla]].general)
+                        cla+=1
+        self.override_Old(contralist)              # override p in contraditions found
+        gl.args.settimer("concep_904: set_General",timer()-s)
+                    
             
-    def read_concept(self,attrList,isquestion,correct_leaf=-1):     # recursive function to read concepts from Mentalese input
+    def read_concept(self,attrList,isquestion,correct_leaf=-1,isparent=-1):     # recursive function to read concepts from Mentalese input
                                                     # we may submit the leaf of the current branch. Function returns parent indices!
         aStr=str(attrList[0]).strip()               # parameter is passed in a wrapping list to be able to use recursion
         rulStr=""                                   # string for rule-information like p=p1
@@ -450,7 +615,7 @@ class Kbase:
                 isWord=0
                 relType=gl.args.rcode[aStr[0:actPos]]
                 attrList[0]=str(aStr[actPos+1:]).strip()
-                parents.append(self.read_concept(attrList,isquestion,correct_leaf))
+                parents.append(self.read_concept(attrList,isquestion,correct_leaf,isparent=1))
                 aStr=str(attrList[0]).strip()
                 actPos=0
                 continue
@@ -467,7 +632,7 @@ class Kbase:
                     return self.override_Parent(isquestion,thisparent,correct_leaf)   # return the parent after potential override
                 else:                               #if the concept is not a single word, register the embedded concept as parent, and read the next parent
                     attrList[0]=str(aStr[actPos+1:]).strip()
-                    parents.append(self.read_concept(attrList,isquestion,correct_leaf))
+                    parents.append(self.read_concept(attrList,isquestion,correct_leaf,isparent=1))
                     aStr=str(attrList[0]).strip()
                     actPos=0
                     continue
@@ -513,13 +678,19 @@ class Kbase:
                     attrList[0]=str(aStr[actPos:]).strip()
                     
                     if p_result is not None:
-                        newindex=self.add_concept(p_result[0],relType,parents)           # add the concept to WM
+                        if isparent==-1:                                            # this is not a parent but the top concept
+                            newindex=self.add_concept(p_result[0],relType,parents)           # add the concept to WM
+                        else:
+                            newindex=self.add_concept(gl.args.pmax/2,relType,parents)           # add the concept to WM, parent has p=pmax/2
                         self.cp[newindex].rulestr=p_result[2]                        # add the rule string
                     else:
                         if isquestion==1:                                           # for question set pmax/2 p value
                             newindex=self.add_concept(int(gl.args.pmax/2),relType,parents)           # add the concept to WM
                         else:
-                            newindex=self.add_concept(gl.args.pdefault,relType,parents)           # add the concept to WM
+                            if isparent==-1:                                            # this is not a parent but the top concept
+                                newindex=self.add_concept(gl.args.pdefault,relType,parents)           # add the concept to WM
+                            else:
+                                newindex=self.add_concept(gl.args.pmax/2,relType,parents)           # add the concept to WM, parent has p=pmax/2
                         
                     if r_result is not None:
                         self.cp[newindex].relevance=r_result[0]

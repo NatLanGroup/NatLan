@@ -1,4 +1,5 @@
 import gl
+from timeit import default_timer as timer
 
 class Branch:           #branching in WM
 
@@ -9,6 +10,8 @@ class Branch:           #branching in WM
         self.branchesnow=[]
         self.lastbrpos=-1       #last position where branching happened
         self.lastbr_list=[]     #list of concepts of mapping at this last position
+        self.map_potential=set()    # words for potential mapping within this paragraph
+        self.wordinpara = {}    # kblink-wmpos pairs to show latest occurance of words in the paragraph
 
     def get_previous_concepts(self,beforei):            # returns the id list of previous concepts (inclusive)
         previous_concepts = []
@@ -85,43 +88,64 @@ class Branch:           #branching in WM
             relevant=[gl.WM.ci]
         return relevant                     #this is empty list if branch of wmpos was killed earlier
 
+    def word_Tomapto(self, thispara, currentwm):            # returns word from the same paragraph that has C(word,...) in WM, before or after
+        wmapto=-1
+        cmapto=gl.WM.cp[currentwm].parent[0]                # we know this is C relation. take the word in the C relation.
+        mapwmuse=gl.WM.cp[cmapto].wmuse                     # for original input wmuse=-1
+        if gl.WM.cp[currentwm].relation==4 and mapwmuse==[-1] and int(gl.args.pmax/2)!=gl.WM.cp[currentwm].p:  # C rel orig inp p!=2
+            if thispara==1 and gl.WM.cp[cmapto].kblink[0] not in self.map_potential:  # first the C() is found
+                if gl.WM.cp[cmapto].relation==1:            # this is a word
+                    wmapto=gl.WM.cp[cmapto].mapto           # in .mapto we have either cmapto or the override_parent mapping value
+            if gl.WM.cp[cmapto].kblink[0] in self.map_potential:    # the word x in C(x,..) has not crossed paragraph border
+                wordpos=self.wordinpara[gl.WM.cp[cmapto].kblink[0]]  # get the latest occurance of the word in paragraph
+                wmapto=gl.WM.cp[wordpos].mapto              # in .mapto
+        return wmapto                                       # if this is -1 then no word to map to
+
+    def collect_Potential(self,thispara,currentwm):         # if we are still within paragraph, add word to list of potential mapping
+        if currentwm in gl.WM.paragraph: thispara=0         # remember if we cross paragraph border
+        if gl.WM.cp[currentwm].relation==1 and thispara==1: # we are on a word in the same paragraph
+            if gl.WM.cp[currentwm].wmuse==[-1]:             # original input
+                if gl.WM.cp[currentwm].kblink[0] not in self.map_potential:     # add wm position only once. TO DO: enable multiple positions.
+                    self.wordinpara[gl.WM.cp[currentwm].kblink[0]]=currentwm    # remember latest occurence in paragraph
+                self.map_potential.add(gl.WM.cp[currentwm].kblink[0])           # remember kblink as potential word to map to
+        return thispara
 
     def trymap_Single(self,maprule):        #mapping for a single rule
         relevant = self.select_Relevant(self.wmpos)     #all branches where we have wmpos
         currentwm=self.wmpos
-        rulw=-1
+        rulw=-1 ; thispara=1                            # flag to show we did not cross paragraph border yet
         while currentwm>=0:                             #walk back on branch
             if gl.WM.cp[currentwm].previous>=0:         #we have a previous link
                 previwm=gl.WM.cp[currentwm].previous
             else: previwm=currentwm-1
             if previwm<0: break
             currentwm = previwm
-            #TO DO: if currentwm is a word, search for C relation in earlier WM and in KB !!
-            if gl.WM.cp[currentwm].relation==4:         #C relation needed to try mapping
-                mapwmuse=gl.WM.cp[gl.WM.cp[currentwm].parent[0]].wmuse  #is this original input? where wmuse==-1.
-            if gl.WM.cp[currentwm].relation==4 and mapwmuse==[-1]:      #original input + C relation needed to try mapping
-                ruleword=gl.KB.cp[maprule].parent[1]    # in the rule in KB, second parent is a new word to be added
-                if gl.KB.cp[ruleword].relation==1:      #TO DO not only word but concept
-                    if gl.KB.cp[ruleword].mentstr != gl.WM.cp[self.wmpos].mentstr:   #TO DO: avoid D(x,x)?
-                        if rulw==-1:                    #add rule only once
-                            rulw = gl.WM.add_concept(gl.args.pmax,1,[],[ruleword])      #add the word from the rule to WM
-                            ruleinwm = gl.WM.add_concept(gl.KB.cp[maprule].p,gl.KB.cp[maprule].relation,[self.wmpos,rulw],[maprule])        #add rule D(x,y) relation to WM
-                            gl.WM.cp[relevant[0]].next = [rulw]     #continue branch leaf with rulw
-                            gl.WM.cp[rulw].previous = relevant[0]
-                            gl.WM.cp[rulw].wmuse=[]
-                            gl.WM.cp[ruleinwm].wmuse=[]
-                            gl.log.add_log(("MAPPING: add rule to WM:",gl.KB.cp[ruleword].mentstr," ",gl.KB.cp[maprule].mentstr))
-                        self.add_Mapbranch(maprule, currentwm, ruleinwm)  #add branch now!
-                        if relevant[0] in gl.WM.branch:                     #we do have some branch already
-                            gl.WM.branch.remove(relevant[0])                #remove obsolate branch leaf
+            thispara = self.collect_Potential(thispara,currentwm)       # add currentwm to potential words to map, if so.   
+            #TO DO: if currentwm is a word, search for C relation  in KB  (done in earlier WM) !!
+            if gl.WM.cp[currentwm].relation==4:                             #C relation needed to try mapping
+                wmapto=self.word_Tomapto(thispara,currentwm)                # find out if this C relation has a word to map to
+                if wmapto!=-1:      
+                    ruleword=gl.KB.cp[maprule].parent[1]                    # in the rule in KB, second parent is a new word to be added
+                    if gl.KB.cp[ruleword].relation==1:                      #TO DO not only word but concept
+                        if gl.KB.cp[ruleword].mentstr != gl.WM.cp[self.wmpos].mentstr:   #TO DO: avoid D(x,x)?
+                            if rulw==-1:                                    #add rule only once
+                                rulw = gl.WM.add_concept(gl.args.pmax,1,[],[ruleword])      #add the word from the rule to WM
+                                ruleinwm = gl.WM.add_concept(gl.KB.cp[maprule].p,gl.KB.cp[maprule].relation,[self.wmpos,rulw],[maprule])        #add rule D(x,y) relation to WM
+                                gl.WM.cp[relevant[0]].next = [rulw]         #continue branch leaf with rulw
+                                gl.WM.cp[rulw].previous = relevant[0]
+                                gl.WM.cp[rulw].wmuse=[]
+                                gl.WM.cp[ruleinwm].wmuse=[]
+                                gl.log.add_log(("MAPPING: add rule to WM:",gl.KB.cp[ruleword].mentstr," ",gl.KB.cp[maprule].mentstr))
+                            self.add_Mapbranch(maprule, currentwm, ruleinwm, wmapto)  #add branch now!
+                            if relevant[0] in gl.WM.branch:                     #we do have some branch already
+                                gl.WM.branch.remove(relevant[0])                #remove obsolate branch leaf
                                                                        #TO DO: try update branchvalue too
 
 
-    def add_Mapbranch(self,maprule,currentwm, ruleinwm):    #add one more branch starting from ruleinwm and expressing D(wmpos,curretwm)
-        currentword = gl.WM.cp[currentwm].parent[0]     #on currentwm we have C(x,y) and x is the current word for this mapping
-                                                        #TO DO: if currentword is not original input we need no branching.
+    def add_Mapbranch(self,maprule,currentwm, ruleinwm,currentword):    #add one more branch starting from ruleinwm and expressing D(wmpos,curretwm)
         if currentword not in self.mapped:              #not yet mapped at this ruleinwm
             mapconcept = gl.WM.add_concept(gl.KB.cp[maprule].p, 3, [self.wmpos,currentword])        # mapping added to WM D()
+            gl.reasoning.currentmapping[gl.WM.cp[self.wmpos].mentstr]=self.wmpos    # remembefr mapping happening in this row
             gl.WM.cp[mapconcept].wmuse=[]               #wmuse for a mapping is not -1 but empty
             gl.WM.cp[mapconcept-1].next.remove(mapconcept)      #multiple mapping is not directly following ruleinwm
             gl.log.add_log(("MAPPING: add mapping to WM on index ",gl.WM.ci," concept:",gl.WM.cp[mapconcept].mentstr))
@@ -167,35 +191,6 @@ class Branch:           #branching in WM
             if gl.WM.branchvalue[leaf] < kill_limit:
                 self.kill_Branch(leaf,"Reason: low branch value.")
 
-    def get_Wordinment(self,ment):                          # return words from any mentalese
-        ment=ment.strip()
-        wordlist=[]; thisword=""
-        termination = [",",")",".g=",".p=",".r=",".c="]     # valid terminations of words
-        beginning=["(",","]                                 # valid beginnings: must be a singe character
-        pos=0
-        while pos<len(ment):
-            if ment[pos] in beginning:                      # word may begin
-                done=0; gword=""
-                while done==0:                              # build current word
-                    pos+=1                                  # next position in word
-                    thisword=thisword+ment[pos]             # add character to current word
-                    for term in termination:
-                        if term in thisword:                # we added a full termination
-                            done=1                          # word ended
-                            if term == ".g=":               # g value must be transferred
-                                pos2=pos
-                                while ment[pos2]!="," and ment[pos2]!=")":  # to the end of word with g value
-                                    pos2+=1
-                                gword = ment[pos-2:pos2]    # add .g=0 part
-                            thisword = thisword[0:len(thisword)-len(term)]  # remove termination
-                    if done==0 and "(" in thisword:         # not a word but compound concept like A( or AND(
-                        done=1; thisword=""                 # no word
-                if len(thisword)>0:
-                    wordlist.append([thisword.strip(),gword])   # store result
-                thisword=""
-            else: pos+=1                                    #not a beginning: move one position
-        return wordlist
-
     def create_Branchlist(self):
         if gl.WM.branch==[]:            #no branching happened so far
             br=[gl.WM.ci]               #last concept is the only leaf
@@ -203,25 +198,6 @@ class Branch:           #branching in WM
             br=gl.WM.branch[:]          #stored branches copy
         return br
 
-    def mapping_Insert(self,qmentalese):                    #insert some D(x) relations before question to force mapping
-        #this is needed for any question if we want to do mapping for some words of the question
-        #otherwise questions are skipped for reasoning and thereby for mapping too
-        toinsert=""
-        gl.reasoning.question_specific_words=[]
-        wordlist=self.get_Wordinment(qmentalese[:])         #get all words of the question
-        for word in wordlist:
-            maprule=gl.WM.get_Maprules(-1,word[0])
-            if maprule!=[]: toinsert="D(" + word[0]+word[1] + ")"      #assemble D(x) using g-value as well
-            if toinsert!="":                                    #D(x) to be inserted
-                gl.WM.branch_read_concept(0,[toinsert],0)       #insert on all living branches
-                gl.log.add_log(("QUESTION WORD added for mapping on index:",gl.WM.ci," concept added:",gl.WM.cp[gl.WM.ci].mentstr))
-                toinsert=""
-                branches = self.create_Branchlist()             #add gl.WM.ci if needed
-                for br in branches:                             #all living bfranches where D(x) has been added
-                    gval=gl.WM.cp[br-1].g                       # g value of word
-                    if gval == gl.args.gmin:                    # gvalue=0, specific
-                        gl.reasoning.question_specific_words.append([word[0],br-1]) # record the index of g=0 word
-            
 
     def evaluate_Branches(self,wmpos):                          # update consistency of entire branches
         allbr = self.select_Relevant(wmpos)                     #get all branches where we have wmpos
@@ -240,6 +216,7 @@ class Branch:           #branching in WM
         
 
     def update_Consistency(self,new,old):   # update consistency value for wm item new
+        s=timer()
         if new!=old:
             if gl.WM.rec_match(gl.WM.cp[new],gl.WM.cp[old])==1:     #concepts match
                 index1 = int(gl.WM.cp[new].p)
@@ -247,6 +224,7 @@ class Branch:           #branching in WM
                 cons = gl.args.consist[index1][index2]              #read the consist table
                 if cons<gl.WM.cp[new].c:                            #consistency is worse than stored
                     gl.WM.cp[new].c=cons                            #currently we just store the top inconsistency per concept
+        gl.args.settimer("branch_02: update_consistency",timer()-s)
 
     def get_Lastmulti(self,thisbranch):                 #get position of last branching
         self.lastbrpos=-1
@@ -259,13 +237,14 @@ class Branch:           #branching in WM
                     self.lastbr_list.append(gl.WM.cp[ni].parent)    #list of D(x,y) mappinf relation parents: (x,y)
     
     def perform_Branching(self,thisbranch):             #creation of new branches
+        s=timer()
         self.get_Lastmulti(thisbranch)                  #get the latest psition where branching happened
         self.oldbranch = gl.WM.branch[:]                #remember blist of initial branches
         maplist = gl.WM.get_Maprules(self.wmpos)         #mapping rules list
         for maprule in maplist:
             self.trymap_Single(maprule)
-                  
-        
+        gl.args.settimer("branch_01: perform_branching",timer()-s)
+
                 
 if __name__ == "__main__":
     print("This is a module file, run natlan.py instead")
