@@ -1,0 +1,412 @@
+// Rules
+m/ IM(AND(D(%1,%2)p=p0,A(%2,%3)p=p1),A(%1,%3))p=pclass
+m/ IM(D(%1,%2)p=p0,D(%2,%1))p=pide1
+m/ IM(D(%1,%2)p=p0,C(%1,%2))p=pide1
+m/ IM(AND(D(%1,%2)p=p0,D(%2,%3)p=p1),D(%1,%3))p=pide2
+m/ IM(AND(C(%1,%2)p=p0,C(%2,%3)p=p1),C(%1,%3))p=pclass
+m/ IM(AND(C(%1,%2)p=p0,A(%2,%3)p=p1),A(%1,%3))p=pclass
+m/ IM(AND(C(%1,%2)p=p0,P(%2,%3)p=p1),P(%1,%3))p=pclass
+m/ IM(AND(C(%1,%2)p=p0,F(%2,%3)p=p1),F(%1,%3))p=pclass    
+m/ IM(AND(F(%1,%2)p=p0,A(%1,%3)p=p1),A(F(%1,%2),%3))p=pclass
+m/ IM(AND(XOR(%1,%2)p=p0,F(%1,%3)p=p1),F(%2,%3))p=pxor	  // XOR reasoning
+m/ IM(A(AND(%1,%2),%3)p=p0,A(%1,%3))p=pide1				  // AND reasoning  
+m/ IM(IM(%1,%2),%2)p=im									  // IM reasoning
+m/ IM( C(%1,F(%2,%3))p=p0, C(%1,%2))p=pide1
+m/ IM(C(%1,F(%2,strange))p=p0,C(%1,%2))p=idedegrade
+m/ IM(AND(A(%1,F(%2,can))p=p0,A(%1,F(%2,want))p=p1),A(%1,%2))p=can
+m/ IM(AND(C(%1,%2)p=p0,A(F(%3,%2),%4)p=p1),A(F(%3,%1),%4))p=pclass   //Do dead dogs live? does not work because Multiconcept does not yet use build_concept 
+
+//ANIMALS: SOME, DEAD ANIMALS, CAN, WANT
+
+m/ F(dummy)
+e/ Animals live.							m/ A(animal,live)
+e/ Dead animals do not live.				m/ A(F(animal,dead),live)p=0
+e/ An animal not living is dead.			m/ IM(NOT(A(animal,live)),F(animal,dead))
+e/ Dead animals do not live anymore.		m/ AND(A(F(animal,dead),F(live,T(now))p=0),A(animal,F(live,T(before))))
+e/ Do animals live? Yes.					m/ A(animal,live)?				a/ A(animal,live)p=4
+e/ Do dead animals live? No.				m/ A(F(animal,dead),live)?		a/ A(F(animal,dead),live)p=0
+e/ Does this animal live?					m/ A(animal.g=0,live)?			a/ A(animal.g=0,live)p=2
+e/ Do all animals live? No.					// A(Q(all,animal),live)?		// A(Q(all,animal),live)p=0
+e/ Which animals do not live? Dead animals do not live.	  m/ A(F(animal,?),live)		a/ A(F(animal,dead),live)p=0
+e/ Did dead animals live before? Yes.		// A(F(animal,dead),F(live,T(before)))?   	// A(F(animal,dead),F(live,T(before)))p=4
+e/ Did dead animals live ever? Yes, dead animals lived before.	// A(F(animal,dead),F(live,T(?)))  // A(F(animal,dead),F(live,T(before)))p=4
+e/ Dogs are animals.						m/ C(dog,animal)
+e/ Do dogs live?							m/ A(dog,live)?					a/ A(dog,live)p=4
+e/ Do dead dogs live?						m/ A(F(dog,dead),live)?			a/ A(F(dog,dead),live)p=0
+
+e/ Living animals move.						m/ IM(A(animal,live),A(animal,move))
+e/ Animals move.							m/ A(animal,move)
+e/ Dead animals do not move.				m/ A(F(animal,dead),move)p=0
+e/ Animals can move.						m/ A(animal,F(move,can))
+e/ Do animals move? Yes.					m/ A(animal,move)?				a/ A(animal,move)p=4
+e/ Do dead animals move? No.				m/ A(F(animal,dead),move)?		a/ A(F(animal,dead),move)p=0
+e/ Do all animals move? No.
+e/ Which animals move? Living animals move.
+e/ Do living animals always move? No.
+e/ Which animals do not move? Dead animals do not move.
+e/ Do some animals move?  Yes.
+e/ Can animals move?  Yes.
+e/ Can dead animals move?  No.
+e/ The ways an animal moves include walking, running, flying and swimming.
+e/ Walking is a way of moving.
+e/ Running is a way of moving.
+e/ Flying is a way of moving.
+e/ Swimming is a way of moving.
+e/ Some animals walk, some run, some fly and some swim.
+
+//BIRDS
+
+e/ Birds are animals.						m/ C(bird,animal)
+e/ Not all animals are birds.
+e/ Birds fly.								m/ A(bird,fly)
+e/ Birds have wings.						m/ P(bird,wing)
+e/ Birds use their wings to fly.
+e/ All birds can fly?  Yes.
+e/ All animals can fly? No.
+e/ Which animals can fly?  Birds can fly.
+e/ All birds have wings?  Yes.
+e/ Can a bird fly without wings?  No.
+
+e/ Water is a habitat.
+e/ If something is an animal of the water, this means it lives in water.   m/ IM(C(%1,P(water,animal))p=p0,A(%1,F(live,R(in,water))))p=pide1
+// This is the same for all habitats.   E(this, Q(some,habitat), habitat)  
+// E is a new relation for explicit induction - meaning expansion - from example to general.
+
+//PENGUIN TEXT
+
+m/ IM(F(%1,F(different,R(from,%2)))p=p0,NOT(S(%1,%2)))p=pide1 //to understand "They are very different from.."
+// IM(NOT(S(%1,%2))p=p0,S(%1,%2))p=not
+// IM(AND(C(%1,animal),C(%1,P(water,%2))),A(%1,F(live,R(in,water))))   // will work when multiconcept uses build concept
+
+
+// C(they,animal)r=4
+m/ C(penguin,animal)
+e/ Penguins are a strange type of bird. 		m/ C(penguin,F(bird,strange))
+e/ They are very different than most birds because they do not fly.     m/ F(penguin,F(different,R(from,bird)))
+m/ A(penguin,fly)p=0
+// because ket jelentese: 1. altalanos indok 2. specialis aspektus: annyiban, hogy ...
+// IM( IM(R(because,Y),X), F(X,Y)) because egyik jelentese: X fennall Y-ra szukitetten. (pl X=penguins are similar to birds.) 
+e/ Penguins swim.   							m/ A(penguin,swim)
+// C(fly,move) es C(swim,move) aktivalasa fokozza a koherenciat.
+e/ They are birds of the water. 				m/ C(penguin,P(water,bird)) 
+e/ Penguins are great at living in the ocean.	m/ A(penguin,F(live, well, R(in,ocean)))
+e/ Are penguins birds? Yes, mostly.				m/ C(penguin,bird)?			a/ C(penguin,bird)p=3
+e/ Do penguins have wings? yes probably.		m/ P(penguin,wing)?			a/ P(penguin,wing)p=3
+e/ How are penguins similar to birds? Penguins have wings. m/ F(S(penguin,bird),?)
+e/ How are penguins different from birds?  Penguins do not fly.  m/ F(NOT(S(penguin,bird)),?)
+e/ What do penguins do? 						m/ A(penguin,?)				a/ A(penguin,fly)p=0 A(penguin,swim)p=4
+e/ Do birds swim? No. -this needs intersentence relation-
+e/ Where do penguins live? 						m/ A(penguin,F(live,?))		a/ A(penguin,F(live,R(in,water)))p=4 A(penguin,F(live,R(in,ocean)))p=4
+
+e/ Instead of wings, penguins have flippers.    m/ P(penguin,flipper)
+m/ P(penguin,wing)p=0
+e/ They use these flippers to push themselves through the water.  m/ F(A(they,I(use,flippers)),R(inorderto,A(they,F(I(push,themselves),R(through,water)))))
+// aktivalt es reasonelt tartalom:
+// pengu goal: push self through water
+// pengu goal: swim
+// pengu way to achieve swim goal: use flippers
+// How do penguins swim? They use their flippers.
+e/ Their feet are webbed like a duck’s and they use them to kick and steer. 
+
+Penguins are a strange type of bird.   s1
+They are very different than most birds because they do not fly. s2 s3  IM(s3,s2)  D(s1,s2) 
+Penguins swim.  s4  IM(s4,s3)
+They are birds of the water. s5  IM(s4,s5) vagy IM(s5,s4)
+Penguins are great at living in the ocean.  s6  IM(s4,s6) IM(s5,s6)
+
+// MONDATKOZI KAPCSOLATOK
+// egy IM(s1,s2) es s1.p=4 sot meg kulon s2.p=4  -> az IM-nek nem az a szerepe hogy s2 p-jet megkapjuk.
+// A szerepe megertesben: a szoveg koherencia erosites (valoszinubb branch valasztasa).
+// Szerepe a szoveg alkotasban: koherens, ertheto szoveg letrehozasi strategia.
+
+// COMMON SENSE SO FAR
+// C(x,F(strange,y)) vagy F(x,F(different,R(from,y))) : osztalyba tartozas kivetelek mellett, ellentmondas.
+// be good at sg: do sg and be successful. Successful: achieve goal.
+// animal`s goal of living: eat, move, breed.
+// goal: if goal and can, then do. same as want. Positive impact. x has goal y: y is good for x.
+// good,bad  positive, negative : F(y, F(goodfor,x))  y is good for x. -> C(y, P(goals,x))  y is part of goals of x.
+// because jelentese: annyiban, hogy. X because Y : X fennall, annyiban hogy Y (es nem altalaban).
+// to, in order to: F(x, R(inorderto,y)) es x=A(q,x1). q celja y, x->y. vagy csak A(q,y) q teszi y-t es ebbol kovetkezik hogy celja is, tudja is.
+// use : A(x, I(use,y)) ez semmi, using/with: A(x, F(z, R(with,y))) ebbol mi is kovetkezzen??
+// use+to: F(A(x, I(use, y)),R(to,z))  : x celja z, (use,y)->z.
+
+
+e/ In order to be light enough to fly, most birds have hollow bones.   
+// F(P(most birds,hollow bones), R(inorderto,they are light enough to fly))
+// F(F(most birds, light enough),R(inorderto,fly))
+e/ The bones of a penguin are solid.    m/ P(penguin,F(bone,solid))
+// F(F(penguin,heavy),R(inorderto,F(dive,deep,R(in,water))))
+e/ This makes it easier for them to dive deep into the water. 
+m/ A(this, I(F(make, easier), A(they, F(dive,deep,R(into,water)))))
+// A(x, I(F(make, easy/hard), y)) -> A(x, I(support,y)) es meg valoszinuleg y.
+
+In order to be light enough to fly, most birds have hollow bones. s1
+The bones of a penguin are solid. s2 IM(s1,NOT(s2))
+This makes it easier for them to dive deep into the water.  s3  IM(s2,s3)
+
+// MONDATKOZI KAPCSOLATOK
+// Egyelore nem vilagos mibol latszik hogy IM(s1,s2) vagy IM(s2,s1) - talan branchen valasztodik ki.
+// Az IM(s1,NOT(s2)) egy branchen valasztodik ki mindenkepp.
+
+//COMMON SENSE
+// support: A(x, I(support,y))  magas p eseten: IM(x,y) es y. 
+//          alacsony p: IM(x, NOT(y)) es lehet y vagy NOT(y).
+// a: birds have hollow bones  b: birds are light (b suppport c) c: birds fly
+// d: penguins have solid bones 
+// common sense: hollow object is light, solid object is heavy
+// e: reasoned: penguins are heavy  (e support f) f: penguins dive
+// good,bad: F(e, F(goodfor, f))  e is good for f.   
+
+e/ Penguins have dark backs and white bellies. 	m/ P(penguin,F(back,dark),F(belly,white))
+e/ This is a form of camouflage. 	m/ C(this, P(form, camouflage))
+m/ C(this, camouflage)
+e/ Camouflage helps animals hide. m/ A(camouflage, I(help, A(animal,hide))
+m/ A(F(camouflage, animal), I(support, A(animal,hide)))
+e/ Penguin camouflage is called countershading.  D(F(camuflage,penguin),countershading)
+e/ Countershading is very useful in the ocean.  F(countershading, F(useful, R(in,ocean)))
+e/ It provides cover from predators above and below. A(it, I(provide, F(cover,R(from,predator),R(from,above),R(from,below))))
+e/ From above, penguins will blend in with the dark depths of the ocean.  
+m/ A(penguins, F(blend, R(in), R(with,P(F(depth,dark),ocean)),R(from,above)))
+// A(x, F(blend, R(in), R(with, y))) -> IM(A(z, I(look,AND(x,y))), NOT(A(z,I(see,x)))   es egyszeruen  A(z, I(see,x))p=0
+// magyarazata/oka because: A(z, I(look,y))  es S(P(color,x), P(color,y)).
+e/ From below, penguins will blend in with the light sky.
+e/ Why will sharks not notice penguins?
+e/ Are sharks dangerous to penguins?
+e/ How are penguins protected from sharks?
+e/ What color are penguins?
+e/ How do penguins look like?
+e/ Why is countershading useful for penguins?
+e/ What is penguin countershading like?
+e/ Are penguins protected from lions?
+e/ Where are predators dangerous to penguins?
+e/ Is countershading protecting penguins from a danger?
+
+Penguins have dark backs and white bellies.  s1
+This is a form of camouflage.  s2  D(s1,s2) D(this,s1) D(this,P(camouflage,form))
+Camouflage helps animals hide.  s3  nincs kapcsolat!
+Penguin camouflage is called countershading.  s4  D(peng camou, countersh) D(s41,s42) D(s41,s1)
+Countershading is very useful in the ocean.  s5  nincs kapcsolat!
+It provides cover from predators above and below.  s6  D(it,countershading) kulonben nincs kapcsolat. 
+From above, penguins will blend in with the dark depths of the ocean.  s7  IM(s7,s6)  
+From below, penguins will blend in with the light sky.  s8  IM(s8,s6)
+
+Camouflage helps animals hide.  s3
+Penguins have dark backs and white bellies.  s1
+Penguin camouflage is called countershading.  s4
+
+// COMMON SENSE
+// meaning of help: A(x, I(help, y)) -> A(x, I(support,y)) 
+// rengeteg mondatkozi kapcsolat:
+// Countershading is very useful ... useful FOR PENGUINS! Mapping az elozo mondatbol.
+// useful jelentese: F(x, F(useful, R(for,y))) -> A(x, I(support,y)) .  C(x, F(goodfor,y))
+// It provides cover ... IN THE OCEAN! Mappping from previous sentence.
+// blend in jelentese: A(x, F(blend, R(in), R(with, y))) -> IM(A(z, I(look,AND(x,y))), NOT(A(z,I(see,x)))   es egyszeruen  A(z, I(see,x))p=0
+
+The thick feathers of a penguin are built for cold waters.  s1   F(P(penguin,feather),thick, A(F(built,R(for,F(cold,water)))))
+They are very closely spaced and are also waterproof.  s2   IM(s2,s1) F(they,A(F(spaced,closely)),waterproof)
+Underneath is a layer of soft down feathers.  s3  IM(s3,s1)  F(P(F(feathers,soft,down),layer),underneath)
+This keeps a warm layer of air near the skin.  s4   IM(s4, s1)  A(this,I(F(keep,R(near,skin)),P(air,F(layer,warm)))) == A(exist,F(P(air,layer),R(near,skin))
+What do feathers of a penguin protect from?
+How are penguins protected from cold?
+Why does a penguin need protection from cold?
+
+
+// COMMON SENSE
+// is built for: F(x, A(F(built,R(for,y)))) -> x supports/good for z if z is exposed to y
+// in this case, x is exposed to y. C(y, P(x,exposure)). Also, IM(AND(P(x,exposure),P(z,x)), P(z,exposure)).
+// SUPPORT: C(z,animal) : C(g, P(z,goals))  : F(x, F(goodfor, z)) <-> IM(x,g)p=pmax.  valamint: -> x es C(x,P(z,goals))
+// PROTECT: C(z,animal) : C(t, P(z,threats))  : F(x, F(goodfor, z)) <-> IM(x,NOT(t))p=pmax.  valamint: -> x es C(x,P(z,goals))
+// THREATEN: C(z,animal) : C(t, P(z,threats))  : F(x, F(badfor, z)) <-> IM(x,t)p=pmax.  valamint: -> NOT(x) es C(NOT(x),P(z,goals))
+// EXPOSED: C(z,animal) : C(y, P(z,exposure)) will generate goals and threats specific for the exposure
+// P(z,cold) is a key exposure: animal is exposed to cold environment. How to make this understandable?
+//  1. how P(z,cold) exposure emerges: IM(AND(C(%1,animal),A(%1,F(live,R(in, F(%2,cold))))), P(%1,cold)) etc GENERALIZED RELEVANT KNOWLEGDE
+//  2. consequences of an exposure: action/goal sequences, see below.
+
+// FOUNDATION OF ANIMAL EXPOSURES, GOALS AND THREATS
+// hungryness->eat : F(z,hungry) <-> P(z,hungryness) an exposure / -> C(A(z,eat),P(z,goals))  these are true for specific z animal.
+// matingseason->mate
+// offspring->feed
+// season->wander
+// warm -> cool
+// cold -> heat
+// tired -> rest
+// threatened, chased -> escape, hide
+
+// FOUNDATION OF ANIMAL ACTION SEQUENCE
+// any goal/threat launches action sequence. for z animal and g goal, P(z,g)->A(z, P(g,sequence)).
+// want eat: launches action sequence EAT: go to sea inorderto dive into sea. Dive into sea inorderto find fish. Find fish inorderto eat fish.
+// sequence = IM(P(z,eat), P(z,find fish), P(z, dive into sea), P(z, go to sea)). 
+// top level animal eat sequence: IM(P(z,eat goal), P(z,find food goal), P(z,move to food source area goal)).
+If an animal is hungry, it wants to eat. (want -> goal) (an animal: g=0 is lehetne, de g=1 is jonak  latszik)
+If it wants to eat, then it wants to find food.
+If it wants to find food, then it moves to the place of food. (to the place where food is/can  be found)
+// IM(A(%1,F(live, R(in,%2))),D(%2,P(place,R(of,%1))))
+
+
+Penguins waterproof their feathers by coating them with oil.  s1  A(penguin, I(waterproof,Q(their,feathers))).s, F(s1,R(by,A(ing, F(coat,R(with,oil)))))
+Penguins have a gland that lets out oil near their tail.  s2  P(penguin, F(gland, R(near,Q(their,tail)))).s,  A(that, I(F(let,out),oil))
+By touching their beak to the gland they can spread the oil to their other feathers.  s3  D(s3,s1) miert s1-hez van koze, nem s2-hoz? 
+Penguins need healthy feathers to survive.  s4
+When Penguins take care of their feathers it is called preening.  s5=D(s51,s52)  IM(s4,s51)
+They use their beaks to clean their feathers and keep them healthy.  s6  C(s51,s6)  reszletesebb kifejtes.
+What is coated with oil?
+Who coats penguins` feathers with oil?
+Why are penguins` feathers coated with oil?
+Why are waterproof feathers useful for penguins?
+What is special about penguins` feathers?
+How do penguins waterproof their feathers?
+What do penguins use the oil let out near their tail for?
+How do penguins use the oil let out near their tail?
+What is preening?
+What is preening for?
+
+// COMMON SENSE
+// PENGUIN GOAL SEQUENCE  is the same as an action sequence and can be mixed:
+// penguins dive in water , water is cold -> be protected from cold -> need waterproof and thick feathers -> oil feathers -> have a gland for oil -> spread oil.
+// IM(F(z,z dive in water and water is cold), P(z,protected from cold), P(z, waterproof feathers), P(z, oil feathers), P(z, have gland for oil), P(z, spread oil))
+// z USE x inorderto y : IM(use x,y)  and C(y,P(z,goal))  y is a goal of z
+// Why z use x? z use x inorderto y, or because y. 
+// A(z,x) by A(z,y) : C(x,P(z,goal))  and IM(y,x)
+
+Penguin’s feathers go through a large amount of wear and tear.   A(P(feather,penguin),F(go,R(through,F(amount,large,R(of,wear and tear)))))
+To prevent them from wearing out, most penguins molt once a year.  s1=A(penguin,molt)
+The old feathers fall out as new feathers grow to replace them.  NEEDS TO BE CONNECTED TO s1. D(s1,A(old feathers,fall out) and IM(old feathers out,new feathers grow))
+Whose feathers fall out every year? Penguins` feathers fall out every year. 
+While penguins are molting, they are unable to hunt.   s1
+Their soft down feathers are exposed and these are not waterproof. s2.  CONNECT: IM(AND(F(Q(their,feathers),exposed), F(these,NOT(waterproof))),s1)
+ALL THESE ARE CORRECT: D(s1,s2),   IM(s1,s2),  IM(s2,s1)
+Because of this, penguins eat a lot before they molt.
+Why are penguins not able to hunt when molting?
+Why do eat penguins a lot before molting?
+
+COMMON SENSE
+ABILITY ABLE CAN - just like goals, actions, threats, support, protect.
+1. a is an ability, C(a,P(z,abilities)) N(a,some action). If goal=some action, then -> A(z,some action.)
+2. ability may depend on something, like IM(b,a) or N(b,a) .
+ANIMAL CONDITIONS
+animal z cannot get into state s where F(s,F(badfor,z)), like IM(s,death). 
+This means that if IM(hunt,e) and IM(e,s):  C(hunt,p(z,ability)p=0, animal is not able to hunt. 
+
+Penguins form long-lasting families. s1
+They mate with the same partner each year. s2 CONNECT: D(s1,s2) or IM(s2,s1) . 
+Each has a unique mating song. 
+Penguins use this to identify each other. 
+Once the female lays the egg, both the male and female help raise their young.
+What is the mating song of penguins used for?
+Do males penguins take part in raising their offspring?
+
+COMMON SENSE
+INTER-SENTENCE CONNECTIONS
+Penguins form long-lasting families. s1
+They mate with the same partner each year. s2 CONNECT: D(s1,s2) or IM(s2,s1)
+s1: A(x,y1) s2: A(x,y2)  --> D(s1,s2) and D(y1,y2) (and) IM(y2,y1). 
+Here for example: P(family,partner) : these two sentences have x and family topic in common!
+Do we also need: long-lasting family ??
+--
+Penguins form long-lasting families. s1
+They eat shellfish and other fish.  : Only penguins connect the sentences. Low bounding force. D(s1,s2) does not hold!
+--
+Penguins use their mating song to identify each other. s1
+They mate with the same partner each year. s2 
+--
+animal action sequence for breeding:
+IM(F(z,is adult),P(z,breed),P(z,find mate),P(z,build nest),P(z,take care of egg), P(z,protect offspring), P(z,feed offspring))
+family of animals and people:
+C(penguin,animal) C(penguin,bird) D(penguin,Q(a,P(bird,kind))) 
+EXCLUSIVITY: XOR(x,y) : C(x,a) C(y,a) -> C(x,y)p=0 and C(y,x)p=0
+z animal. P(z,family) P(person,family). P(z,Q(a,family).g=0), P(family,x)->D(x,Q(a,z).g=0) so x is a z. P(family,P(x,father)). etc.
+x1 and x2 pair, partners -> x1 male, father, x2 female, mother. x1 and x2 mate. and vice. 
+
+Penguins eat seafood. 
+They hunt squid, shellfish, and other fish. 
+Being good swimmers helps them hunt and have food to eat.
+When they are young, the thicker outer layer of feathers has not grown in yet.
+This means their parents have to provide food for them.
+They do this by regurgitating their food.
+The parent hunts and catches food. 
+They then throw it back up into the chick’s beak.
+Is it important for penguins to swim?
+How well do penguins swim?
+Can young penguins swim?
+Why do parents feed young penguins?
+How do penguins feed the young?
+
+There are 18 different kinds of penguins. 
+They are different in size and color. 
+They live all over the southern half of the world. 
+This is called the southern hemisphere.
+The tallest of them is the emperor penguin in Antarctica. 
+Female emperor penguins lay one egg at a time. 
+After the female penguin lays the egg, she passes it over to the male penguin to hatch. 
+She must pass the egg very carefully. 
+It’s important not to let the egg be in the cold for too long or it will freeze.
+Are there various kinds of penguins?
+How do they differ?
+Where do penguins live?
+How is the emperor penguin special?
+Where is the egg of the emperor penguin?
+How is the egg kept warm?
+
+Penguins lay eggs like other birds, but not all penguins make a nest. 
+Instead, the male emperor penguin carries it between his feet.
+He protects it from the cold with a flap of belly skin.
+Where is the egg of the emperor penguin?
+How is the egg kept warm?
+
+Not all penguins live in the snow. 
+African penguins are the only penguins from Africa.
+They build nests under bushes and rocks to avoid the hot sun.
+What kinds of penguins live in Africa?
+
+Erect-crested penguins only come to shore to breed and raise their chick. 
+The females lay two eggs. 
+The second egg is often two times bigger than the first one. 
+The bigger one is more likely to reach adulthood.
+How many offsprings do erect-crested penguins have?
+
+Little penguins are the smallest penguins. 
+They are known by many names. 
+They can be called blue penguins or fairy penguins.
+Are little penguins smaller than sparrows?
+
+Chinstrap penguins have a thin black line that wraps around their chins. 
+They are known as the most aggressive type of penguin.
+Who are agressive penguins?
+What do agressive penguins do?
+
+Penguins in warmer climates cool off in many ways. 
+Their feathers can be used to keep them cool as well as warm. 
+By puffing their feathers up, it allows cooler air to reach their skin. 
+They also pant. 
+Panting causes the throat and mouth to cool down. 
+Holding out their flippers to the air also releases heat.
+Why do penguins pant?
+Why do penguins need to cool off?
+
+COMMON SENSE
+environment triggered action sequences of animals
+KEEP WARM
+COOL DOWN
+HIDE
+KEEP DRY
+KEEP WET
+
+
+Penguins are an endangered species. 
+This means that they are at risk of disappearing.
+Pollution, climate change, and taking too many fish make it hard for penguins to survive.
+We should be careful to help all 18 types of penguins survive in the future.
+Why are penguins an endangered species?
+What causes penguins become rare?
+Can we do something about it?
+
+COMMON SENSE
+animal action sequence for SURVIVE
+IM(F(z), P(z,survive), P(z,stay alive, breed, raise young), P(get away from threats, feed, stay healthy, find breeding spot, feed young, get protected from men and predators))
+
+
+How are penguins different from other birds? 
+How are they the same?
+What do emperor penguins do instead of building a nest?
+What are some names for the smallest penguins?
+Why do penguins need to be great swimmers?

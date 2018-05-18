@@ -507,19 +507,13 @@ class Reasoning:
                         finalmatch=self.final_RuleMatch(new,old,rulenew,ruleold)    #%1 %2 etc must mean the same thing in new and old
                         if enable==1 and finalmatch==1 and (new not in gl.WM.cp[old].rule_match[orulei]):     #not skipped, and new not in WM pack
                             self.append_Match(new,old,rulenew,ruleold,orulei)                   #add new to the current wm pack
-                        if finalmatch==0:                   #nonmatching pair found, we must do a check
-                            for checkwm in range(0,new):    #NOT OPTIMAL: entire older WM
-                                for rmi in range(len(gl.WM.cp[checkwm].rule_match)):
-                                    if old in gl.WM.cp[checkwm].rule_match[rmi]:    #older member of nonmatching pair included
-                                        try: gl.WM.cp[checkwm].rule_match[rmi].remove(new)  #try remove new because of nonmatch
-                                        except: y=0
                                         
                 # this might be the condition of an earlier IM concept. This has nothing in kb_rules for this.
             if gl.KB.cp[ruleold[1]].relation==13:       #for old, the matching rule's condition is IM, as in IM(IM(%1,%2),%2)
                 if gl.WM.cp[old].relation==13:          #redundant for WM
                     if gl.WM.cp[new].relation==gl.WM.cp[gl.WM.cp[old].parent[0]].relation:  #condition in old IM() matches the new concept's relation
                         p2=gl.WM.cp[old].parent[0]
-                        if gl.WM.rec_match(gl.WM.cp[new],gl.WM.cp[p2],[new,p2]):    # this is exactly the condition
+                        if gl.WM.rec_match(gl.WM.cp[new],gl.WM.cp[p2],[new,p2])==1:    # this is exactly the condition
                             gl.WM.cp[old].rule_match[orulei].append([new])   # for debugging and logging, remember the condition now found in "old"
                             implication=gl.KB.cp[ruleold[0]].parent[1]       # implication part of the rule for "old"
                             condition=gl.KB.cp[ruleold[0]].parent[0]         # condition part of the rule

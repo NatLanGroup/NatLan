@@ -1,0 +1,105 @@
+
+1. Mentalese translation
+This keeps a warm layer of air near the skin.  s4   IM(s4, s1)  A(this,I(F(keep,R(near,skin)),P(air,F(layer,warm))))
+X keep F(Y,a,R()) -> A(exist, F(Y,a,R())) 
+EXISTENCE STATEMENTS 
+A(is, F(x,y)) == F(x,y) and x, was known, needs mapped			The fox in the garden is red.
+A(exist, F(x,y)) == F(x,y) and x, x was not known, no mapping   There is a red fox in the garden.
+A(emerge, F(x,y)) == F(x,y) and now x, previously no x.         Red foxes move from the north to the garden.
+  
+
+
+2. word meaning common sense
+TYPE OF  Penguins are a strange type of bird.
+FORM OF  This is a form of camouflage.
+DIFFERENT FROM They are very different from other birds.
+IS CALLED Penguin camouflage is called countershading.
+BECAUSE They are strange birds because they do not fly.
+OF THE An animal of the habitat means it lives in the habitat.
+INSTEAD OF  Instead of wings, penguins have flippers.
+USE They use the flippers to swim.
+do x BY do y - Penguins waterproof their feathers by coating them with oil.
+BE GOOD AT Penguins are good at living in the ocean.
+BE GREAT AT
+IN ORDER TO In order to hunt they need to dive in the ocean.
+TO Penguins catch fish to feed.
+BLEND IN If something blends in with an object, the thing cannot be seen, only the object.
+BUILT FOR The feathers of a penguin are built for cold waters.
+x GO THROUGH WEAR AND TEAR  Penguins` feathers go through a large amount of wear and tear.
+WEAR OUT  If x wear out y then y cannot be used, is not useful.
+COAT WITH penguins coat their feathers with oil -> oil and feathers are close in space
+
+
+3. Space common sense
+POSITION in space
+EXCLUSIVE space occupation
+CLOSE, TOUCH  spread oil to their feathers
+PART birds have wings - keep constantly close position
+
+
+B. Object common sense
+HOLLOW / SOLID  how corresponds to LIGHT / HEAVY
+PLACE , location
+IN WATER -> GET WET
+P(Y,X) and Y GET WET -> X GET WET if whole is wet, part is wet
+IN WATER and WATERPROOF -> DRY
+INNER
+OUTER, SHELL
+SHELL PROTECT INNER
+PROTECT: warm, cold, wet, hit, see, find, touch
+objects` key concepts
+GROUP a few specific x where C(x.g=1,x.g=0), written as P(x,group)
+
+
+B. Living common sense
+Living thing is OBJECT
+ACTION Living thing performs some action.
+GOAL Action of living thing makes him achieve goal.
+ABILITY, ABLE, CAN Birds can fly.
+EASY -> CAN,  HARD -> CANNOT
+	Easy action makes it probable that animal performs action.
+EFFORT is a set of valuable resources of living thing: time, work, danger (risk)
+MOVE change location
+living things` key concepts
+FAMILY is a GROUP where D(x,P(y,familyrelation)) and familyrelation=mother,father,child, son,etc.
+EXCLUSIVITY of family : families are exclusive groups.
+
+
+C. Animal common sense
+Animal is LIVING THING
+parts of animals: BODY, HEAD, LEG, SKIN
+GOAL, GOODFOR, USEFUL, HELP, SUPPORT, PROTECT
+THREAT, BADFOR, HARMFUL, STOP, PREVENT, THREATEN
+ENVIRONMENT like land, air, water. Properties like cold, hot, dry, wet.
+HABITAT like desert, forest, sea, ocean, water.
+EXPOSURE to an environment. From exposures, goals and threats are derived.
+action sequences: action/goal generates action/goal, or status (feature) generates action/goal.
+sequence start points
+LIVE -> SURVIVE
+LIVE -> MOVE
+HUNGRY -> EAT
+THREAT OF BEING CATCHED -> FLEE, HIDE
+COLD -> GET WARM
+WARM -> COOL DOWN
+ADULT -> BREED
+BREED -> RAISE, PROTECT, FEED, CARE
+SEASON -> WANDER
+YOUNG -> PLAY
+TIRED -> REST
+animal states (these are some relevant features)
+LIVING
+DEAD
+MOVING
+
+
+
+D. Bird common sense
+Bird is ANIMAL
+parts of birds WING FEATHERS BEAK LEGS
+bird movement
+FLY
+birds sequences
+BREED -> LAY EGGS
+GET WARM -> DRY FEATHER
+
+

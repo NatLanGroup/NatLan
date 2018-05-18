@@ -168,7 +168,7 @@ class Kbase:
             if self.ci>-1: self.cp[newleaf].next=[]     #this becomes leaf
             if self.name=="WM" and self.ci+1 in gl.WM.branch:
                 gl.WM.branch.remove(self.ci+1)          # old leaf needs update
-                gl.WM.branch.appenmd(newleaf)
+                gl.WM.branch.append(newleaf)
                 try:
                     value=self.branchvalue[self.ci+1]
                     del self.branchvalue[self.ci+1]     #branbchvaljue needs update
@@ -629,7 +629,9 @@ class Kbase:
                     if wl_ind == -1:
                         wl_ind = gl.WL.add_word(ss,g_value)
                     thisparent = self.add_concept(1,1,[],[wl_ind],g_value)   #parent is empty, KB link is wl_ind
-                    return self.override_Parent(isquestion,thisparent,correct_leaf)   # return the parent after potential override
+                    overparent=self.override_Parent(isquestion,thisparent,correct_leaf)
+                    gl.WM.cp[thisparent].mapto=overparent           # remember in the word where it was overridden to
+                    return overparent   # return the parent after potential override
                 else:                               #if the concept is not a single word, register the embedded concept as parent, and read the next parent
                     attrList[0]=str(aStr[actPos+1:]).strip()
                     parents.append(self.read_concept(attrList,isquestion,correct_leaf,isparent=1))
@@ -646,7 +648,9 @@ class Kbase:
                     if wl_ind == -1:
                         wl_ind = gl.WL.add_word(ss,g_value)
                     thisparent = self.add_concept(1,1,[],[wl_ind],g_value)   #parent is empty, KB link is wl_ind
-                    return self.override_Parent(isquestion,thisparent,correct_leaf)   # return the parent after potential override
+                    overparent=self.override_Parent(isquestion,thisparent,correct_leaf)
+                    gl.WM.cp[thisparent].mapto=overparent           # remember in the word where it was overridden to
+                    return overparent   # return the parent after potential override
                 else:                               #if the concept is not a single word, register the embedded concept as parent, and read the next parent
                     p_result = None
                     r_result = None
