@@ -21,7 +21,40 @@ def get_spacy_parser(language='en'):
     end = time.time()
     print('Language loaded, took %d seconds' % (end-start))
     return result
-    
+
+
+def run_parser():
+    print("Importing spaCy")
+    nlp = get_spacy_parser()
+    try:
+        t = Testinput(sys.argv[1])
+        t.readtest()
+        for rowi in range(len(t.eng)):
+            doc=nlp(t.eng[rowi])
+            for sent in doc.sents:
+                mentalese_trans(sent.root)
+                t.systemanswer[rowi] = get_concept(sent.root).mentalese
+            t.write_result(rowi)
+        print('Testoutput file generated')
+    except:
+        print("ERROR: Testfile not founded")
+
+
+def run_bracketing():
+    print("Importing spaCy")
+    nlp = get_spacy_parser()
+    try:
+        t = Testinput(sys.argv[1])
+        t.readtest()
+        for rowi in range(len(t.eng)):
+            doc=nlp(t.eng[rowi])
+            for sent in doc.sents:
+                t.systemanswer[rowi] = bracketing(sent.root)
+            t.write_result(rowi)
+        print('Testoutput file generated')
+    except:
+        print("ERROR: Testfile not founded")
+
 class Testinput:
     def __init__(self, testfilename):
         self.name = testfilename
@@ -94,20 +127,11 @@ class Testinput:
             self.resultf.write(self.comment[rowindex])
         self.resultf.write("\n")
         
-print("Importing spaCy")
-nlp = get_spacy_parser()
-try:
-    t = Testinput(sys.argv[1])
-    t.readtest()
-    for rowi in range(len(t.eng)):
-        doc=nlp(t.eng[rowi])
-        for sent in doc.sents:
-            mentalese_trans(sent.root)
-            t.systemanswer[rowi] = get_concept(sent.root).mentalese
-        t.write_result(rowi)
-    print('Testoutput file generated')
-except:
-    print("ERROR: Testfile not founded")
+
+
+if __name__ == "__main__":
+#    run_parser()
+    run_bracketing()
     
 #################### FOR OTHER TEST ####################
 #print('Input file loaded')  

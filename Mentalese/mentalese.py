@@ -14,6 +14,17 @@ def init(token): #initialisation: mentalese is the base form of the words
     if token.pos_ == u'PROPN':
         get_concept(token).set_mentalese(token.orth_,'W') # instead joe -> Joe      
     
+def bracketing(token): #bracketizing the sentence
+    chnum = 0
+    res = "(" + token.lemma_
+    for child in token.children:
+        chnum += 1
+        res = res + ";" + bracketing(child)
+    res = res + ")"
+    if chnum == 0:
+        res = token.lemma_
+    return res
+
 def lvl_1_rule_1(token): # advmod, advmod -> advmod
     if token.head.dep_ == token.dep_ == u'advmod':
         get_concept(token.head).set_mentalese(get_concept(token).mentalese,get_concept(token.head).mentalese,'MC')
