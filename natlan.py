@@ -52,18 +52,18 @@ if gl.args.argnum == 2:
     end=timer()
     i=0
     for wmi in gl.WM.cp:
-        print (i,wmi.mentstr,wmi.p,wmi.parent,"g=",wmi.g," wmuse:",wmi.wmuse," reasonuse:",wmi.reasonuse," used by:",wmi.usedby," general:",wmi.general," same:",wmi.same)
+        print (i,wmi.mentstr,wmi.p,wmi.parent,"g=",wmi.g," consist=",wmi.c," wmuse:",wmi.wmuse," reasonuse:",wmi.reasonuse," used by:",wmi.usedby," general:",wmi.general," same:",wmi.same," prev",wmi.previous," next:",wmi.next)
         i+=1
     i=0
     for wmi in gl.KB.cp:
         print (i,wmi.mentstr,wmi.parent," general:",wmi.general)
         i+=1
-    for br in gl.WM.branch:
-        bro=branch.Branch(0)
-        thisbr=bro.get_previous_concepts(br)
-        for wmi in reversed(thisbr):
-            print (wmi,gl.WM.cp[wmi].mentstr,gl.WM.cp[wmi].parent," p=",gl.WM.cp[wmi].p," g=",gl.WM.cp[wmi].g," wmuse:",gl.WM.cp[wmi].wmuse," next:",gl.WM.cp[wmi].next," consistency=",gl.WM.cp[wmi].c)
-        print ("BRANCH:",br,thisbr)
+#    for br in gl.WM.branch:
+ #       bro=branch.Branch(0)
+  #      thisbr=bro.get_previous_concepts(br)
+   #     for wmi in reversed(thisbr):
+    #        print (wmi,gl.WM.cp[wmi].mentstr,gl.WM.cp[wmi].parent," p=",gl.WM.cp[wmi].p," g=",gl.WM.cp[wmi].g," wmuse:",gl.WM.cp[wmi].wmuse," next:",gl.WM.cp[wmi].next," consistency=",gl.WM.cp[wmi].c)
+     #   print ("BRANCH:",br,thisbr)
     gl.test.testf.close()
     gl.test.resultf.close()
     print ("branches:",gl.WM.branch," branchvalue:",gl.WM.branchvalue)

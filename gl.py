@@ -16,14 +16,17 @@ class Arguments:
         self.gmin = 0           # threshold for generality for concept to be specific
         self.eachmax = 4        # concept each property: level of exceptions
         self.timecheck = {}      # time consumption mapped to function name
-                                
+        self.debug = 0          # debug mode                        
         
         i=1.1                   # to be used instead of 1
         self.im = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 3, 3], [2, 2, 2, 3, 4]]         # IM rule
         self.can = [[0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 1, 2, 2, 2], [0, 1, 2, 3, 3], [0, 1, 2, 3, 4]]        # can rule
+        self.cando = [0,i,2,2,2]                                                                                # cando rule
         self.pide1 = [0,i,2,3,4]                                                                                # D-rule single arg
+        self.pnot1 = [4,3,2,i,0]                                                                                # NOT() rule
         self.idedegrade = [i,i,2,3,3]                                                                           # degrading D rule
         self.pide2 = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [i, i, 2, 2, 3], [0, i, 2, 3, 4]]      # D-rule IM(AND(D(),D()),D())
+        self.pand = [[0, 0, 0, 0, 0], [0, i, i, i, i], [0, i, 2, 2, 2], [0, i, 2, 3, 3], [0, i, 2, 3, 4]]       # AND-rule
         self.pclass = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [i, i, 2, 2, 3], [0, i, 2, 3, 4]]     # class relation
         self.degrade = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [i, i, 2, 2, 3], [i, i, 2, 3, 3]]    # degraded class
         # pclass is the matrix for class reasoning. C(%1,%2)p1 and %X(%2,%3)p2 -> %x(%2,%3)pclas, pclass[p2,p1]
@@ -33,7 +36,7 @@ class Arguments:
         self.branch_kill = [0,i,2,3,3]   # index = best branch value. output=limit below which branch is killed.
         self.pmap = {
             "pide1":self.pide1,"pide2":self.pide2,"pclass":self.pclass,"pxor":self.pxor,
-            "idedegrade":self.idedegrade, "degrade":self.degrade
+            "idedegrade":self.idedegrade, "degrade":self.degrade, "pnot1":self.pnot1, "pand":self.pand
         }
 
         self.rcode = {
@@ -48,6 +51,13 @@ class Arguments:
             6: "Q", 7: "A", 8: "I", 9: "R", 10: "T",
             11: "P", 12: "M", 13: "IM", 14: "N", 15: "V",
             16: "AND", 17: "NOT", 18: "OR", 19: "XOR"
+        }
+
+        self.noxx = [2,3,4,13,15,16,18,19]   #these relations make no sense in form of D(x,x)
+
+        self.noreplace = {                                              # for these relations (index of dict) no C reasoning possible on given arguments (value)
+            1:[99],2:[99],3:[0,1,2],4:[1,2],5:[1,2],6:[1,2],7:[1,2],8:[0],9:[99],10:[99],       #all relations must have a dummy value 99 at least
+            11:[0],12:[99],13:[1,2],14:[99],15:[99],16:[99],17:[99],18:[99],19:[99]
         }
 
     def settimer(self,fname,timeused):              # measure time spent in a function

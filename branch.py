@@ -79,7 +79,7 @@ class Branch:           #branching in WM
             i = gl.WM.cp[i].previous
         return -1                                       # return -1 if no previous sentence concept available
 
-    def select_Relevant(self,wmpos):        #select all branches in which we have wmpos
+    def select_Relbr(self,wmpos):        #select all branches in which we have wmpos
         relevant=[]
         for br in gl.WM.branch:
             thisbr=self.get_previous_concepts(br)
@@ -111,7 +111,7 @@ class Branch:           #branching in WM
         return thispara
 
     def trymap_Single(self,maprule):        #mapping for a single rule
-        relevant = self.select_Relevant(self.wmpos)     #all branches where we have wmpos
+        relevant = list(gl.WM.brelevant)     #all branches where we have wmpos
         currentwm=self.wmpos
         rulw=-1 ; thispara=1                            # flag to show we did not cross paragraph border yet
         while currentwm>=0:                             #walk back on branch
@@ -138,6 +138,8 @@ class Branch:           #branching in WM
                                 gl.log.add_log(("MAPPING: add rule to WM:",gl.KB.cp[ruleword].mentstr," ",gl.KB.cp[maprule].mentstr))
                             self.add_Mapbranch(maprule, currentwm, ruleinwm, wmapto)  #add branch now!
                             if relevant[0] in gl.WM.branch:                     #we do have some branch already
+                                gl.WM.update_Samestring(relevant[0],gl.WM.ci)   #update the obsolate leaf to the new leaf in WM.samestring
+                                                                                # TO DO: LIMITATION: this updates relevant[0] only!
                                 gl.WM.branch.remove(relevant[0])                #remove obsolate branch leaf
                                                                        #TO DO: try update branchvalue too
 
@@ -154,42 +156,52 @@ class Branch:           #branching in WM
             gl.WM.cp[mapconcept].previous=ruleinwm      #branch shows back to rule
             gl.WM.branch.append(mapconcept)             #update list of branches
             self.branchesnow.append(mapconcept)
+            if len(gl.WM.cp[ruleinwm].next)>1:          #new branch added, additional key needs to be added in samestring
+                gl.WM.copy_Samestring(gl.WM.cp[ruleinwm].next[0],mapconcept)   #copy samestring to the new key
             gl.log.add_log(("BRANCH ADDED on WM index:",ruleinwm," added branch index:",mapconcept," all branches here:",gl.WM.cp[ruleinwm].next," All branches:",gl.WM.branch))
             print ("ADD BRANCH wmpos",self.wmpos,gl.WM.cp[self.wmpos].mentstr,"branches",gl.WM.branch)
 
     def kill_Branch(self,leaf,reason):                             # kill this branch
        if leaf in gl.WM.branch:
            gl.WM.branch.remove(leaf)
+           if leaf in gl.WM.samestring: del gl.WM.samestring[leaf]
            try:
                val=gl.WM.branchvalue[leaf]
                del gl.WM.branchvalue[leaf]
                gl.log.add_log(("BRANCH KILLED on leaf index:",leaf," Branch value was:",val," All branches now:",gl.WM.branch,reason))
+               print ("BAD BRANCH KILLED on leaf:",leaf," Branch value:",val," All branches now:",gl.WM.branch)
            except:
+               print ("BAD BRANCH KILLED on leaf:",leaf," Branch value: NO VALUE"," All branches now:",gl.WM.branch)
                gl.log.add_log(("BRANCH KILLED on leaf index:",leaf," Branch value was: NO VALUE YET"," All branches now:",gl.WM.branch,reason))
        else:                                                       # kill all relevant branches if this is not a leaf
-            relbr=self.select_Relevant(leaf)
+            relbr=self.select_Relbr(leaf)
             leaf=-1
             if len(relbr)==1:                                       # kill only if this is a single branch
                 for leaf1 in relbr:
                     if leaf1 in gl.WM.branch:
                         gl.WM.branch.remove(leaf1)
+                        if leaf1 in gl.WM.samestring: del gl.WM.samestring[leaf1]
                         try:
                             val=gl.WM.branchvalue[leaf1]
                             del gl.WM.branchvalue[leaf1]            # also delete the branch value entry
                             gl.log.add_log(("BRANCH KILLED. Leaf index killed:",leaf1," branch value was:",val," all branches:",gl.WM.branch," ",reason))
+                            print ("BAD BRANCH KILLED on leaf:",leaf," Branch value:",val," All branches now:",gl.WM.branch)
                         except:
                             gl.log.add_log(("BRANCH KILLED. Leaf index killed:",leaf1," branch value was:","NO VALUE"," all branches:",gl.WM.branch," ",reason))
-                            
+                            print ("BAD BRANCH KILLED on leaf:",leaf," Branch value: NO VALUE"," All branches now:",gl.WM.branch)
+                                 
 
     def compare_Branches(self):                             # find bad branches to be killed
         brmax = 0
         for leaf in gl.WM.branch:                           # get best branch
-            if gl.WM.branchvalue[leaf] > brmax:
-                brmax = gl.WM.branchvalue[leaf]
+            if leaf in gl.WM.branchvalue:                   # may not be the case yet
+                if gl.WM.branchvalue[leaf] > brmax:
+                    brmax = gl.WM.branchvalue[leaf]
         kill_limit = gl.args.branch_kill[brmax]             # limit set in branch_kill parameter table
         for leaf in gl.WM.branch:                           # kill branches below limit
-            if gl.WM.branchvalue[leaf] < kill_limit:
-                self.kill_Branch(leaf,"Reason: low branch value.")
+            if leaf in gl.WM.branchvalue:                   # may not be the case yet
+                if gl.WM.branchvalue[leaf] < kill_limit:
+                    self.kill_Branch(leaf,"Reason: low branch value.")
 
     def create_Branchlist(self):
         if gl.WM.branch==[]:            #no branching happened so far
@@ -200,7 +212,7 @@ class Branch:           #branching in WM
 
 
     def evaluate_Branches(self,wmpos):                          # update consistency of entire branches
-        allbr = self.select_Relevant(wmpos)                     #get all branches where we have wmpos
+        allbr = self.select_Relbr(wmpos)                        #get all branches where we have wmpos
         consi = gl.WM.cp[wmpos].c                               #consistency of this concept
         for leaf in allbr:                                      #for all branches with wmpos
             addc = leaf
@@ -213,6 +225,8 @@ class Branch:           #branching in WM
             except: oldvalue = gl.args.cmax                     #no previous branch value
             if gl.WM.branch!=[]:                                #should be the case
                 gl.WM.branchvalue[leaf] = gl.args.branchvalue[oldvalue][consi]  #read branchvalue table by old value and current consistency
+            if addc!=-1:
+                gl.WM.update_Samestring(addc,leaf)              #update samestring
         
 
     def update_Consistency(self,new,old):   # update consistency value for wm item new

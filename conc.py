@@ -39,7 +39,9 @@ class Kbase:
         self.cp = []                    # CONCEPT LIST CP
         self.ci = -1
         self.branch=[]                  #list of living branches (branch leafs)
+        self.brelevant = set()          # set of relevant branches, where current wmpos occurs
         self.branchvalue = {}           # evaluation (consistency) of each branch. Mapped to branch leaf.
+        self.samestring = {}            # for each branch leaf: a map of mentalese string: all occurence index on branch
         self.paragraph = []             # concepts where the latest paragraph ended on all branches
         self.name = instancename          # the name of the instance can be used in the log file
 
@@ -112,7 +114,7 @@ class Kbase:
     def getp_backward(self,swhat,pback):            # search earlier occurence of swhat and return p
         sindex=self.cp[swhat].previous              # proceed on branch
         found=0
-        while sindex>-1 and found==0:
+        while sindex>-1 and pback==gl.args.pmax/2:  #do not stop on p=2
             if self.rec_match(self.cp[swhat], self.cp[sindex], [swhat,sindex]) == 1:
                 found=1
                 pback=self.cp[sindex].p
@@ -120,6 +122,9 @@ class Kbase:
             sindex=self.cp[sindex].previous
         return pback
 
+    def update_Samestring(self,oldleaf,newleaf):                #update WM.samestring dictionary key
+        if oldleaf in gl.WM.samestring:
+            gl.WM.samestring[newleaf] = gl.WM.samestring.pop(oldleaf)   # this removes the oldleaf key
     
     def add_concept(self, new_p, new_rel, new_parents,kbl=[],gvalue=None):        #add new concept to WM or KB. parents argument is list
         self.cp.append(Concept(new_rel))                        #concept added
@@ -147,6 +152,8 @@ class Kbase:
                 self.cp[self.ci].wordlink.append(gl.KB.cp[kbl[0]].wordlink[0])      # we have a single word link
                 self.cp[self.ci].mentstr = gl.KB.cp[kbl[0]].mentstr[:]
             if gvalue!=None: self.cp[self.ci].g=gvalue          #explicit generality provided
+        if self.name=="WM" and self.branch==[]:                 #in WM, no leafs stored
+            self.update_Samestring(gl.WM.ci-1,gl.WM.ci)         #update the leaf in samestring
         if new_rel == 13 :                                      # IM relation
             pari=0
             for par in self.cp[self.ci].parent : 
@@ -159,21 +166,39 @@ class Kbase:
         gl.log.add_log((self.name," add_concept index=",self.ci," p=",self.cp[self.ci].p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
         return self.ci
 
+    def copy_Samestring(self,oldleaf,newleaf):              # expand the WM.samestring dictionary with newleaf key, copyiing content from oldleaf
+        if oldleaf in gl.WM.samestring:                     #this expand is needed when new branch was added
+            gl.WM.samestring[newleaf]={}
+            for ment in gl.WM.samestring[oldleaf]:          #mentalese strings are keys
+                gl.WM.samestring[newleaf].update({ment:gl.WM.samestring[oldleaf][ment][:]})   #copy list of identical mentalese concepts
+
+    def update_Branchinfo(self,oldleaf,newleaf,newvalue=-999):  #update branch related info in self.branch, self.branchvalue and self.samestring
+        if oldleaf!=newleaf:                                #update necessary
+            self.update_Samestring(oldleaf,newleaf)         #WM.samestring key must be updated anyway
+            if oldleaf in gl.WM.branch:                     #thsi is in fact a leaf
+                gl.WM.branch.remove(oldleaf)
+                try:
+                    value=self.branchvalue[oldleaf]
+                    del self.branchvalue[oldleaf]           #value remembered, old item removed
+                except:
+                    value=4   #FIX NEEDED
+                    gl.log.add_log(("ERROR in update_Branchinfo (conc.py): oldleaf not existing in WM.branchvalue:",oldleaf," branches=",gl.WM.branch))
+                if newleaf>-1:
+                    gl.WM.branch.append(newleaf)
+                    self.cp[newleaf].next=[]                #for a leaf, next is empty
+                    if newvalue==-999:                      #no new branch value provided
+                        self.branchvalue[newleaf]=value     #old value kept
+                    else: self.branchvalue[newleaf]=newvalue
+
+            
     def remove_concept(self):
         gl.log.add_log((self.name," remove concept index=",self.ci))
         if (self.ci>-1):
             newleaf=self.cp[self.ci].previous
             self.cp.pop()
             self.ci=self.ci-1
-            if self.ci>-1: self.cp[newleaf].next=[]     #this becomes leaf
-            if self.name=="WM" and self.ci+1 in gl.WM.branch:
-                gl.WM.branch.remove(self.ci+1)          # old leaf needs update
-                gl.WM.branch.append(newleaf)
-                try:
-                    value=self.branchvalue[self.ci+1]
-                    del self.branchvalue[self.ci+1]     #branbchvaljue needs update
-                    self.branchvalue[newleaf]=value
-                except: a=0
+            if self.name=="WM":
+                self.update_Branchinfo(self.ci+1,newleaf)   #update branch related lists and dicts
         return self.ci
 
     def get_branch_concepts(self, beforei):             #returns the id list of previous concepts on branch (inclusive)
@@ -184,6 +209,21 @@ class Kbase:
             curri = gl.WM.cp[curri].previous
         return previous_concepts
 
+    def reverse_Drel(self,new,old):                     #new and old are D relations, the function checks reverse order.
+        pn0=self.cp[new].parent[0]
+        pn1=self.cp[new].parent[1]
+        po0=self.cp[old].parent[0]
+        po1=self.cp[old].parent[1]
+        if self.cp[pn0].mentstr == self.cp[po1].mentstr and self.cp[pn1].mentstr == self.cp[po0].mentstr:  #strings match in reverse order
+            if self.rec_match(self.cp[pn0],self.cp[po1],[pn0,po1]):     #they match
+                if self.rec_match(self.cp[pn1],self.cp[po0],[pn1,po0]):     #other pair also match
+                    if self.cp[new].p==gl.args.pmax/2:                  #new needs update
+                        self.cp[new].p=self.cp[old].p                   #new updated
+                        gl.log.add_log(("PVALUE OVERRIDE in reverse_Drel. overridden=",new," based on:",old,"new p=",self.cp[old].p))
+                    if self.cp[old].p==gl.args.pmax/2:                  #old needs update
+                        self.cp[old].p=self.cp[new].p                   #old updated
+                        gl.log.add_log(("PVALUE OVERRIDE in reverse_Drel. overridden=",old," based on:",new,"new p=",self.cp[old].p))
+                        
     def search_onbranch(self,swhat,swhatindex):       # search answer on branches separately
         found=[]
         if self.branch==[]: branches=[gl.WM.ci]         #no branches, just the default
@@ -197,6 +237,30 @@ class Kbase:
                 sindex = sindex-1
         return found
 
+    def get_previous_concepts(self,beforei):            # returns the id list of previous concepts (inclusive)
+        previous_concepts = []
+        curri = beforei
+        while curri != -1:
+            previous_concepts.append(curri)
+            curri = gl.WM.cp[curri].previous
+        return previous_concepts
+
+    def select_Relevant(self,wmpos):        #select all branches in which we have wmpos
+        relevant=[]
+        for br in gl.WM.branch:
+            thisbr=self.get_previous_concepts(br)
+            if wmpos in thisbr: relevant.append(br)
+        if gl.WM.branch==[]:
+            relevant=[gl.WM.ci]
+        return relevant                     #this is empty list if branch of wmpos was killed earlier
+
+#    def select_Relevant_quick(self,wmpos,thisbr):        #faster select all branches in which we have wmpos
+ #       relevant=[]
+  #      for br in gl.WM.branch:
+   #         if wmpos in thisbr: relevant.append(br)
+    #    if gl.WM.branch==[]:
+     #       relevant=[gl.WM.ci]
+      #  return relevant                     #this is empty list if branch of wmpos was killed earlier
 
     def isword_Special(self,what1,inwhat):          # compare two words to see if one word is a special case of the other
         is_special=0                # one of the words may be a specific one, the other %1, then %1 is more general
@@ -408,14 +472,8 @@ class Kbase:
                     preleaf = self.cp[self.ci].previous     #new leaf value
                     self.cp.pop()                   #remove concept
                     self.ci = self.ci -1
-                if leng>0 and self.branch!=[]:      #something removed from a branch
-                    self.branch.remove(leaf)        #branch list update
-                    oldvalue=self.branchvalue[leaf]     #remember branch value
-                    del self.branchvalue[leaf]      #branch value index needs update
-                    if preleaf>-1:                  #add updates
-                        self.branch.append(preleaf)
-                        self.cp[preleaf].next=[]
-                        self.branchvalue[preleaf]=oldvalue
+                if leng>0:                          #something removed from a branch
+                    self.update_Branchinfo(leaf,preleaf)  # update branch related lists and dicts
                 for aw in awlist:                   #update leaf values in answerlist !!
                     if leaf == aw[0]:               #this needs update
                         if leng>0 and preleaf>-1:
@@ -715,13 +773,8 @@ class Kbase:
         if gl.WM.branch==[] or gl.WM.ci in gl.WM.branch:        #we process gl.WM.ci only if needed
             storeleaf = gl.WM.ci                                #remember the most recent leaf
             self.read_concept(tfment,isquestion,storeleaf)      #read the input to a single branch from storeleaf
+            self.update_Branchinfo(storeleaf,gl.WM.ci)          #update branch related lists and dicts
             
-            if storeleaf in self.branch:                        #thsi was a leaf, we need updates
-                self.branch.remove(storeleaf)
-                self.branch.append(gl.WM.ci)
-                brvalue=self.branchvalue[storeleaf]
-                del self.branchvalue[storeleaf]
-                self.branchvalue[gl.WM.ci]=brvalue
         for leaf in inibr:                                      #any further leafs
             startpos=gl.WM.ci
             mentalese2=mentalese[:]
@@ -731,11 +784,7 @@ class Kbase:
                 self.read_concept(mentalese2,isquestion,leaf)   #read the input again. then connect it to the branch of leaf.
             if gl.WM.ci>startpos:                               #something added to WM
                 gl.WM.cp[lastleaf].next=[]                      #remove continuity with lastleaf
-                self.branch.remove(leaf)                        #leaf needs update
-                self.branch.append(gl.WM.ci)
-                brvalue=self.branchvalue[leaf]
-                del self.branchvalue[leaf]
-                self.branchvalue[gl.WM.ci]=brvalue
+                self.update_Branchinfo(leaf,gl.WM.ci)           #update branch related lists and dicts
                 gl.WM.cp[leaf].next=[startpos+1]                #new input is continuation of branch of leaf
                 gl.WM.cp[startpos+1].previous = leaf            #connectioon backward
             lastleaf=leaf

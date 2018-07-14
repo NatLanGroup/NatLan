@@ -23,6 +23,11 @@ class Testinput:
             self.resultf = open(testfilename[:pos]+"_result"+testfilename[pos:],"w")    #output file
         except:
             gl.log.add_log(("ERROR: Testinput: input or output file could not be opened:", self.name))
+        try:
+            basefname = testfilename[:pos]+"_base"+testfilename[pos:]               # base file to compare result with
+            self.basef = open(basefname, "r")
+            print ("MESSAGE: Base file found: ",basefname)
+        except: a=0
 
     def readtest(self):
         gl.log.add_log(("Test file started:", self.name))
@@ -130,18 +135,19 @@ class Testinput:
     def write_result(self,rowindex):                    # write outpit file
         evals=self.eval_test(rowindex)
         self.resultf.write(evals)                       # write OK, BAD
-        self.resultf.write(" /e ")
-        self.resultf.write(self.eng[rowindex])
-        addspaces(self.eng[rowindex],22)                # fill spaces up to 22 characters
-        self.resultf.write(" /m ")
-        self.resultf.write(self.mentalese[rowindex])
-        addspaces(self.mentalese[rowindex],22)
-        self.resultf.write(" /a ")
-        self.resultf.write(self.goodanswer[rowindex])
-        self.resultf.write(" /s ")
-        if (len(self.eng[rowindex])==0 and len(self.mentalese[rowindex])==0 and len(self.comment[rowindex])>0):
-            self.resultf.write("\n")
-            self.resultf.write(self.comment[rowindex])
+        if len(self.eng[rowindex])>0:                   
+            self.resultf.write(" /e ")
+            self.resultf.write(self.eng[rowindex])
+            addspaces(self.eng[rowindex],22)                # fill spaces up to 22 characters
+        if len(self.mentalese[rowindex])>0:
+            self.resultf.write(" /m ")
+            self.resultf.write(self.mentalese[rowindex])
+            addspaces(self.mentalese[rowindex],22)
+        if len(self.goodanswer[rowindex])>0:
+            self.resultf.write(" /a ")
+            self.resultf.write(self.goodanswer[rowindex])
+            self.resultf.write(" /s ")
+        self.resultf.write(self.comment[rowindex])
         for sysalist in self.systemanswer[rowindex]:
             if type(sysalist) is list: sysa=sysalist[1]
             else: sysa=sysalist
