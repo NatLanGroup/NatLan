@@ -31,10 +31,12 @@ def process_testinput (tf):                  # input is the Testinput object
             starti=startiremember
         gl.reasoning.reset_Currentmapping(tf.mentalese[ri])     # keep only words in currentmapping that are in current sentence
 
-gl.args = gl.Arguments()  # initialize
-gl.WM = conc.Kbase("WM")  # WORKING MEMORY
-gl.KB = conc.Kbase("KB")  # KNOWLEDGE BASE
-gl.WL = wrd.Wlist("WL")  # WORD LIST
+gl.d=0                      # debugging
+gl.error = 0                # error counter
+gl.args = gl.Arguments()    # initialize
+gl.WM = conc.Kbase("WM")    # WORKING MEMORY
+gl.KB = conc.Kbase("KB")    # KNOWLEDGE BASE
+gl.WL = wrd.Wlist("WL")     # WORD LIST
 gl.log = gl.Logging()
 gl.reasoning = reason.Reasoning() #class instance for reasoning
 
@@ -70,6 +72,8 @@ if gl.args.argnum == 2:
     print ("TIME USAGE REPORT IN BPS FOLLOWS.",end-s, " s total run time.")
     for t in sorted(gl.args.timecheck,reverse=False):
         print (t, int(gl.args.timecheck[t]*10000/(end-s)))
+    gl.test.check_result()                  # compare _base to _result file
+    if gl.error>0: print ("ERROR in process_CDrel. count =",gl.error)
 
 #gl.KB.walk_db(24)                        # walk through parents of a concept, print them
 #gl.unittest.utest_read_concept()            # run read_concept unit test

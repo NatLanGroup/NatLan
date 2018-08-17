@@ -8,8 +8,7 @@ from timeit import default_timer as timer
 # TO DO: N() rule - necessary condition - not so important
 
 # TO DO: resoning LIMITATIONS. see this: IM(A(%1,F(consist,R(of,%2))),P(%1,%2))p=pide1. input=A(family,F(consist,R(of,AND(father,mother))))
-# 1. AND(father,mother) is not processed for %2 because it currently needs to be a single word.
-# 2. no general AND reasoning to arrive at R(of,mother) -> P(family,mother).
+# no general AND reasoning to arrive at R(of,mother).
 
 class Reasoning:
     def __init__(self):
@@ -25,6 +24,9 @@ class Reasoning:
         self.topparents = []            # record which parents on top level are to be affected by reasoning.
         self.noreplace = {}             # map to record inhibited replacements
         self.imcount=0                  # number of concepts added
+        self.addedconcfor={}            # note original concepts to be replaced
+
+    
 
     #This method checks if the 2 indexes from WM and KB matches (in syntax, not in each word).
     def do_they_match_for_rule(self, wm_index, kb_index):
@@ -176,6 +178,25 @@ class Reasoning:
                     return 1
         return 0
 
+    def add_Reasonedword(self,newparent):                   # if implication has specific words, add them to WM
+        wcount=0
+        for npi in range(len(newparent)):
+            pari=newparent[npi]
+            if type(pari) is not int:                       # parent is not an index but a word
+                kbli=gl.WL.find(pari)                       # word1s first meaning in KB. Always found as this is a rule in KB.
+                g_value=gl.args.gmax                        # default g for now. TO DO: handle g-value in rule.
+                wordwm = gl.WM.add_concept(gl.args.pmax,1,[],[kbli],g_value)   # add word in WM
+                newparent[npi]=wordwm                       # update parent list with word in WM
+                wcount+=1
+        return wcount
+
+    def update_Prevnext(self,addedconcept,leaf,addedword):  # update previous and next after reasoned concepts added
+        if len(addedconcept)>1: recentleaf=addedconcept[-2]  # check that more than 1 concept was added
+        else: recentleaf=leaf                               # exactly 1 concept added
+        gl.WM.cp[gl.WM.ci-addedword].previous=recentleaf    # correct with the number of words added
+        gl.WM.cp[recentleaf].next = [gl.WM.ci-addedword]
+
+        
     def finaladd_Concept(self,conclist,reasoned_p,rel_list,nplist,rule):     # single function to add a list of reasoned concepts to WM together with its parents
         s=timer();
         center=gl.WM.ci                                      #remember ci at entering finaladd
@@ -190,6 +211,10 @@ class Reasoning:
             for newparent in nplist:                        # parent list of next concept to add
                 relation=rel_list[ccount]
                 ccount+=1
+                for i in range(len(newparent)):
+                    if newparent[i]<0:                      # parent is a compound concept that was added now
+                        newparent[i]=addedconcept[(-1)*newparent[i]-1]  # insert the index of this concept
+                addedword = self.add_Reasonedword(newparent)    # if implication has specific words, add them first
                 if newparent==nplist[-1]: finalconcept=1    # this is the main concept
                 else: finalconcept=0
                 if finalconcept==1:                         # we are at the main concept
@@ -197,9 +222,6 @@ class Reasoning:
                     found = gl.WM.search_fullmatch(reasoned_p, relation,newparent,rule,thisbranch,conclist[:])      #see whether the concept is already on the branch
                 else: found=0                               # add the concept anyway
                 if found == 0:
-                    for i in range(len(newparent)):
-                        if newparent[i]<0:                  # parent is a compound concept that was added now
-                            newparent[i]=addedconcept[(-1)*newparent[i]-1]  # insert the index of this concept
                     if finalconcept==1: apply_p=reasoned_p                  # use reasoned_p in the final concept only
                     else: apply_p = gl.args.pmax/2                          # parents only get pmax/2
                     gl.WM.add_concept(apply_p, relation,newparent)          # add the reasoned concept
@@ -212,13 +234,7 @@ class Reasoning:
                     if self.same_Reasoned(gl.WM.ci)==1 or is_inhibited:     # same concept reasoned as the input used, or inhibited
                         while gl.WM.ci>center: gl.WM.remove_concept()      # remove all concepts added in this round
                     else:
-                        if len(addedconcept)>1: recentleaf=addedconcept[-2]  # more than 1 concepts added
-                        else: recentleaf=leaf
-                        gl.WM.cp[gl.WM.ci].previous = recentleaf
-                        if gl.WM.ci>0 and gl.WM.cp[gl.WM.ci-1].next == gl.WM.ci:    #earlier concept is also pointing here, ERROR
-                            if gl.WM.cp[gl.WM.ci].previous != gl.WM.ci-1:           #next needs to be corrected
-                                gl.WM.cp[gl.WM.ci-1].next = []                      #that needs to be a leaf
-                        gl.WM.cp[recentleaf].next = [gl.WM.ci]                      #old leaf continued
+                        self.update_Prevnext(addedconcept,leaf,addedword)   # update previous and next values
                         if finalconcept==1:
                             gl.WM.update_Branchinfo(leaf,gl.WM.ci)                  #update branch and branchvalue and samstring
                             gl.log.add_log(("REASONED concept added! input new,old:",conclist," on branch leaf:",leaf," on index:",gl.WM.ci," rule:",rule," reasoned concept:",gl.WM.cp[gl.WM.ci].mentstr, " p=",reasoned_p," parents:",gl.WM.cp[gl.WM.ci].parent))
@@ -312,7 +328,7 @@ class Reasoning:
                 self.visit_concept(gl.WM,wmitem,visitnew)                # further build flattend corresponding WM concept
             condimap = self.check_condition(visitnew,visitcond)          # check that %1 %1 etc have the proper words in new
             if len(condimap)>0:                                          # all new parents successfully created in condimap
-                reasoned_p = self.lookup_Rtable(new,old,rulei,wmpi,implication)  # read p valéues form reasoning table
+                reasoned_p = self.lookup_Rtable(new,old,rulei,wmpi,implication)  # read p values form reasoning table
                 clist = [new,old]                                        # initiallist of concepts used for reasoning
                 for olditem in gl.WM.cp[old].rule_match[rulei][wmpi]:    # look at further concepts used
                     if olditem not in clist: clist.append(olditem)
@@ -321,7 +337,7 @@ class Reasoning:
                 
                 
 
-    def generate_IMconcept(self,new,rule,implication,condition,condi_p=-1): # handle the rule IM(IM(%1,%2),%2) normal implication. TO DO: call finaladd.
+    def generate_IMconcept(self,new,rule,implication,condition,condi_p=-1): # handle the rule IM(IM(%1,%2),%2) normal implication. 
         if len(gl.KB.cp[condition].parent)==2:          # IM() has a single condition and a single implication TO DO: multiple implications
             if "%" in gl.KB.cp[gl.KB.cp[condition].parent[0]].mentstr:      # % in IM(%1,%2)
                 if gl.KB.cp[gl.KB.cp[condition].parent[1]].mentstr == gl.KB.cp[implication].mentstr:  # %2 in IM(IM(%1,%2),%2). The rule is now identified.
@@ -373,13 +389,13 @@ class Reasoning:
         return condimap
 
     def build_concept(self,db,curri,condimap,conclist,reasoned_p,rule,nextp=0):     #recursive build of reasoned concept starting with parents
-        # TO DO: enable word in this implication. Not only %1 %2 etc.
         if nextp==0 and db.cp[curri].relation!=1: self.imparents.append([])     # curri is the index of the implication in KB
         while (len(db.cp[curri].parent)>0 and nextp<len(db.cp[curri].parent)):  # walk nto finished over parents on same level
             self.build_concept(db,db.cp[curri].parent[nextp],condimap,conclist,reasoned_p,rule,0)
             nextp=nextp+1
         if db.cp[curri].relation==1:
-            self.imparents[-1].append(condimap[db.cp[curri].mentstr])           # collect parents for a concept that has words as parents
+            try: self.imparents[-1].append(condimap[db.cp[curri].mentstr])      # collect parents for a concept that has words as parents
+            except: self.imparents[-1].append(db.cp[curri].mentstr)             # we assume that curri points to a specific word in the rule
         thispnum=len(db.cp[curri].parent)
         if thispnum == len(self.imparents[-1]):                                 # detect that all parents are in place
             self.recordparents.append(self.imparents.pop())                     # remove added fraction parents and record them
@@ -414,7 +430,7 @@ class Reasoning:
             self.recordrel=[]; self.imcount=0
             if gl.KB.cp[implication].mentstr!="%2" or gl.KB.cp[rule[1]].relation!=13:   # this is not the IM(IM(%1,%2),%2) rule
                 self.build_concept(gl.KB, implication, condimap, [new][:], reasoned_p,rule)   # call finaladd_Concept for several concepts
-        if gl.KB.cp[implication].mentstr!="%2" and gl.KB.cp[rule[1]].relation == 13:    # rule portion is IM, the implication in rule is just %2
+        if gl.KB.cp[implication].mentstr=="%2" and gl.KB.cp[rule[1]].relation == 13:    # rule portion is IM, the implication in rule is just %2
             self.generate_IMconcept(new,rule,implication,condition)     # this is hard-wired for rule: IM(IM(%1,%2),%2)
 
     def combine_condi(self,condim1,condim2):                # combine two condimaps into one, check that %1 mean the same in both
@@ -527,6 +543,40 @@ class Reasoning:
         #further cases based on gl.noreplace handled in visit_Replace
         return isenabled
 
+    def count_Addedconc(self,repl,parentlist):              # remember orig concepts being replaced and added concept count
+        clist=[]
+        for pari in gl.WM.cp[repl].parent:                  # concepts potentially already replaced
+            if pari in self.addedconcfor:                   # pari was added earlier
+                for plist in self.addedconcfor[pari]:       #
+                    clist.append(plist)
+        if repl in self.addedconcfor:                       # added earlier
+            self.addedconcfor[repl].append(parentlist)
+        else:
+            self.addedconcfor[repl] = [parentlist]          # else insert list of parents being used for addition
+        for plist in clist:
+            if plist not in self.addedconcfor[repl]:
+                self.addedconcfor[repl].append(plist)
+
+    def fix_imcount(self,repmap,pari,pix,rel):              # decrease imcount if disbaled replacement is occuring
+        if pari in repmap and pix in self.noreplace[rel]:   # parent needs replace, and is disabled !!
+            if pari in self.addedconcfor:                   # for pari, concept already planned to be added
+                decr = len(self.addedconcfor[pari])
+                self.imcount = self.imcount-decr            # adjust imcount because pari replace is disabled
+                for pfor in self.addedconcfor[pari]:        # parents not needed
+                    for precordi in range(len(self.recordparents)-1,-1,-1): # parents in self.recordparents, backwards
+                        if pfor == self.recordparents[precordi]:    #
+                            del self.recordparents[precordi]        # delet the most recent unused parent
+                            del self.recordrel[precordi]            # delet relation as well
+                            self.addedconcfor[pari].remove(pfor)    # this is not being added anymore
+                            for ppp in self.addedconcfor:           # check entire list of conc to be added
+                                if ppp>pari:                        # a parent potentially using pfor
+                                    if pfor in self.addedconcfor[ppp]:  # yes it is using pfor
+                                        self.addedconcfor[ppp].remove(pfor)
+                                        if ppp in repmap:
+                                            repmap[ppp]=repmap[ppp]-decr  # fix the replace index in repmap
+                            break                                   # only delete once
+            
+
     def visit_Replace (self,top,curri,repmap):              #recursive visit of old and build of reasoned concept
         nextp=0
         while (len(gl.WM.cp[curri].parent)>0 and nextp<len(gl.WM.cp[curri].parent)):
@@ -545,7 +595,8 @@ class Reasoning:
                 #print ("VIS 1 parentlist",parentlist," repcount",repcount)
                 mentales="!new!"                #only for debbuging. new concept will bedded.
                 if repcount==0:                 #this is the first parent to be replaced
-                    self.imcount+=1             #NUMER OF CONCEPTS TO ADD
+                    self.imcount+=1             #number of concepts to add
+                    self.count_Addedconc(repl,parentlist)  # remember how many concepts are added
                     self.recordrel.append(rel)  #remember the relation to be added
                     self.recordparents.append(parentlist)   #parentlist has both the unchanged parents and the replaced one
                     repmap[repl]=gl.WM.ci+self.imcount  #we know the index of the concept to be added. repl needs to be replaced because it has a replaced parent.
@@ -553,31 +604,14 @@ class Reasoning:
                     self.recordparents[self.imcount-1][pix]=repmap[pari]   #replace more parents.
                 repcount+=1                     #coiunt how many parents are replaced
                 if curri==top:                  #we are on the level of the origoinal concept, not its parents
-                    self.topparents.append(pari) #remember paRENT NEEDS REPLACE
-            #print ("VISIT REPL curri",curri,"toopparent",self.topparents," pari",pari," repl",repl," pix",pix," repmap",repmap," imcount",self.imcount," repcount",repcount," recordrel",self.recordrel," recordparernts",self.recordparents,(pari in repmap),rel,(pix not in gl.args.noreplace[rel]))
+                    self.topparents.append(pari)   # remember parent needs replace
+            self.fix_imcount(repmap,pari,pix,rel)  # decrese imcount if disabled replacement is occuring
             pix+=1                              #index of next pari
 
     def build_Repmap(self,fromc,toc,repmap):            # fromc and same concepts to fromc need to be replaced by toc
         if fromc not in repmap: repmap[fromc]=toc       # repmap maps concept to replace to the concept by which it is replaced
         for samc in gl.WM.cp[fromc].same:               # all concepts that are the same as fromc
             if samc not in repmap: repmap[samc]=toc    # these also get replaced
-
-    def clean_Replace(self):                             # delete unused concepts from recordparents
-        cleancount=0
-        copypar=self.recordparents[:]
-        for addi in range(len(copypar)):                 #all concepts to be added
-            addcon=gl.WM.ci+addi+1                       #index of concept to be added
-            found=0
-            for checki in range(addi+1,len(copypar)):    #concepts to be added later than this one
-                if addcon in copypar[checki]:            #addcon is really used later
-                    found=1
-                    for pind in range(len(copypar[checki])):   #take these parents
-                        if self.recordparents[checki-cleancount][pind]==addcon:   #this is it
-                            self.recordparents[checki-cleancount][pind]==addcon-cleancount  #correct the parent because of deletions
-            if found==0 and addi<len(copypar)-1:     #this concpet is unused and it is not the top level concept
-                del self.recordrel[addi]                #remove from recordrel
-                del self.recordparents[addi]            #remove from recordparents
-                cleancount+=1                           #count one more deleted
 
     def read_ptable(self,tname,indexlist):              #read reasoning table
         reasoned_p=0
@@ -605,10 +639,14 @@ class Reasoning:
                     repmap={}                               #map to hold pairs of concept replacements
                     self.build_Repmap(fromc,toc,repmap)     # populate repmap
                     self.imcount=0; self.recordrel=[];self.recordparents=[];self.topparents=[]
-                    self.visit_Replace(old,old,repmap)      #perform replacement and recursively add reasoned concept with parents
-                    if len(self.topparents)>0:              # we have something to reason
-                        self.clean_Replace()                #clean recordparents from unused concepts
-                        self.finaladd_Concept([new,old][:],pval,self.recordrel,self.recordparents,[0])  # add the reasoned concepts
+                    self.addedconcfor = {}
+                    try:
+                        self.visit_Replace(old,old,repmap)      #perform replacement and recursively add reasoned concept with parents
+                        if len(self.topparents)>0:              # we have something to reason
+                            self.finaladd_Concept([new,old][:],pval,self.recordrel,self.recordparents,[0])  # add the reasoned concepts
+                    except:
+                        gl.error+=1
+                        gl.log.add_log(("ERROR in process_CDrel 1, reason.py. new:",gl.WM.cp[new].mentstr," old:",gl.WM.cp[old].mentstr))
                 if gl.WM.cp[new].relation==3:               #D relation: replace parent 0 with 1
                     fromc=gl.WM.cp[new].parent[0]           # this will be replaced
                     toc=gl.WM.cp[new].parent[1]             #member, this will be used
@@ -617,10 +655,14 @@ class Reasoning:
                         repmap={}                           #map to hold pairs of concept replacements
                         self.build_Repmap(fromc,toc,repmap) # populate repmap
                         self.imcount=0; self.recordrel=[];self.recordparents=[];self.topparents=[]
-                        self.visit_Replace(old,old,repmap)  #perform replacement and recursively add reasoned concept with parents
-                        if len(self.topparents)>0:          #we have something to reason
-                            self.clean_Replace()            #clean recordparents from unused concepts
-                            self.finaladd_Concept([new,old][:],pval,self.recordrel,self.recordparents,[0])  # add the reasoned concepts
+                        self.addedconcfor = {}
+                        try:
+                            self.visit_Replace(old,old,repmap)  #perform replacement and recursively add reasoned concept with parents
+                            if len(self.topparents)>0:          #we have something to reason
+                                self.finaladd_Concept([new,old][:],pval,self.recordrel,self.recordparents,[0])  # add the reasoned concepts
+                        except:
+                            gl.error+=1
+                            gl.log.add_log(("ERROR in process_CDrel 2, reason.py. new:",gl.WM.cp[new].mentstr," old:",gl.WM.cp[old].mentstr))
                     
     def process_Anyrel(self,new,old):                   #if new is any relation, use earlier C or D in old to reason
         if (gl.WM.cp[old].relation==3 or gl.WM.cp[old].relation==4) and len(gl.WM.cp[old].parent)==2:   #C or D rel with 2 parents
@@ -647,6 +689,7 @@ class Reasoning:
         s=timer(); orulei=0
 
         #hard wired reasoning follows for C and D relation
+        #TO DO: check the override implication based on more general C, D relation! Maybe not running.
         if (gl.WM.cp[new].relation==3 or gl.WM.cp[new].relation==4) and gl.WM.cp[old].relation!=1 and enable==1 and len(gl.WM.cp[new].parent)==2:
             if self.isnew_CDrel(new,same_list):                 #see if this C or D rel is the first occurence
                 self.process_CDrel(new,old)                     #reason on old, using the C or D rel in new

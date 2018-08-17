@@ -123,7 +123,7 @@ class Testinput:
                 goodindex+=1
             if (eval=="OK     " and (0 in goodamatch)):      # concept match OK but some p values do not match
                 eval="***BADP"
-            if (eval=="OK     " and (2 in sysamatch)):      # concept match mulétiple cases, some p mismatching
+            if (eval=="OK     " and (2 in sysamatch)):      # concept match multiple cases, some p mismatching
                 eval="***BADP"
             if (eval=="OK     " and (0 in sysamatch)):      # too many system answers
                 eval="OK MORE"
@@ -136,18 +136,18 @@ class Testinput:
         evals=self.eval_test(rowindex)
         self.resultf.write(evals)                       # write OK, BAD
         if len(self.eng[rowindex])>0:                   
-            self.resultf.write(" /e ")
+            self.resultf.write(" e/ ")
             self.resultf.write(self.eng[rowindex])
             addspaces(self.eng[rowindex],22)                # fill spaces up to 22 characters
         if len(self.mentalese[rowindex])>0:
-            self.resultf.write(" /m ")
+            self.resultf.write(" m/ ")
             self.resultf.write(self.mentalese[rowindex])
             addspaces(self.mentalese[rowindex],22)
         if len(self.goodanswer[rowindex])>0:
-            self.resultf.write(" /a ")
+            self.resultf.write(" a/ ")
             self.resultf.write(self.goodanswer[rowindex])
-            self.resultf.write(" /s ")
-        self.resultf.write(self.comment[rowindex])
+            self.resultf.write(" s/ ")
+        self.resultf.write(self.comment[rowindex][:-1])
         for sysalist in self.systemanswer[rowindex]:
             if type(sysalist) is list: sysa=sysalist[1]
             else: sysa=sysalist
@@ -155,7 +155,65 @@ class Testinput:
         if self.systemanswer[rowindex]!=[]: self.resultf.write(str(self.systemanswer[rowindex]))
         self.resultf.write("\n")
         
+    def mentalese_fromrow(self,line):           # get mentalese string
+        i=0; mentout=""
+        epos=-1;mpos=-1;apos=-1;comment=-1
+        while i<len(line):
+            if "e/" in line[i:i+2]: epos=i      # order of e/ m/ a/ is fixed
+            if "m/" in line[i:i+2]: mpos=i   
+            if "a/" in line[i:i+2]:
+                apos=i
+                if mpos>-1: mentout = line[mpos+2 : apos][:].strip()
+            if "//" in line[i:i+2]:
+                comment=i
+                if mpos>-1 and apos==-1: mentout = line[mpos+2 : comment][:].strip()
+            i+=1
+        if mpos>-1 and apos==-1 and comment==-1:
+            mentout = line[mpos+2 : i][:].strip()
+        return mentout
 
+    def locate_thisment(self,row,ment,lines):   # locate mentalese from row in lines
+        while row<len(lines):
+            if ment in lines[row]:              # mentalese located
+                try: return lines[row][0:7]
+                except: return "notfound"
+            row+=1
+        return "notfound"
+
+    def check_result(self):                     # compare _base file with _result file
+        match=0; diff=0; notf=0; message=""; r_eval=" "
+        try:                                    # if the files exist
+            self.resultf.close()                # close current result file
+            pos=self.name.find(".")
+            self.resultf=open(self.name[:pos]+"_result"+self.name[pos:],"r")    # open result file for read
+            resultlines=[]
+            for rline in self.resultf:
+                resultlines.append(rline[:])    # loafd entire result file
+            brow=0
+            for bline in self.basef:            # rows in base file
+                try: bment=self.mentalese_fromrow(bline)   # get the mentalese
+                except: print ("ERROR in testing.mentalese_fromrow. row:",brow)
+                if len(bment)>0:
+                    try: r_eval=self.locate_thisment(brow,bment,resultlines)
+                    except: print ("ERROR in testing.locate_thisment. row:",brow)
+                if bline[0:7] == r_eval: match+=1   # match
+                else:
+                    if r_eval == "notfound":
+                        notf+=1
+                        print ("NOT FOUND in RESULT: row=",brow," mentalese:",bment," base eval:",bline[0:7])
+                    elif len(bment)>0:
+                        diff +=1
+                        print ("DIFF in RESULT: row=",brow," mentalese:",bment," base eval:",bline[0:7]," current eval:",r_eval)
+                brow+=1
+            self.resultf.close()
+            self.basef.close()
+        except: message = "ERROR in RESULT CHECK, probably _base file not found"
+        if diff==0 and notf==0: alleval=" ALL OK"
+        else: alleval=""
+        if "ERROR" in message: print (message)
+        else: print ("RESULT CHECK.",alleval,"match:",match,"difference:",diff,"not found:",notf, message)
+                    
+            
 class Temptest:                                 # unit tests and other temporary data
     def __init__(self):
         self.dog=gl.WL.add_word("dog")

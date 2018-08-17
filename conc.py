@@ -97,7 +97,8 @@ class Kbase:
                                 allsame=0
                             pari+=1
                         if allsame==1:
-                            found=self.check_Contradiction(sindex,rule,pin,conclist)    # check whether we have contradiction and resolve it
+                            foundnow=self.check_Contradiction(sindex,rule,pin,conclist)    # check whether we have contradiction and resolve it
+                            if foundnow == 1: found=1
         gl.args.settimer("concep_902: search_fullmatch",timer()-s)
         return found    # TO DO: feed back allsame in found, to populate .general in reasoned concept in finaladd
 
@@ -122,24 +123,28 @@ class Kbase:
             sindex=self.cp[sindex].previous
         return pback
 
-    def update_Samestring(self,oldleaf,newleaf):                #update WM.samestring dictionary key
-        if oldleaf in gl.WM.samestring:
-            gl.WM.samestring[newleaf] = gl.WM.samestring.pop(oldleaf)   # this removes the oldleaf key
-    
+    def update_Samestring(self,oldleaf,newleaf):                #update WM.samestring dictionary key and WM.brelevant set
+        if self.name=="WM":
+            if oldleaf in gl.WM.samestring:
+                gl.WM.samestring[newleaf] = gl.WM.samestring.pop(oldleaf)   # this removes the oldleaf key
+            if oldleaf in gl.WM.brelevant:                      # brelevant is the set of branch leafs for current wm_pos
+                gl.WM.brelevant.remove(oldleaf)
+                gl.WM.brelevant.add(newleaf)
+                
     def add_concept(self, new_p, new_rel, new_parents,kbl=[],gvalue=None):        #add new concept to WM or KB. parents argument is list
         self.cp.append(Concept(new_rel))                        #concept added
         self.ci = len(self.cp) - 1                              #current index
         self.cp[self.ci].previous=self.ci-1                     #set previous
         if self.ci>0:
             if self.cp[self.ci-1].next==[]:
-                self.cp[self.ci-1].next.append(self.ci)         #set next
-        self.cp[self.ci].p = self.convert_p(new_p)              #set p value
-        self.cp[self.ci].add_parents(new_parents)               #set parents
+                self.cp[self.ci-1].next.append(self.ci)         # set next                
+        self.cp[self.ci].p = int(new_p)                         # set p value
+        self.cp[self.ci].add_parents(new_parents)               # set parents
         self.cp[self.ci].kblink[:]=kbl[:]                       # set link to KB
         if kbl==[] and self.name=="KB" and new_rel==1:          # word addition in KB
             self.cp[self.ci].kblink.append(self.ci)             # add own index in KB
         if (new_rel != gl.args.rcode["W"]):                     # if this is not a word
-            for par in self.cp[self.ci].parent:                 #register new concept as the child of parents
+            for par in self.cp[self.ci].parent:                 # register new concept as the child of parents
                 self.cp[par].child.append(self.ci)
 
             self.cp[self.ci].mentstr = gl.args.rcodeBack[new_rel] + "("     # set mentstr
@@ -171,6 +176,8 @@ class Kbase:
             gl.WM.samestring[newleaf]={}
             for ment in gl.WM.samestring[oldleaf]:          #mentalese strings are keys
                 gl.WM.samestring[newleaf].update({ment:gl.WM.samestring[oldleaf][ment][:]})   #copy list of identical mentalese concepts
+        if oldleaf in gl.WM.brelevant:                      # brelevant is the list of leafs for current WM pos
+            gl.WM.brelevant.add(newleaf)                    # add this element to the set
 
     def update_Branchinfo(self,oldleaf,newleaf,newvalue=-999):  #update branch related info in self.branch, self.branchvalue and self.samestring
         if oldleaf!=newleaf:                                #update necessary
@@ -224,16 +231,19 @@ class Kbase:
                         self.cp[old].p=self.cp[new].p                   #old updated
                         gl.log.add_log(("PVALUE OVERRIDE in reverse_Drel. overridden=",old," based on:",new,"new p=",self.cp[old].p))
                         
-    def search_onbranch(self,swhat,swhatindex):       # search answer on branches separately
+    def search_onbranch(self,swhat,swhatindex):                     # search answer on branches separately
         found=[]
-        if self.branch==[]: branches=[gl.WM.ci]         #no branches, just the default
+        if self.branch==[]: branches=[gl.WM.ci]                     #no branches, just the default
         else: branches = self.branch[:]
-        for leaf in branches:                           #all branches
-            thisbr = self.get_branch_concepts(leaf)     #entire branch, reverse order
+        for leaf in branches:                                       #all branches
+            thisbr = self.get_branch_concepts(leaf)                 #entire branch, reverse order
             sindex = len(thisbr)-1
             while sindex>=0:
+                if gl.WM.cp[thisbr[sindex]].relation==3 and swhat.relation==3 and thisbr[sindex]<swhatindex:    # two D relations: replace parent 0 with 1
+                    if len(gl.WM.cp[thisbr[sindex]].parent) == 2 and len(swhat.parent)==2:
+                        self.reverse_Drel(swhatindex,thisbr[sindex]) # reverse D() and override p   
                 if self.rec_match(swhat,gl.WM.cp[thisbr[sindex]], [swhatindex,thisbr[sindex]]) == 1:     # identical concept
-                    found.append([leaf, thisbr[sindex]])    # add to found list, noting the branch too
+                    found.append([leaf, thisbr[sindex]])            # add to found list, noting the branch too
                 sindex = sindex-1
         return found
 
@@ -686,7 +696,7 @@ class Kbase:
                     g_value=self.word_get_num(aStr,actPos)          #get g value of the word
                     if wl_ind == -1:
                         wl_ind = gl.WL.add_word(ss,g_value)
-                    thisparent = self.add_concept(1,1,[],[wl_ind],g_value)   #parent is empty, KB link is wl_ind
+                    thisparent = self.add_concept(gl.args.pmax,1,[],[wl_ind],g_value)   #parent is empty, KB link is wl_ind
                     overparent=self.override_Parent(isquestion,thisparent,correct_leaf)
                     gl.WM.cp[thisparent].mapto=overparent           # remember in the word where it was overridden to
                     return overparent   # return the parent after potential override
@@ -705,7 +715,7 @@ class Kbase:
                     g_value=self.word_get_num(aStr,actPos)          #get g value of the word
                     if wl_ind == -1:
                         wl_ind = gl.WL.add_word(ss,g_value)
-                    thisparent = self.add_concept(1,1,[],[wl_ind],g_value)   #parent is empty, KB link is wl_ind
+                    thisparent = self.add_concept(gl.args.pmax,1,[],[wl_ind],g_value)   #parent is empty, KB link is wl_ind
                     overparent=self.override_Parent(isquestion,thisparent,correct_leaf)
                     gl.WM.cp[thisparent].mapto=overparent           # remember in the word where it was overridden to
                     return overparent   # return the parent after potential override
@@ -741,7 +751,7 @@ class Kbase:
                     
                     if p_result is not None:
                         if isparent==-1:                                            # this is not a parent but the top concept
-                            newindex=self.add_concept(p_result[0],relType,parents)           # add the concept to WM
+                            newindex=self.add_concept(self.convert_p(p_result[0]),relType,parents)           # add the concept to WM
                         else:
                             newindex=self.add_concept(gl.args.pmax/2,relType,parents)           # add the concept to WM, parent has p=pmax/2
                         self.cp[newindex].rulestr=p_result[2]                        # add the rule string

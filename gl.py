@@ -57,7 +57,7 @@ class Arguments:
 
         self.noreplace = {                                              # for these relations (index of dict) no C reasoning possible on given arguments (value)
             1:[99],2:[99],3:[0,1,2],4:[1,2],5:[1,2],6:[1,2],7:[1,2],8:[0],9:[99],10:[99],       #all relations must have a dummy value 99 at least
-            11:[0],12:[99],13:[1,2],14:[99],15:[99],16:[99],17:[99],18:[99],19:[99]
+            11:[1,2],12:[99],13:[99],14:[99],15:[99],16:[99],17:[99],18:[99],19:[99]
         }
 
     def settimer(self,fname,timeused):              # measure time spent in a function
