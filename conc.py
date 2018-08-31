@@ -41,9 +41,12 @@ class Kbase:
         self.branch=[]                  #list of living branches (branch leafs)
         self.brelevant = set()          # set of relevant branches, where current wmpos occurs
         self.branchvalue = {}           # evaluation (consistency) of each branch. Mapped to branch leaf.
+        self.branchactiv = {}           # set of activated concepts on branch
         self.samestring = {}            # for each branch leaf: a map of mentalese string: all occurence index on branch
         self.paragraph = []             # concepts where the latest paragraph ended on all branches
-        self.name = instancename          # the name of the instance can be used in the log file
+        self.name = instancename        # the name of the instance can be used in the log file
+        self.thispara = []              # list of concepts in this paragraph
+        self.prevpara = []              # list of concepts in previous paragraph
 
     def check_Contradiction(self,sindex,rule,pin,conclist):     # process contradiction
         if self.cp[sindex].p == pin:                        # no contradiction
@@ -178,11 +181,32 @@ class Kbase:
                 gl.WM.samestring[newleaf].update({ment:gl.WM.samestring[oldleaf][ment][:]})   #copy list of identical mentalese concepts
         if oldleaf in gl.WM.brelevant:                      # brelevant is the list of leafs for current WM pos
             gl.WM.brelevant.add(newleaf)                    # add this element to the set
+        if oldleaf in gl.WM.branchactiv:                    # expand branchactiv mapping
+            gl.WM.branchactiv[newleaf]=set()
+            gl.WM.branchactiv[newleaf].update(gl.WM.branchactiv[oldleaf])  # copy activated concepts of old branch
+            if oldleaf in gl.WM.branchactiv[newleaf]:
+                gl.WM.branchactiv[newleaf].remove(oldleaf)  # oldleaf is not part of newleaf branch (branching happened before oldleaf)
 
-    def update_Branchinfo(self,oldleaf,newleaf,newvalue=-999):  #update branch related info in self.branch, self.branchvalue and self.samestring
-        if oldleaf!=newleaf:                                #update necessary
-            self.update_Samestring(oldleaf,newleaf)         #WM.samestring key must be updated anyway
-            if oldleaf in gl.WM.branch:                     #thsi is in fact a leaf
+    def update_Branchactiv(self,oldleaf,newleaf):           # update WM.branchactiv keys
+        if self.name=="WM":
+            if oldleaf in gl.WM.branchactiv:
+                gl.WM.branchactiv[newleaf]=gl.WM.branchactiv.pop(oldleaf)   # this removes oldleaf key and replaces with newleaf
+            else:
+                if oldleaf==-1:                             # only for first concept in WM
+                    gl.WM.branchactiv[newleaf] = set()      # leaf needs to be added
+            if newleaf<oldleaf:                             # concept removal has happened (removal impacts a leaf in any case)
+                if newleaf in gl.WM.branchactiv:
+                    if oldleaf in gl.WM.branchactiv[newleaf]:  # old leaf was activated but got removed
+                        gl.WM.branchactiv[newleaf].remove(oldleaf)  # remove old leaf as that was removed from WM
+            else:                                           # concept addition happened
+                if gl.act.allwmactive == 1:                 # entire WM needs activation
+                    gl.act.activate_Conc(newleaf,[newleaf]) # activate the concept added now
+
+    def update_Branchinfo(self,oldleaf,newleaf,newvalue=-999):  # update branch related info in self.branch, self.branchvalue and self.samestring
+        if oldleaf!=newleaf:                                # update necessary
+            self.update_Samestring(oldleaf,newleaf)         # WM.samestring key must be updated anyway
+            self.update_Branchactiv(oldleaf,newleaf)        # WM.branchactiv key must be updated anyway
+            if oldleaf in gl.WM.branch:                     # this is in fact a leaf
                 gl.WM.branch.remove(oldleaf)
                 try:
                     value=self.branchvalue[oldleaf]

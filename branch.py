@@ -130,7 +130,8 @@ class Branch:           #branching in WM
                         if gl.KB.cp[ruleword].mentstr != gl.WM.cp[self.wmpos].mentstr:   #TO DO: avoid D(x,x)?
                             if rulw==-1:                                    #add rule only once
                                 rulw = gl.WM.add_concept(gl.args.pmax,1,[],[ruleword])      #add the word from the rule to WM
-                                ruleinwm = gl.WM.add_concept(gl.KB.cp[maprule].p,gl.KB.cp[maprule].relation,[self.wmpos,rulw],[maprule])        #add rule D(x,y) relation to WM
+                                ruleinwm = gl.WM.add_concept(gl.KB.cp[maprule].p,gl.KB.cp[maprule].relation,[self.wmpos,rulw],[maprule]) #add rule D(x,y) relation to WM
+                                gl.act.activate_Conc(ruleinwm,[relevant[0]])  # activate the rule in WM
                                 gl.WM.cp[relevant[0]].next = [rulw]         #continue branch leaf with rulw
                                 gl.WM.cp[rulw].previous = relevant[0]
                                 gl.WM.cp[rulw].wmuse=[]
@@ -142,6 +143,7 @@ class Branch:           #branching in WM
                                                                                 # TO DO: LIMITATION: this updates relevant[0] only!
                                 gl.WM.branch.remove(relevant[0])                #remove obsolate branch leaf
                                                                        #TO DO: try update branchvalue too
+                            gl.WM.update_Branchactiv(relevant[0],gl.WM.ci)      # update the obsolate leaf to the new leaf in WM.branchactiv
 
 
     def add_Mapbranch(self,maprule,currentwm, ruleinwm,currentword):    #add one more branch starting from ruleinwm and expressing D(wmpos,curretwm)
@@ -165,6 +167,7 @@ class Branch:           #branching in WM
        if leaf in gl.WM.branch:
            gl.WM.branch.remove(leaf)
            if leaf in gl.WM.samestring: del gl.WM.samestring[leaf]
+           if leaf in gl.WM.branchactiv: del gl.WM.branchactiv[leaf]
            try:
                val=gl.WM.branchvalue[leaf]
                del gl.WM.branchvalue[leaf]
@@ -181,6 +184,7 @@ class Branch:           #branching in WM
                     if leaf1 in gl.WM.branch:
                         gl.WM.branch.remove(leaf1)
                         if leaf1 in gl.WM.samestring: del gl.WM.samestring[leaf1]
+                        if leaf1 in gl.WM.branchactiv: del gl.WM.branchactiv[leaf1]
                         try:
                             val=gl.WM.branchvalue[leaf1]
                             del gl.WM.branchvalue[leaf1]            # also delete the branch value entry

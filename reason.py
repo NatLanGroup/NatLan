@@ -25,7 +25,7 @@ class Reasoning:
         self.noreplace = {}             # map to record inhibited replacements
         self.imcount=0                  # number of concepts added
         self.addedconcfor={}            # note original concepts to be replaced
-
+        self.thisactiv = []             # concepts activated while a specific concept is being reasoned on
     
 
     #This method checks if the 2 indexes from WM and KB matches (in syntax, not in each word).
@@ -212,7 +212,7 @@ class Reasoning:
                 relation=rel_list[ccount]
                 ccount+=1
                 for i in range(len(newparent)):
-                    if newparent[i]<0:                      # parent is a compound concept that was added now
+                    if type(newparent[i])==int and newparent[i]<0:      # parent is a compound concept that was added now
                         newparent[i]=addedconcept[(-1)*newparent[i]-1]  # insert the index of this concept
                 addedword = self.add_Reasonedword(newparent)    # if implication has specific words, add them first
                 if newparent==nplist[-1]: finalconcept=1    # this is the main concept
@@ -822,30 +822,26 @@ class Reasoning:
 
     def perform_Reason(self, starti, lasti, nqflag, next_question):
         s=timer()
-        try: nextrelation = gl.WM.cp[lasti-1].relation      # to test if this is an argument of an IM relation
-        except: nextrelation=-2                             # because if YES we may want to disable reasoning
         for wm_pos in range(starti,lasti):
-            enable=0; is_a_parent=0
-            if nextrelation == 13:                          # next concept is IM()
-                if gl.WM.cp[wm_pos].relation!=1:            # not a word
-                    is_a_parent=1                           # this is a portion of the latestbrelation
-            if nextrelation!=13 or is_a_parent==0:          # this is not the argument of an IM relation
-                enable=1                                    # we enable reasoning now
             if wm_pos>gl.reasoning.reason_processed:        # not yet processed for reasoning
                 gl.reasoning.reason_processed=wm_pos        # set as processed 
                 self.brancho = [branch.Branch(wm_pos)]      # store the branch object
                 thisbranch = gl.WM.get_previous_concepts(wm_pos)   #all concepts in the branch
                 gl.WM.brelevant = set(gl.WM.select_Relevant(wm_pos))  # collect branches on which wm_pos is present
+                self.thisactiv = list(gl.act.get_Thisactiv(wm_pos))   # list of currently activated concepts
+                self.thisactiv.sort(key=int, reverse=True)  # backward only needed while we have cnum-=1
+                thisreason=self.thisactiv                   # only needed while we want to switch back simply to thisbranch
                 if len(gl.WM.brelevant)!=0:                 # reason only if wm_pos is on a living branch
                     same_list=self.add_Samestring(wm_pos,thisbranch)   # get the list of same mentalese concepts, and add wm_pos to dict
                     self.brancho[0].perform_Branching(thisbranch)         # perform mapping
                     self.convert_KBrules(wm_pos,1)          # converts the rule fractions in kb_rules to [imlevel,condition] list
                                                             # also calls the addition of reasoned concept to WM if condition is not AND
-                    cnum = len(thisbranch)-1                # counter backwards
-                    while cnum>0:                          # for all old concepts in branch try to get a match for rules with multiple condition
+                    cnum = len(thisreason)-1                # counter backwards
+                    while cnum>0:                           # for all old concepts in branch try to get a match for rules with multiple condition
                         if gl.WM.cp[wm_pos].wmuse!=[-2]:    # do not reason if concept is parent of a reasoned concept
-                            self.brancho[0].update_Consistency(wm_pos,thisbranch[cnum])     #NOT OPTIMAL called for each new-old pair. update consistency of wm_pos
-                            self.enter_RuleMatch(wm_pos,thisbranch[cnum],same_list,1)                 #1.completes rule_match list  2.adds new reasoned concept to WM
+                            self.brancho[0].update_Consistency(wm_pos,thisreason[cnum])     #NOT OPTIMAL called for each new-old pair. update consistency of wm_pos
+                            if thisreason[cnum] < wm_pos:   # reason on earlier concepts only
+                                self.enter_RuleMatch(wm_pos,thisreason[cnum],same_list,1)   # 1.completes rule_match list  2.adds new reasoned concept to WM
                         cnum-=1
                     self.brancho[0].evaluate_Branches(wm_pos)       # update consistency for branches thathave wm_pos included
         if nqflag: self.mapping_Insert(next_question)       # insert D(x) before questions on relevant branches

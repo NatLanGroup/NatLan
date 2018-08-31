@@ -1,14 +1,15 @@
-import sys, gl, conc, wrd, testing, reason, branch
+import sys, gl, conc, wrd, testing, reason, branch, activ
 from timeit import default_timer as timer
 
-def process_testinput (tf):                  # input is the Testinput object
-    nqflag=False                            # flag to show next row is question and not processed
-    for ri in range(len(tf.mentalese)):     # take mentalese items (rows in test input file)
+def process_testinput (tf):                     # input is the Testinput object
+    nqflag=False                                # flag to show next row is question and not processed
+    for ri in range(len(tf.mentalese)):         # take mentalese items (rows in test input file)
         counter=0; tfment=[]
         tfment.append(tf.mentalese[ri])
         starti=gl.WM.ci                             # start position in WM
         if len(tfment[0])<2:                        # if this is an empty row, remember paragraph border
             gl.WM.paragraph = list(set(gl.WM.branch).union(set([gl.WM.ci])))  # record the last concept of the paragraph
+            gl.act.update_Para()                    # update list of concepts in this and previous paragraph
         while (len(tfment[0])>3 and counter<20):    # counter protects against endless loop
             gl.WM.branch_read_concept(starti,tfment,tf.question[ri])              # store concepts in WM
             counter=counter+1
@@ -39,6 +40,7 @@ gl.KB = conc.Kbase("KB")    # KNOWLEDGE BASE
 gl.WL = wrd.Wlist("WL")     # WORD LIST
 gl.log = gl.Logging()
 gl.reasoning = reason.Reasoning() #class instance for reasoning
+gl.act = activ.Activate()   # activation class instance
 
 test1 = conc.Concept()
 test1.add_parents([-1, 17])
