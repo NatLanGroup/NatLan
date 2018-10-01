@@ -18,7 +18,11 @@ def process_testinput (tf):                     # input is the Testinput object
         endi = gl.WM.ci                             # end position in WM
         gl.reasoning.actual=starti+1
         if (tf.question[ri]==1):                    # if yes, then on endi we assume a question
+            if gl.act.act_qw==1:                    # activation and reasoning based on question necessary
+                gl.reasoning.recent_Activation(endi) # activate and reason on question on endi
             tf.systemanswer[ri][:] = gl.WM.answer_question(starti,endi)[:]    # answer question and record concept indices
+            if gl.act.act_qw==1:
+                gl.act.clean_Recentact()            # activations based on question are deleted
             starti = gl.WM.ci                       # do not reason on questions
             gl.reasoning.actual = gl.WM.ci
         gl.test.write_result(ri)                    # write result file
@@ -75,7 +79,7 @@ if gl.args.argnum == 2:
     for t in sorted(gl.args.timecheck,reverse=False):
         print (t, int(gl.args.timecheck[t]*10000/(end-s)))
     gl.test.check_result()                  # compare _base to _result file
-    if gl.error>0: print ("ERROR in process_CDrel. count =",gl.error)
+    print ("TOTAL reasoning attempts=",gl.args.total_reasoncount," REASONed concepts=",gl.args.success_reasoncount,"ERROR in process_CDrel. count =",gl.error)
 
 #gl.KB.walk_db(24)                        # walk through parents of a concept, print them
 #gl.unittest.utest_read_concept()            # run read_concept unit test

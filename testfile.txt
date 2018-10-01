@@ -100,8 +100,12 @@ e/ How do tired dogs walk?           m/ F(A(F(dog,tired),walk),?)       a/ F(A(F
 e/ Do tired dogs walk slowly?        m/ F(A(F(dog,tired),walk),slowly)? a/ F(A(F(dog,tired),walk),slowly)p=1
 e/ What dogs walk slowly?            m/ F(A(F(dog,?),walk),slowly)      a/ F(A(F(dog,tired),walk),slowly)p=1
 e/ What do tired dogs do slowly?     m/ F(A(F(dog,tired),?),slowly)     a/ F(A(F(dog,tired),walk),slowly)p=1
+
 e/ Joe is a person.				 	 m/ C(Joe,person)
 e/ A garden is not a person.		 m/ C(garden,person)p=0
+e/ People read.						 m/ A(people,read)
+
+e/ Does Joe read?					 m/ A(Joe,read)?   			a/ A(Joe,read)p=4
 
 // MAPPING. r=4 concept is mapping rule. row without mentalese is paragraph break. Mapping happens within paragraph.
 e/ He may mean a boy. 			m/ D(he,boy)p=0.5
@@ -140,7 +144,7 @@ e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)
 e/ Girls are people. 		     	m/ C(girl,people)  
 e/ Boys are people.		     		m/ C(boy,people)            
 m/ F(fox,brown)
-e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)p=2 A(Mary,walk)p=4  //bad eval code
+e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)p=2 A(Mary,walk)p=4 
 e/ The fox hunts in the forest.      m/ F(A(fox,hunt),R(in,forest))
 e/ Does the brown fox hunt?          m/ A(F(fox,brown),hunt)?    a/ A(F(fox,brown),hunt)p=2
 
@@ -148,7 +152,7 @@ e/ Does the brown fox hunt?          m/ A(F(fox,brown),hunt)?    a/ A(F(fox,brow
 e/ If a person runs, then that person moves. m/ IM(A(person,run),A(person,move))
 e/ Does a person run?                m/ A(person,run)?           a/ A(person,run)p=2
 e/ Does a person move?               m/ A(person,move)?          a/ A(person,move)p=2
-e/ Who moves?                        m/ A(?,move)                a/ A(person,move)p=2   //bad eval code
+e/ Who moves?                        m/ A(?,move)                a/ A(person,move)p=2 
 e/ People run.                       m/ A(people,run)    
 e/ Who moves?                        m/ A(?,move)                a/ A(person,move)p=4
 e/ Do animals walk?                  m/ A(animal,walk)?          a/ A(animal,walk)p=2

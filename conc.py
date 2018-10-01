@@ -4,8 +4,9 @@ from timeit import default_timer as timer
 class Concept:
     def __init__(self,rel=0):
         self.p = int(gl.args.pmax/2)        # p value of concept
-        self.c = int(gl.args.cmax)          # consistence of this concept and previous concepts
+        self.c = int(gl.args.cmax)          # consistency of this concept and previous concepts
         self.g = int(gl.args.gmax)          # generality: how specific (0) or general (1) is the concept
+        self.acts = 0                       # activation level of concept
         self.each = int(gl.args.eachmax/2)  # each property: 0 means exception, 4 means each=no exception for sure
         self.relevance = int(gl.args.rmax/2)  # relevance of the concept
         self.relation = rel # relation code
@@ -25,6 +26,7 @@ class Concept:
         self.rulestr = []   # strings for rule-information like p=p1 or p=pclas
         self.kb_rules = []  # list of rules in KB which match this concept
         self.rule_match = []  # list of WM concepts that match the respective rule of kb_rules
+        self.kbrules_converted=0    # flag to show if convert_KBrules was called for this concept
 
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
@@ -42,6 +44,7 @@ class Kbase:
         self.brelevant = set()          # set of relevant branches, where current wmpos occurs
         self.branchvalue = {}           # evaluation (consistency) of each branch. Mapped to branch leaf.
         self.branchactiv = {}           # set of activated concepts on branch
+        self.new_activ = {}             # sets of recently activated concepts mapped to branch
         self.samestring = {}            # for each branch leaf: a map of mentalese string: all occurence index on branch
         self.paragraph = []             # concepts where the latest paragraph ended on all branches
         self.name = instancename        # the name of the instance can be used in the log file
@@ -263,7 +266,7 @@ class Kbase:
             thisbr = self.get_branch_concepts(leaf)                 #entire branch, reverse order
             sindex = len(thisbr)-1
             while sindex>=0:
-                if gl.WM.cp[thisbr[sindex]].relation==3 and swhat.relation==3 and thisbr[sindex]<swhatindex:    # two D relations: replace parent 0 with 1
+                if gl.WM.cp[thisbr[sindex]].relation==3 and swhat.relation==3 :    # two D relations: replace parent 0 with 1
                     if len(gl.WM.cp[thisbr[sindex]].parent) == 2 and len(swhat.parent)==2:
                         self.reverse_Drel(swhatindex,thisbr[sindex]) # reverse D() and override p   
                 if self.rec_match(swhat,gl.WM.cp[thisbr[sindex]], [swhatindex,thisbr[sindex]]) == 1:     # identical concept
@@ -493,9 +496,8 @@ class Kbase:
     def remove_Frombranch(self,starti,endi,awlist):     # remove input (question etc) from all branches
         leng = endi-starti
         awoutlist = []
-        if endi == gl.WM.ci :
-            if self.branch == []: branches=[self.ci]
-            else: branches = self.branch[:]
+        if self.branch == []: branches=[self.ci]
+        else: branches = self.branch[:]
         if len(branches)>1:
             bsort = sorted(branches, key=int, reverse=True)
             leng = bsort[0]-bsort[1]                #on the branch we only have the new input. so this is the length of it.
@@ -524,6 +526,7 @@ class Kbase:
 
 
     def answer_question(self,starti,endi):          #answer a question now stored in WM
+        s=timer()
         answerlist=[]                           
         self.rec_set_undefined_parents(endi)        #sets -1 parents instead of ? character
         qcount=[0]                                   #counter for ? parents
@@ -533,17 +536,26 @@ class Kbase:
         else: branches=self.branch[:]
         awbrlist=[]                                 # here we note if we have answer on this branch
         for aw in answers:
-            if (aw[1] not in branches or (aw[0] not in awbrlist and qcount[0]==0)):               #the question itself is an answer and a leaf, must be removed
+            if (aw[1]!=endi or (aw[0] not in awbrlist and qcount[0]==0)):   #the question itself is an answer and a leaf, must be removed
                 answerlist.append(aw)
             awbrlist.append(aw[0])
-        if qcount[0]>0:                             #if -1 parent in input, then it must be removed
-            answerlist = self.remove_Frombranch(starti,endi,answerlist[:])[:]
         for leaf in branches:                       #do not remove question if it is Z(a,b)? but may need to be added to answers
-            answeryes=[]
+            answeryes=0
             for anw in answerlist:
-                if leaf==anw[0]: answeryes=1        #remember we have answer
+                if leaf==anw[0] and gl.WM.cp[anw[1]].wmuse!=[-2]:   # an answer not parent of reasoned
+                    ament=gl.WM.cp[anw[1]].mentstr  # answer mentalese
+                    if ",?" not in ament and "?," not in ament and "(?)" not in ament:  # not a A(Joe,?) type of question
+                        answeryes+=1                #remember we have answer, count them
             if qcount[0]==0:                        #question like Z(a,b)?
-                if answeryes==0: answerlist.append([leaf,leaf]) #question added as answer
+                if answeryes==0: answerlist.append([leaf,endi]) #question added as answer
+            if answeryes>1 :
+                try: answerlist.remove([leaf,endi])  # remove the question
+                except: a=0
+        for anw in answerlist[:]:                   # iterate on copy because we remove from list
+            ament=gl.WM.cp[anw[1]].mentstr
+            if gl.WM.cp[anw[1]].wmuse==[-2] or ",?" in ament or "?," in ament or "(?)" in ament:
+                answerlist.remove(anw)
+        gl.args.settimer("concep_905: answer_question",timer()-s)
         return answerlist
     
     def read_mentalese(self,mfilename,mlist=[]):    #read Mentalese from a file or get in a list

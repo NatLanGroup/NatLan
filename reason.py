@@ -6,9 +6,8 @@ from timeit import default_timer as timer
 # TO DO: XOR(%1.p=p1,%2) this p value should work
 # TO DO: NOT() relation  or Q(not,x)  just like Q(some,x) Q(maybe,x) Q(probably,x) etc
 # TO DO: N() rule - necessary condition - not so important
-
-# TO DO: resoning LIMITATIONS. see this: IM(A(%1,F(consist,R(of,%2))),P(%1,%2))p=pide1. input=A(family,F(consist,R(of,AND(father,mother))))
-# no general AND reasoning to arrive at R(of,mother).
+# TO DO: no general AND reasoning to arrive at R(of,mother).  A(family,F(consist,R(of,AND(father,mother))))
+# TO DO: spreading activation is exploding.
 
 class Reasoning:
     def __init__(self):
@@ -26,6 +25,7 @@ class Reasoning:
         self.imcount=0                  # number of concepts added
         self.addedconcfor={}            # note original concepts to be replaced
         self.thisactiv = []             # concepts activated while a specific concept is being reasoned on
+        self.processed_pairs = {}       # newconcept:set(old) to record which concept pairs has been reasoned on
     
 
     #This method checks if the 2 indexes from WM and KB matches (in syntax, not in each word).
@@ -105,6 +105,7 @@ class Reasoning:
         
     def convert_KBrules(self,new,enable):           #converts the rule fractions in kb_rules to [imlevel,condition] list
         imcombined=[]                               #finds first arg of rule and records all potential matches
+        gl.WM.cp[new].kbrules_converted=1           # remember this function was used here
         for ruleindex in gl.WM.cp[new].kb_rules:    #low level condition fractions already in kb_rules
             im=[]
             for child in gl.KB.cp[ruleindex].child:
@@ -683,11 +684,18 @@ class Reasoning:
                 is_new=False
                                         #TO DO: add check for C/D relation in KB
         return is_new
-    
+
+    def set_Pairs(self,new,old,same_list):                      # record that new,old pair is processed
+        if new not in self.processed_pairs:
+            self.processed_pairs[new]=set()
+        self.processed_pairs[new].add(old)                      # record new,old pair
+        if old not in self.processed_pairs:
+            self.processed_pairs[old]=set()
+        self.processed_pairs[old].add(new)                      # record old,new pair
                 
     def enter_RuleMatch(self,new,old,same_list,enable):         # enable: will cause reasoning be skipped if concept is argument of an IM() relation
         s=timer(); orulei=0
-
+        self.set_Pairs(new,old,same_list)                       # record that new,old pair is processed
         #hard wired reasoning follows for C and D relation
         #TO DO: check the override implication based on more general C, D relation! Maybe not running.
         if (gl.WM.cp[new].relation==3 or gl.WM.cp[new].relation==4) and gl.WM.cp[old].relation!=1 and enable==1 and len(gl.WM.cp[new].parent)==2:
@@ -723,7 +731,7 @@ class Reasoning:
     
  
     
-    def get_Wordinment(self,ment):                          # return words from any mentalese
+    def get_Wordinment(self,ment):                          # TO DO: should be moved to conc. return words from any mentalese
         ment=ment.strip()
         wordlist=[]; thisword=""
         termination = [",",")",".g=",".p=",".r=",".c="]     # valid terminations of words
@@ -812,6 +820,7 @@ class Reasoning:
             if thisment in ment_dict:                    #this is not the first such concept
                 onthisbr=set(ment_dict[thisment]) & thisbrset    #list of same mentalese on the branch of wm_pos
                 sameset.update(onthisbr)                # sameset has all conceps with same mentalses as wm_pos
+                sameset.discard(wm_pos)                 # remove wm_pos itself from the set of same concepts
                 if wm_pos not in ment_dict[thisment]:
                     ment_dict[thisment].append(wm_pos)
             else:
@@ -820,32 +829,63 @@ class Reasoning:
         return sameset
             
 
-    def perform_Reason(self, starti, lasti, nqflag, next_question):
+    def perform_Reason(self, starti, lasti, nqflag, next_question, recent_activ=False):
         s=timer()
         for wm_pos in range(starti,lasti):
-            if wm_pos>gl.reasoning.reason_processed:        # not yet processed for reasoning
+            if wm_pos>gl.reasoning.reason_processed or recent_activ==True: # not yet processed for reasoning or recent activation
                 gl.reasoning.reason_processed=wm_pos        # set as processed 
                 self.brancho = [branch.Branch(wm_pos)]      # store the branch object
                 thisbranch = gl.WM.get_previous_concepts(wm_pos)   #all concepts in the branch
+                if recent_activ==False:                      # not activation but the next input
+                    gl.WM.thispara.append(wm_pos)           # add concept to this paragraph
+                    for othercon in thisbranch:             # all concepts. TO DO: involvecheck in KB !
+                        self.brancho[0].update_Consistency(wm_pos,othercon)  # update consistency of wm_pos
                 gl.WM.brelevant = set(gl.WM.select_Relevant(wm_pos))  # collect branches on which wm_pos is present
                 self.thisactiv = list(gl.act.get_Thisactiv(wm_pos))   # list of currently activated concepts
                 self.thisactiv.sort(key=int, reverse=True)  # backward only needed while we have cnum-=1
                 thisreason=self.thisactiv                   # only needed while we want to switch back simply to thisbranch
                 if len(gl.WM.brelevant)!=0:                 # reason only if wm_pos is on a living branch
                     same_list=self.add_Samestring(wm_pos,thisbranch)   # get the list of same mentalese concepts, and add wm_pos to dict
-                    self.brancho[0].perform_Branching(thisbranch)         # perform mapping
-                    self.convert_KBrules(wm_pos,1)          # converts the rule fractions in kb_rules to [imlevel,condition] list
+                    if recent_activ==False: self.brancho[0].perform_Branching(thisbranch)         # perform mapping
+                    if gl.WM.cp[wm_pos].kbrules_converted==0:  # not yet applied
+                        self.convert_KBrules(wm_pos,1)      # converts the rule fractions in kb_rules to [imlevel,condition] list
                                                             # also calls the addition of reasoned concept to WM if condition is not AND
                     cnum = len(thisreason)-1                # counter backwards
                     while cnum>0:                           # for all old concepts in branch try to get a match for rules with multiple condition
                         if gl.WM.cp[wm_pos].wmuse!=[-2]:    # do not reason if concept is parent of a reasoned concept
-                            self.brancho[0].update_Consistency(wm_pos,thisreason[cnum])     #NOT OPTIMAL called for each new-old pair. update consistency of wm_pos
-                            if thisreason[cnum] < wm_pos:   # reason on earlier concepts only
-                                self.enter_RuleMatch(wm_pos,thisreason[cnum],same_list,1)   # 1.completes rule_match list  2.adds new reasoned concept to WM
+                            if thisreason[cnum] < wm_pos or recent_activ==True:   # reason on earlier concepts, or on activation
+                                if not (wm_pos in self.processed_pairs and thisreason[cnum] in self.processed_pairs[wm_pos]):  # not yet processed
+                                    if gl.WM.cp[wm_pos].relation!=1 and gl.WM.cp[thisreason[cnum]].relation!=1: # not a word
+                                        ciremember = gl.WM.ci
+                                        gl.args.total_reasoncount+=1
+                                        self.enter_RuleMatch(wm_pos,thisreason[cnum],same_list,1)   # 1.completes rule_match list  2. runs reasoning
+                                        gl.args.success_reasoncount += gl.WM.ci-ciremember
                         cnum-=1
                     self.brancho[0].evaluate_Branches(wm_pos)       # update consistency for branches thathave wm_pos included
         if nqflag: self.mapping_Insert(next_question)       # insert D(x) before questions on relevant branches
         self.brancho[0].compare_Branches()                  # after reasoning complete, we try to kill some bad branches
         gl.args.settimer("reason_000: perform_reason", timer()-s)     # measure execution time
         
-            
+    def recent_Activation(self,question):                   # we are at question, We activate and perform reasoning.
+        s=timer()
+        wordlist = self.get_Wordinment(gl.WM.cp[question].mentstr)  # get words from question mentalese
+        gl.WM.brelevant = set(gl.WM.select_Relevant(question))      # branches where question is present
+        gl.act.activate_Fromwords(wordlist)                 # activation based on words of question
+        ciremember = gl.WM.ci
+        for leaf in gl.WM.new_activ:                        # leafs where concepts are now activated
+            for actnew in sorted(list(gl.WM.new_activ[leaf])):  # activated concepts
+                self.perform_Reason(actnew,actnew+1,False,None,recent_activ=True)  # perform reasining on newly activated concept
+        nowadded = ciremember+1
+        answerfound = 0
+        while nowadded < gl.WM.ci:                          # check whether answer is found in reasoned concepts
+            gl.WM.rec_set_undefined_parents(question)       # sets -1 parents insetad of ? character
+            if gl.WM.rec_match(gl.WM.cp[question],gl.WM.cp[nowadded],[question,nowadded]) == 1:   # answer found
+                answerfound=1
+            nowadded +=1
+        while answerfound==0 and gl.WM.ci>ciremember:       # something was added. But no answer. Reason on those that was added.
+            endiremember=gl.WM.ci
+            self.createConceptRules(ciremember,gl.WM.cp.__len__())   # add initial kb_rules
+            self.perform_Reason(ciremember+1,len(gl.WM.cp),False,None)  # perform reasoning on these
+            ciremember=endiremember
+        gl.args.settimer("reason_001: recent_Activation",timer()-s)
+        

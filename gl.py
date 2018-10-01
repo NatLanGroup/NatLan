@@ -14,9 +14,13 @@ class Arguments:
         self.rmax = 4           # maximum relevance
         self.gmax = 1           # max for generality
         self.gmin = 0           # threshold for generality for concept to be specific
+        self.amax = 4           # maximum activation
+        self.asec = 2           # level of second round spreading activation
         self.eachmax = 4        # concept each property: level of exceptions
         self.timecheck = {}      # time consumption mapped to function name
-        self.debug = 0          # debug mode                        
+        self.debug = 0          # debug mode
+        self.total_reasoncount = 0  # debug. all reasoning attempts.
+        self.success_reasoncount=0  # debug. reasoned concepts.
         
         i=1.1                   # to be used instead of 1
         self.im = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 3, 3], [2, 2, 2, 3, 4]]         # IM rule
