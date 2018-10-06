@@ -1,0 +1,5 @@
+
+m/ F(dummy)
+
+e/ Joe runs.     m/ A(Joe,run)
+e/ Joe is frightened so Joe runs.  m/ IM(F(Joe,frightened),A(Joe,run))
