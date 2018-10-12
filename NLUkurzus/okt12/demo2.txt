@@ -1,0 +1,6 @@
+
+m/ F(dummy)
+
+m/ A(person,talk)
+m/ C(Joe,person)
+m/ A(Joe,talk)?			a/ A(Joe,talk)p=4
