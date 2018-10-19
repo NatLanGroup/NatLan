@@ -1,0 +1,16 @@
+
+m/ IM(IM(%1,%2),%2)p=im
+
+m/ F(dummy)
+
+m/ A(person,talk)
+m/ C(Joe,person)
+m/ A(Joe,talk)?			a/ A(Joe,talk)p=4
+
+m/ IM(C(%2,P(%1,goal))p=p1, A(%1,F(%2,want)))p=pide1
+m/ C(eat, P(animal,goal))
+m/ A(animal, F(?,want))    a/ A(animal, F(eat,want))p=4
+
+// C(lion,animal)
+// IM(A(lion, F(eat,want)), A(lion, hunt))
+// A(lion, hunt)?			a/ A(lion, hunt)
