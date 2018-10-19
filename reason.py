@@ -22,6 +22,7 @@ class Reasoning:
         self.recordparents = []         # list to collect parents of a compound concept to be reasoned
         self.topparents = []            # record which parents on top level are to be affected by reasoning.
         self.noreplace = {}             # map to record inhibited replacements
+        self.replaced = []              # show replacements happened
         self.imcount=0                  # number of concepts added
         self.addedconcfor={}            # note original concepts to be replaced
         self.thisactiv = []             # concepts activated while a specific concept is being reasoned on
@@ -128,6 +129,8 @@ class Reasoning:
         gl.WM.cp[new].kb_rules=[]                               #delete old kb_rules content
         for rulei in range(len(imcombined)):                    #copy imcombined to kb_rules and add resoned concept (single condition)
             gl.WM.cp[new].kb_rules.append(imcombined[rulei])
+            if gl.KB.cp[imcombined[rulei][0]].track==1:         # this conceptg needs tracking
+                print ("TRACK rule in convert_KBrules. rule:",imcombined[rulei][0],"concept matching",new,"rule condition",imcombined[rulei][1])
             if enable==1:                                       #enable7==0 shows this "new" is parent of an IM concept so reasoning must be skipped
                 self.add_ReasonedConcept(new,rulei)                 #add reasoned concept to WM based on new - works for single condition
         while len(gl.WM.cp[new].rule_match)<len(gl.WM.cp[new].kb_rules):    #rule_match must have corresponding items to kb_rules
@@ -199,7 +202,10 @@ class Reasoning:
 
         
     def finaladd_Concept(self,conclist,reasoned_p,rel_list,nplist,rule):     # single function to add a list of reasoned concepts to WM together with its parents
-        s=timer();
+        s=timer()
+        if rule[0]>0:                                       # not C,D reasoning
+            if gl.KB.cp[rule[0]].track==1:                  # rule tracked
+                print ("TRACK rule in finaladd_C 1.  attempted rule:",rule[0],"concepts used",conclist)               
         center=gl.WM.ci                                      #remember ci at entering finaladd
         new=sorted(conclist,key=int,reverse=True)[0]        # latest concept of reasoning basis - the latest reason used
         reasoned_p=int(reasoned_p)
@@ -239,6 +245,12 @@ class Reasoning:
                         if finalconcept==1:
                             gl.WM.update_Branchinfo(leaf,gl.WM.ci)                  #update branch and branchvalue and samstring
                             gl.log.add_log(("REASONED concept added! input new,old:",conclist," on branch leaf:",leaf," on index:",gl.WM.ci," rule:",rule," reasoned concept:",gl.WM.cp[gl.WM.ci].mentstr, " p=",reasoned_p," parents:",gl.WM.cp[gl.WM.ci].parent))
+                            if rule[0]>0:                                       # not C,D reasoning
+                                if gl.KB.cp[rule[0]].track==1:                  # rule tracked
+                                    print ("TRACK rule in finaladd_C 2. reasoning with rule:",rule[0],"concepts used",conclist,"reasoned index",gl.WM.ci)               
+                            for basec in conclist:
+                                if gl.WM.cp[basec].track==1:                    # used concept tracked
+                                    print ("TRACK concept in finaladd_C 2. WMindex:",basec," reasoning with rule:",rule[0],"concepts used",conclist,"reasoned index",gl.WM.ci)               
                             if relation==3 and reasoned_p==gl.args.pmax:       #D(x,y) added with p=pmax: kill duplicate branch
                                 if newparent in self.brancho[0].lastbr_list or list(reversed(newparent)) in self.brancho[0].lastbr_list:    #parents match
                                     self.kill_Duplicatebranch(newparent)        #try to kill a potentially duplicate branch
@@ -351,6 +363,9 @@ class Reasoning:
                         clist = [gl.WM.ci]
                     index2 = int(gl.WM.cp[new].p)       # p value of IM. That is always the secong index in the im reasoning table.
                     clist.append(new)                   # list of concepts used for this reasoning
+                    for basec in clist:
+                        if gl.WM.cp[basec].track==1:                    # used concept tracked
+                            print ("TRACK an IM concept. IM attempted concept:",basec,"concepts used",clist)               
                     try: reasoned_p = gl.args.im[index1][index2]     # the table name "im" is hardcoded here.
                     except: gl.log.add_log(("ERROR in generate_IMconcept: reasoning table gl.args.im could not be accessed. Indices attempted:",index1,index2))
                     reasoned_concept = gl.WM.cp[new].parent[1]      # the second parent of IM is the implication that we want to reason now.
@@ -576,8 +591,25 @@ class Reasoning:
                                         if ppp in repmap:
                                             repmap[ppp]=repmap[ppp]-decr  # fix the replace index in repmap
                             break                                   # only delete once
-            
 
+    def manage_Replaced (self,rel,pari,repmap,pix,top):     # calculate replacement disable or enable
+        if (-1 not in self.replaced) and pari in repmap and pix in self.noreplace[rel]:   # now disable
+            if rel in gl.args.enable_repl:                  # special enablement, override noreplace
+                if len(self.replaced)>0 and self.replaced[-1] in gl.args.enable_repl[rel]:  # replacement happened on special enablement pos
+                    self.noreplace[rel]=[99]                # override noreplace, enable
+                else:
+                    if len(self.replaced)>1 and self.replaced[-2] in gl.args.enable_repl[rel]:  # replacement happened on special enablement pos
+                        self.noreplace[rel]=[99]                # override noreplace, enable
+                    else:
+                        self.replaced.append(-1)            #disable further replacements
+                        if gl.WM.cp[top].track==1:          # concept tracked
+                            print ("TRACK concept in manage_Repl 1. WM index:",top,"CD reasoning has been disabled for relation:",rel,"parent",pix)
+            else:
+                self.replaced.append(-1)            #disable further replacements
+                if gl.WM.cp[top].track==1:          # concept tracked
+                    print ("TRACK concept in manage_Repl 2. WM index:",top,"CD reasoning has been disabled for relation:",rel,"parent",pix)
+
+                
     def visit_Replace (self,top,curri,repmap):              #recursive visit of old and build of reasoned concept
         nextp=0
         while (len(gl.WM.cp[curri].parent)>0 and nextp<len(gl.WM.cp[curri].parent)):
@@ -590,8 +622,9 @@ class Reasoning:
         parentlist=gl.WM.cp[repl].parent[:]
         mentales=gl.WM.cp[repl].mentstr[:]
         pix=0 ; repcount=0                      #zero parents needed replacement in concept repl
-        for pari in gl.WM.cp[repl].parent:      #parents may need to be replaced
-            if pari in repmap and pix not in self.noreplace[rel]:   # parent need replace and is not disabled
+        for pari in gl.WM.cp[repl].parent:      #parents may need to be replaced7
+            self.manage_Replaced(rel,pari,repmap,pix,top)           # enable or disable replacement
+            if pari in repmap and pix not in self.noreplace[rel] and (-1 not in self.replaced):   # parent need replace and is not disabled
                 parentlist[pix]=repmap[pari]        #replace parent
                 #print ("VIS 1 parentlist",parentlist," repcount",repcount)
                 mentales="!new!"                #only for debbuging. new concept will bedded.
@@ -604,6 +637,7 @@ class Reasoning:
                 else:                           #more than 1 parent to be replaced TO DO: test: C(dog,animal) F(animal,F(strong,animal))
                     self.recordparents[self.imcount-1][pix]=repmap[pari]   #replace more parents.
                 repcount+=1                     #coiunt how many parents are replaced
+                self.replaced.append(rel)       # flag what is replaced
                 if curri==top:                  #we are on the level of the origoinal concept, not its parents
                     self.topparents.append(pari)   # remember parent needs replace
             self.fix_imcount(repmap,pari,pix,rel)  # decrese imcount if disabled replacement is occuring
@@ -642,8 +676,9 @@ class Reasoning:
                     self.imcount=0; self.recordrel=[];self.recordparents=[];self.topparents=[]
                     self.addedconcfor = {}
                     try:
+                        self.replaced=[]                        # need to initialize
                         self.visit_Replace(old,old,repmap)      #perform replacement and recursively add reasoned concept with parents
-                        if len(self.topparents)>0:              # we have something to reason
+                        if len(self.topparents)>0 and (-1 not in self.replaced):  # we have something to reason and not disabled
                             self.finaladd_Concept([new,old][:],pval,self.recordrel,self.recordparents,[0])  # add the reasoned concepts
                     except:
                         gl.error+=1
@@ -658,8 +693,9 @@ class Reasoning:
                         self.imcount=0; self.recordrel=[];self.recordparents=[];self.topparents=[]
                         self.addedconcfor = {}
                         try:
+                            self.replaced=[]                    # need to initialize
                             self.visit_Replace(old,old,repmap)  #perform replacement and recursively add reasoned concept with parents
-                            if len(self.topparents)>0:          #we have something to reason
+                            if len(self.topparents)>0 and (-1 not in self.replaced):    # we have something to reason and not disabled
                                 self.finaladd_Concept([new,old][:],pval,self.recordrel,self.recordparents,[0])  # add the reasoned concepts
                         except:
                             gl.error+=1
@@ -788,7 +824,7 @@ class Reasoning:
             maprule=gl.WM.get_Maprules(-1,word[0])
             if maprule!=[]: toinsert="D(" + word[0]+word[1] + ")"      #assemble D(x) using g-value as well
             if toinsert!="":                                    #D(x) to be inserted
-                gl.WM.branch_read_concept(0,[toinsert],0)       #insert on all living branches
+                gl.WM.branch_read_concept(0,[toinsert],gl.test)       #insert on all living branches
                 gl.log.add_log(("QUESTION WORD added for mapping on index:",gl.WM.ci," concept added:",gl.WM.cp[gl.WM.ci].mentstr))
                 toinsert=""
                 branches = self.create_Branchlist()             #add gl.WM.ci if needed
@@ -858,6 +894,7 @@ class Reasoning:
                                     if gl.WM.cp[wm_pos].relation!=1 and gl.WM.cp[thisreason[cnum]].relation!=1: # not a word
                                         ciremember = gl.WM.ci
                                         gl.args.total_reasoncount+=1
+                                        self.replaced=[]    # initialize replacement flag
                                         self.enter_RuleMatch(wm_pos,thisreason[cnum],same_list,1)   # 1.completes rule_match list  2. runs reasoning
                                         gl.args.success_reasoncount += gl.WM.ci-ciremember
                         cnum-=1

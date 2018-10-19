@@ -17,6 +17,7 @@ class Testinput:
         self.systemanswer = []  # output of the system
         self.evaluation = []    # evaluation of system output includinmg mentalese translation
         self.comment = []       # comment
+        self.debug = []         # show that this row needs debugging
         try:
             self.testf = open(testfilename, "r")
             pos=testfilename.find(".")
@@ -45,15 +46,18 @@ class Testinput:
             self.systemanswer.append([]);
             self.evaluation.append("")
             self.comment.append("")
+            self.debug.append(0)
             rowi = len(self.eng) - 1  # index of the new item
             while i < len(line):
                 if "e/" in line[i:i + 2]: epos = i  # order of e/ m/ a/ // is fixed but all are optioonal
                 if "m/" in line[i:i + 2]:
                     mpos = i
                     if epos > -1: self.eng[rowi] = line[epos + 2:mpos]
+                    if "*" in line[i-1:i]:         # * means debug this row
+                        self.debug[rowi]=1
                 if "a/" in line[i:i + 2]:
                     apos = i
-                    self.question[rowi] = 1
+                    if mpos > -1: self.question[rowi] = 1
                     if mpos > -1: self.mentalese[rowi] = line[mpos + 2:apos]
                     if mpos == -1 and epos > -1: self.eng[rowi] = line[epos + 2:apos]
                     prerow = rowi-1

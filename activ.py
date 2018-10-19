@@ -53,6 +53,18 @@ class Activate:
                             gl.WM.new_activ[leaf].add(curri)  # add activation to invetory of recent activations
                             self.secondround_set.discard(curri)  # remove
             curri=gl.WM.cp[curri].previous                    # up in the branch
+
+    def enable_Word(self,current,word):                     # check that this word position is enabled for activation
+        act_ok=1
+        rel=gl.WM.cp[current].relation
+        if rel in gl.args.noactivate_fromword:              # some positions for this relation are disabled
+            act_ok=0; pari=0                                # default is disbale
+            for par in gl.WM.cp[current].parent:            # check all parents
+                if pari not in gl.args.noactivate_fromword[rel]:   # this position is not disabled
+                    if word in gl.WM.cp[par].mentstr:       # this enabled parent has the word of activation
+                        act_ok=1                            # ebable
+                pari+=1
+        return act_ok
             
     def activate_Fromwords(self,wordlist):                  # activate concepts based on words (used for questions)
         # only the top level needs activation where p!=2. Parents dont.
@@ -64,15 +76,17 @@ class Activate:
                 for actword in wordlist:                    # check eachg word
                     if gl.WM.cp[current].p!=2 and gl.WM.cp[current].relation!=1:   # makes sense, not a word
                         if actword[0] in gl.WM.cp[current].mentstr:     # actword present in mentalese
-                            if branch not in gl.WM.branchactiv:
-                                gl.WM.branchactiv[branch]=set()         # initialize branchactiv for this branch
-                            if branch not in gl.WM.new_activ:
-                                gl.WM.new_activ[branch]=set()            # initialize new_activ for this branch
-                            if current not in gl.WM.branchactiv[branch]: # not yet activated
-                                gl.WM.branchactiv[branch].add(current)   # add to inventory of activated concepts
-                                gl.WM.new_activ[branch].add(current)     # add to inventory of recently activated concepts
-                                if self.act_secondround==1:              # spreading activation
-                                    self.second_Collect(current,second_parents)  # collect for activation spreading
+                            activation_ok = self.enable_Word(current,actword[0])   # check if this is enabled
+                            if activation_ok == 1:                      # this activation is enabled
+                                if branch not in gl.WM.branchactiv:
+                                    gl.WM.branchactiv[branch]=set()         # initialize branchactiv for this branch
+                                if branch not in gl.WM.new_activ:
+                                    gl.WM.new_activ[branch]=set()            # initialize new_activ for this branch
+                                if current not in gl.WM.branchactiv[branch]: # not yet activated
+                                    gl.WM.branchactiv[branch].add(current)   # add to inventory of activated concepts
+                                    gl.WM.new_activ[branch].add(current)     # add to inventory of recently activated concepts
+                                    if self.act_secondround==1:              # spreading activation
+                                        self.second_Collect(current,second_parents)  # collect for activation spreading
                 current = gl.WM.cp[current].previous                     # walk up on branch
             if self.act_secondround==1:                                  # spreading activation
                 self.activate_Second(branch,second_parents)              # perform spreading activation

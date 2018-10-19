@@ -27,6 +27,7 @@ class Concept:
         self.kb_rules = []  # list of rules in KB which match this concept
         self.rule_match = []  # list of WM concepts that match the respective rule of kb_rules
         self.kbrules_converted=0    # flag to show if convert_KBrules was called for this concept
+        self.track = 0      # track the usage of this concept for debugging
 
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
@@ -145,6 +146,7 @@ class Kbase:
             if self.cp[self.ci-1].next==[]:
                 self.cp[self.ci-1].next.append(self.ci)         # set next                
         self.cp[self.ci].p = int(new_p)                         # set p value
+        self.cp[self.ci].track = 0                              # set default tracking to NO        
         self.cp[self.ci].add_parents(new_parents)               # set parents
         self.cp[self.ci].kblink[:]=kbl[:]                       # set link to KB
         if kbl==[] and self.name=="KB" and new_rel==1:          # word addition in KB
@@ -425,6 +427,7 @@ class Kbase:
                     kbl=gl.KB.add_concept(self.cp[curri].p,self.cp[curri].relation,plist)   # copy to KB
                     gl.KB.cp[kbl].relevance = self.cp[curri].relevance  #copy relevance
                     gl.KB.cp[kbl].g = self.cp[curri].g  # copy generality
+                    gl.KB.cp[kbl].track = self.cp[curri].track  # copy track property
                 self.cp[curri].kblink.append(kbl)   # set KB link in WM
         return curri
 
@@ -524,6 +527,26 @@ class Kbase:
         if curri==-1: qc[0]=qc[0]+1                 #qc[0] is the counter for ? parents which have -1 value
         return curri                                #qc[0] is also kept as it is transferred by reference
 
+    def get_Common(self,visitq,pwm):                # get common part of parents' matches in KB
+        doneparent=0                                # how many parents of pwm are present in visitq
+        finalkb=set()
+        for vitem in visitq:
+            if pwm==vitem[0]: doneparent+=1         # a completed parent found
+        if doneparent == len(gl.WM.cp[pwm].parent):                  # we have all parents done in visitq
+            parentcount=0
+            for vitem in visitq:
+                if pwm==vitem[0]:
+                    parentcount+=1
+                    if parentcount==1: finalkb=set(vitem[2])        # initialize finalkb with the first set of KB matches
+                    else:
+                        if list(vitem[2])==[-1]:                    # -1 parent means any concept will match
+                            finalkb = finalkb                       # no change to finalkb
+                        else:
+                            if finalkb == set([-1]): finalkb = set(vitem[2])   # first parent was -1, initialize finalkb
+                            else: finalkb = finalkb & set(vitem[2])  # take the common part of matches in KB
+
+        wm_ment = gl.WM.cp[pwm].mentstr                     # we need to check relation match and parent positions
+    #    if "?" in wm_ment:                                  # this is a A(Joe,?) type 
 
     def answer_question(self,starti,endi):          #answer a question now stored in WM
         s=timer()
@@ -705,7 +728,7 @@ class Kbase:
         gl.args.settimer("concep_904: set_General",timer()-s)
                     
             
-    def read_concept(self,attrList,isquestion,correct_leaf=-1,isparent=-1):     # recursive function to read concepts from Mentalese input
+    def read_concept(self,attrList,isquestion,correct_leaf=-1,isparent=-1,istrack=0):     # recursive function to read concepts from Mentalese input
                                                     # we may submit the leaf of the current branch. Function returns parent indices!
         aStr=str(attrList[0]).strip()               # parameter is passed in a wrapping list to be able to use recursion
         rulStr=""                                   # string for rule-information like p=p1
@@ -804,13 +827,14 @@ class Kbase:
                         self.cp[newindex].relevance=r_result[0]
                     if g_result is not None:
                         self.cp[newindex].g=g_result[0]
-                        
+                    self.cp[newindex].track=istrack             # track concept if needed
                     return newindex
                 
             actPos=actPos+1
         return
 
-    def branch_read_concept(self,starti,tfment,isquestion):     #read new input on all branches
+    def branch_read_concept(self,starti,tfment,tf,ri=0):        # read new input on all branches
+        isquestion = tf.question[ri]                            # is it a question?
         inibr = self.branch[:]
         try: inibr.remove(gl.WM.ci)                             #this leaf is handled separatly
         except: a=0
@@ -818,7 +842,7 @@ class Kbase:
         lastleaf = gl.WM.ci                                     #storeleaf has changed to this value
         if gl.WM.branch==[] or gl.WM.ci in gl.WM.branch:        #we process gl.WM.ci only if needed
             storeleaf = gl.WM.ci                                #remember the most recent leaf
-            self.read_concept(tfment,isquestion,storeleaf)      #read the input to a single branch from storeleaf
+            self.read_concept(tfment,isquestion,storeleaf,istrack=tf.debug[ri])      #read the input to a single branch from storeleaf
             self.update_Branchinfo(storeleaf,gl.WM.ci)          #update branch related lists and dicts
             
         for leaf in inibr:                                      #any further leafs

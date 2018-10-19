@@ -11,7 +11,7 @@ def process_testinput (tf):                     # input is the Testinput object
             gl.WM.paragraph = list(set(gl.WM.branch).union(set([gl.WM.ci])))  # record the last concept of the paragraph
             gl.act.update_Para()                    # update list of concepts in this and previous paragraph
         while (len(tfment[0])>3 and counter<20):    # counter protects against endless loop
-            gl.WM.branch_read_concept(starti,tfment,tf.question[ri])              # store concepts in WM
+            gl.WM.branch_read_concept(starti,tfment,tf, ri)    # store concepts in WM
             counter=counter+1
         gl.WM.move_rule(tf,ri,starti)               # if this is a rule, move to KB
         if gl.WM.ci>=0: gl.WM.move_relevant(starti) # if this is top relevant, r=4, move it to KB
@@ -46,32 +46,24 @@ gl.log = gl.Logging()
 gl.reasoning = reason.Reasoning() #class instance for reasoning
 gl.act = activ.Activate()   # activation class instance
 
-test1 = conc.Concept()
-test1.add_parents([-1, 17])
-result = gl.WM.search_inlist(test1)
-gl.unittest=testing.Temptest()              # initialize temporary tests
 
 if gl.args.argnum == 2:
-    #gl.unittest.test_implication()
     gl.test = testing.Testinput(sys.argv[1])
     gl.test.readtest()
     s=timer()
     process_testinput (gl.test)
     end=timer()
     i=0
+    print ("WM list:")
     for wmi in gl.WM.cp:
-        print (i,wmi.mentstr,wmi.p,wmi.parent,"g=",wmi.g," consist=",wmi.c," wmuse:",wmi.wmuse," reasonuse:",wmi.reasonuse," used by:",wmi.usedby," general:",wmi.general," same:",wmi.same," prev",wmi.previous," next:",wmi.next)
+        print (i,wmi.mentstr,"relation",wmi.relation,"parent",wmi.parent,"child",wmi.child,"p value",wmi.p,"KB link",wmi.kblink)
         i+=1
     i=0
+    print ("KB list:")
     for wmi in gl.KB.cp:
-        print (i,wmi.mentstr,wmi.parent," general:",wmi.general)
+        print (i,wmi.mentstr,"relation",wmi.relation,"parent",wmi.parent,"child",wmi.child,"p value",wmi.p,"word link",wmi.wordlink)
         i+=1
-#    for br in gl.WM.branch:
- #       bro=branch.Branch(0)
-  #      thisbr=bro.get_previous_concepts(br)
-   #     for wmi in reversed(thisbr):
-    #        print (wmi,gl.WM.cp[wmi].mentstr,gl.WM.cp[wmi].parent," p=",gl.WM.cp[wmi].p," g=",gl.WM.cp[wmi].g," wmuse:",gl.WM.cp[wmi].wmuse," next:",gl.WM.cp[wmi].next," consistency=",gl.WM.cp[wmi].c)
-     #   print ("BRANCH:",br,thisbr)
+
     gl.test.testf.close()
     gl.test.resultf.close()
     print ("branches:",gl.WM.branch," branchvalue:",gl.WM.branchvalue)

@@ -26,6 +26,7 @@ class Arguments:
         self.im = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 3, 3], [2, 2, 2, 3, 4]]         # IM rule
         self.can = [[0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 1, 2, 2, 2], [0, 1, 2, 3, 3], [0, 1, 2, 3, 4]]        # can rule
         self.cando = [0,i,2,2,2]                                                                                # cando rule
+        self.cannot = [2,2,2,i,0]                                                                               # cannot rule
         self.pide1 = [0,i,2,3,4]                                                                                # D-rule single arg
         self.pnot1 = [4,3,2,i,0]                                                                                # NOT() rule
         self.idedegrade = [i,i,2,3,3]                                                                           # degrading D rule
@@ -40,7 +41,8 @@ class Arguments:
         self.branch_kill = [0,i,2,3,3]   # index = best branch value. output=limit below which branch is killed.
         self.pmap = {
             "pide1":self.pide1,"pide2":self.pide2,"pclass":self.pclass,"pxor":self.pxor,
-            "idedegrade":self.idedegrade, "degrade":self.degrade, "pnot1":self.pnot1, "pand":self.pand
+            "idedegrade":self.idedegrade, "degrade":self.degrade, "pnot1":self.pnot1, "pand":self.pand,
+            "can":self.can, "cando":self.cando, "cannot":self.cannot
         }
 
         self.rcode = {
@@ -63,6 +65,12 @@ class Arguments:
             1:[99],2:[99],3:[0,1,2],4:[1,2],5:[1,2],6:[1,2],7:[1,2],8:[0],9:[99],10:[99],       #all relations must have a dummy value 99 at least
             11:[1,2],12:[99],13:[99],14:[99],15:[99],16:[99],17:[99],18:[99],19:[99]
         }
+
+        self.enable_repl = {                        # these are valid replacements. higher level enabled: [list of lower level enabling]
+            7:[8], 4:[11], 5:[9]  }
+
+        self.noactivate_fromword ={                 # some concepts should not be activated from word if found in the given position
+            4:[1]  }                                # relation not to activate : [list of positions of word]
 
     def settimer(self,fname,timeused):              # measure time spent in a function
         try: self.timecheck[fname] += timeused      # increase time spent in fname
