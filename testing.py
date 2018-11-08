@@ -113,9 +113,13 @@ class Testinput:
                 for sysalist in self.systemanswer[rowindex]:        # and take all system answers
                     if type(sysalist) is list: sysa=sysalist[1]     #backward compatibility
                     else: sysa=sysalist
-                    if (gl.WM.rec_match(gl.WM.cp[gooda],gl.WM.cp[sysa],goodanswer=1)==1): # relation and parents match
+                    if sysalist[0]==0:  db=gl.KB                    # 0 means KB. process answers from KB too.
+                    else: db=gl.WM
+                    if db.name=="KB":  castKB=1                      # rec_match called for compare with KB
+                    else: castKB=0
+                    if (gl.WM.rec_match(gl.WM.cp[gooda],db.cp[sysa],castSecondKbase=castKB,goodanswer=1)==1): # relation and parents match
                         goodmatch=1
-                        if (gl.WM.cp[gooda].p == gl.WM.cp[sysa].p):     # p value is the same
+                        if (gl.WM.cp[gooda].p == db.cp[sysa].p):     # p value is the same
                             sysamatch[sysindex]=1
                             goodamatch[goodindex]=1
                         else:
@@ -155,7 +159,9 @@ class Testinput:
         for sysalist in self.systemanswer[rowindex]:
             if type(sysalist) is list: sysa=sysalist[1]
             else: sysa=sysalist
-            self.resultf.write(gl.WM.cp[sysa].mentstr + str(gl.WM.cp[sysa].p)+" ")   # write answer string
+            if sysalist[0]==0:  db=gl.KB                    # handle answer in KB
+            else: db=gl.WM
+            self.resultf.write(db.cp[sysa].mentstr + str(db.cp[sysa].p)+" ")   # write answer string
         if self.systemanswer[rowindex]!=[]: self.resultf.write(str(self.systemanswer[rowindex]))
         self.resultf.write("\n")
         

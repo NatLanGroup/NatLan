@@ -8,6 +8,7 @@ from timeit import default_timer as timer
 # TO DO: N() rule - necessary condition - not so important
 # TO DO: no general AND reasoning to arrive at R(of,mother).  A(family,F(consist,R(of,AND(father,mother))))
 # TO DO: spreading activation is exploding.
+# TO DO: inv olve KB in reasoning. done: for a new IM relation, the condition is searched in KB, condition p gets updated.
 
 class Reasoning:
     def __init__(self):

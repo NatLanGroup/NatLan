@@ -12,6 +12,7 @@ class Arguments:
         self.cmax = 4           # max for consistency
         self.pmax = 4           # maximum p value. Like 1 for p=0..1, or 4 for p=0,1,2,3,4.
         self.rmax = 4           # maximum relevance
+        self.rmove = 3          # limit from which concept is moved to KB
         self.gmax = 1           # max for generality
         self.gmin = 0           # threshold for generality for concept to be specific
         self.amax = 4           # maximum activation

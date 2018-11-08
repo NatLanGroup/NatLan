@@ -137,6 +137,25 @@ class Kbase:
             if oldleaf in gl.WM.brelevant:                      # brelevant is the set of branch leafs for current wm_pos
                 gl.WM.brelevant.remove(oldleaf)
                 gl.WM.brelevant.add(newleaf)
+
+    def update_Condip(self):                            # update p value of condition. Uses KB as well.
+        pari=0                                          # p value updated on parent of self.ci. self.ci is an IM relation.
+        for par in self.cp[self.ci].parent : 
+            self.cp[par].p = gl.args.pdef_unknown       #this is after concept is added. So log file is bad.
+            if pari==0:                                 # condition in IM
+                newpval = self.getp_backward(par,gl.args.pdef_unknown)   # use the p value of earlier occurence of concept
+                if self.cp[par].p != newpval:           # p value needs update
+                    self.cp[par].p= newpval             # updated
+                    gl.log.add_log(("PVALUE modification in add_concept. WM index:",par," new p value:",self.cp[par].p))
+                elif par>0 and self.name=="WM" and "%" not in self.cp[par].mentstr:   # no new p found in WM, then search KB
+                        condinkb = self.search_KB(par)  # search the condition in KB
+                        if condinkb[1]!=[-1]:             # found
+                            kbpval = gl.KB.cp[condinkb[1][0]].p  # the p value of the condition in KB
+                            if self.cp[par].p != kbpval:        # p value needs update
+                                self.cp[par].p= kbpval         # updated
+                                gl.log.add_log(("PVALUE modification in add_concept. WM index:",par," concept found in KB:",condinkb[1][0]," new p value:",self.cp[par].p))                   
+            pari+=1
+
                 
     def add_concept(self, new_p, new_rel, new_parents,kbl=[],gvalue=None):        #add new concept to WM or KB. parents argument is list
         self.cp.append(Concept(new_rel))                        #concept added
@@ -167,15 +186,8 @@ class Kbase:
             if gvalue!=None: self.cp[self.ci].g=gvalue          #explicit generality provided
         if self.name=="WM" and self.branch==[]:                 #in WM, no leafs stored
             self.update_Samestring(gl.WM.ci-1,gl.WM.ci)         #update the leaf in samestring
-        if new_rel == 13 :                                      # IM relation
-            pari=0
-            for par in self.cp[self.ci].parent : 
-                self.cp[par].p = self.convert_p(gl.args.pdef_unknown)       #this is after concept is added. So log file is bad.
-                if pari==0:                                     # condition in IM
-                    self.cp[par].p = self.getp_backward(par,self.convert_p(gl.args.pdef_unknown))   # use the p value of earlier occurence of concept
-                    gl.log.add_log(("PVALUE modification in add_concept. WM index:",par," new p value:",self.cp[par].p))
-                pari+=1
-
+        if new_rel == 13 and self.name=="WM" :                  # IM relation
+            self.update_Condip()                                # update p value of condition if needed
         gl.log.add_log((self.name," add_concept index=",self.ci," p=",self.cp[self.ci].p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
         return self.ci
 
@@ -293,14 +305,6 @@ class Kbase:
             relevant=[gl.WM.ci]
         return relevant                     #this is empty list if branch of wmpos was killed earlier
 
-#    def select_Relevant_quick(self,wmpos,thisbr):        #faster select all branches in which we have wmpos
- #       relevant=[]
-  #      for br in gl.WM.branch:
-   #         if wmpos in thisbr: relevant.append(br)
-    #    if gl.WM.branch==[]:
-     #       relevant=[gl.WM.ci]
-      #  return relevant                     #this is empty list if branch of wmpos was killed earlier
-
     def isword_Special(self,what1,inwhat):          # compare two words to see if one word is a special case of the other
         is_special=0                # one of the words may be a specific one, the other %1, then %1 is more general
         end1=gl.KB.cp[what1.kblink[0]].mentstr[1:]
@@ -385,6 +389,7 @@ class Kbase:
 
     def get_child(self,rel,parents=[]):                 # search concept as child of parent
         found=-1
+        if parents[0]==-1:  return -1                   # if parent not known, return not found 
         for child in self.cp[parents[0]].child:         # in children of the first parent
             if (self.cp[child].relation==rel):          # relation must match
                 if (self.cp[child].parent==parents):    # parents must match
@@ -431,6 +436,25 @@ class Kbase:
                 self.cp[curri].kblink.append(kbl)   # set KB link in WM
         return curri
 
+    def search_KB(self,curri,lasti=-2,found=[]):         # search concept in KB. Concept is in WM on curri. Returns KB index.
+        while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
+            try: nextp=self.cp[curri].parent.index(lasti)+1
+            except:
+                lasti=-2        # enter lower level
+                nextp=0
+            lasti=self.search_KB(self.cp[curri].parent[nextp],lasti,found)[0]
+        # SEARCH ACTION to follow:
+        if self.name=="WM":                                             # copy from WM only
+            if len(self.cp[curri].kblink)==0 or self.cp[curri].kblink[0]==-1:   # not yet linked to KB (but might be there)
+                plist=[]                                                # holds parent indices valid in KB
+                for pari in self.cp[curri].parent:                      # parents valid in WM
+                    plist.append(self.cp[pari].kblink[0])               # append parent index valid in KB
+                kbl=gl.KB.get_child(self.cp[curri].relation,plist)      # search concept in KB as child of parent
+                self.cp[curri].kblink=[kbl]                             # set KB link in WM, thi smay be -1
+            else: kbl = self.cp[curri].kblink[0]                        # kblink already had the link to KB
+            if kbl not in found: found=[kbl]                        # kbl is -1 if not found among children. 
+        return [curri,found]
+
     def check_Children(self,db,curri,what,result,nextp=0):  # recursive check towards children to compare concepts
         while len(db.cp[curri].child)>0 and nextp<len(db.cp[curri].child):  # walk over children of same level
             self.check_Children(db,db.cp[curri].child[nextp],what,result,0)
@@ -465,7 +489,7 @@ class Kbase:
         
 
     def move_relevant(self, starti):                # if this is top relevant knowledge, move it to KB
-        if (gl.WM.cp[gl.WM.ci].relevance==gl.args.rmax):    #r=rmax
+        if (gl.WM.cp[gl.WM.ci].relevance>=gl.args.rmove):    #r>=rmove limit, for example r=3 or 4
             gl.WM.copyto_kb(gl.WM.ci)               #copy the relevant concept to KB
             for i in range(gl.WM.ci-starti):        #entire group of moved concept
                 gl.WM.remove_concept()              #remove copied concept from WM
@@ -546,7 +570,60 @@ class Kbase:
                             else: finalkb = finalkb & set(vitem[2])  # take the common part of matches in KB
 
         wm_ment = gl.WM.cp[pwm].mentstr                     # we need to check relation match and parent positions
-    #    if "?" in wm_ment:                                  # this is a A(Joe,?) type 
+        if "?" in wm_ment:                                  # this is a A(Joe,?) type of question
+            wm_ment = wm_ment[:wm_ment.index("?")]          # we only take the mentalese portion left to the ?
+        outkb = set()
+        for kbcon in finalkb:                               # this is to check the match of relations and parent positions
+            if gl.WM.cp[pwm].relation == gl.KB.cp[kbcon].relation and wm_ment in gl.KB.cp[kbcon].mentstr:   # menstr string is for position
+                outkb.add(kbcon)
+        return outkb
+
+    def all_Children(self,visitq,pwm):                  # get children of a KB concept set
+        allch = set()                                   # holds the children
+        finalkb = self.get_Common(visitq,pwm)           # get the common part of parents' matches
+        if len(finalkb)>0:
+            for kbconc in finalkb:
+                allch.update(set(gl.KB.cp[kbconc].child))   # add children of kbconc to the set of all children
+        return allch
+
+    def update_Visitq(self,visitq,pwm,wmpar,kbchild):   # update inventory in visitq
+        if pwm>0:
+            dupl=0                                      # check duplication
+            for vitem in visitq:
+                if pwm==vitem[0] and wmpar==vitem[1]: dupl=1    # would be duplication
+            if dupl==0: visitq.append([pwm,wmpar,kbchild])      # update if no duplication
+
+    def pattern_KB(self,db,top,curri,visitq,nextp=0,pwm=0):     # search top (being in db) in KB, match A(Joe,?) type of patterns
+        # top in WM is the concept to search for
+        # curri is the current portion of top that is being visited
+        if db.name=="WM":
+            while curri>0 and len(db.cp[curri].parent)>0 and nextp<len(db.cp[curri].parent):  # walk over parents of same level
+                rel=db.cp[curri].relation
+                kbmatch = self.pattern_KB(db,top,db.cp[curri].parent[nextp],visitq,nextp=0,pwm=curri)   # one level down
+                nextp = nextp + 1
+
+            if curri==-1: crel=1
+            else: crel = gl.WM.cp[curri].relation
+            if crel == 1:                                       # word or curri==-1
+                for wmpar in db.cp[pwm].parent:
+                    if wmpar != -1:
+                        if db.cp[wmpar].relation==1:            # parent is word
+                            kbchild = gl.KB.cp[gl.WM.cp[wmpar].kblink[0]].child   # all children of word in KB
+                        else:
+                            kbchild = self.pattern_KB(db,top,wmpar,visitq)      # wmpar parent's children is being searched in KB
+                        self.update_Visitq(visitq,pwm,wmpar,kbchild)
+                    else:
+                        self.update_Visitq(visitq,pwm,wmpar,[-1])           # mark this parent with -1, all will match
+                finalch = self.all_Children(visitq,pwm)                     # take the children of the matching common final KB concepts
+                for wmchild in gl.WM.cp[pwm].child:                         # children of pwm, that have now potential matches to pwm
+                    self.update_Visitq(visitq,wmchild,pwm,list(finalch))    # add potential matches of pwm to visitq
+                return finalch
+            if curri == top:                                                # we are back to the top level
+                kbanswer = self.get_Common(visitq,top)                      # now get the final match in KB
+                if len(kbanswer)>0:
+                    return list(kbanswer)                                   # final asnwer list
+            return []
+                
 
     def answer_question(self,starti,endi):          #answer a question now stored in WM
         s=timer()
@@ -554,6 +631,12 @@ class Kbase:
         self.rec_set_undefined_parents(endi)        #sets -1 parents instead of ? character
         qcount=[0]                                   #counter for ? parents
         self.find_undefined_parents(endi,qcount)    #recursive search for -1. qcount gets updated.
+
+        visitq=[]                                   # this will hold temporary results in KB search
+        kbanswer = gl.WM.pattern_KB(gl.WM,endi,endi,visitq)   # get answer list from kb
+        gl.args.settimer("concep_101: pattern_KB",timer()-s)
+        if gl.d==7: print ("ANSWER QUESTION FROM KB. question",endi,"KB answers",kbanswer)
+        
         answers = gl.WM.search_onbranch(gl.WM.cp[endi],endi) #search for answers on all branches
         if self.branch == []: branches=[self.ci]
         else: branches=self.branch[:]
@@ -578,6 +661,9 @@ class Kbase:
             ament=gl.WM.cp[anw[1]].mentstr
             if gl.WM.cp[anw[1]].wmuse==[-2] or ",?" in ament or "?," in ament or "(?)" in ament:
                 answerlist.remove(anw)
+        for kbaw in kbanswer:                       # answers we found in KB
+            if "%" not in gl.KB.cp[kbaw].mentstr:   # not a rule
+                answerlist.append([0,kbaw])         # append kb answer, 0 means it is in KB
         gl.args.settimer("concep_905: answer_question",timer()-s)
         return answerlist
     
@@ -809,19 +895,19 @@ class Kbase:
                     attrList[0]=str(aStr[actPos:]).strip()
                     
                     if p_result is not None:
-                        if isparent==-1:                                            # this is not a parent but the top concept
-                            newindex=self.add_concept(self.convert_p(p_result[0]),relType,parents)           # add the concept to WM
+                        if isparent==-1:                                                # this is not a parent but the top concept
+                            newindex=self.add_concept(p_result[0],relType,parents)      # add the concept to WM
                         else:
-                            newindex=self.add_concept(gl.args.pmax/2,relType,parents)           # add the concept to WM, parent has p=pmax/2
-                        self.cp[newindex].rulestr=p_result[2]                        # add the rule string
+                            newindex=self.add_concept(gl.args.pmax/2,relType,parents)   # add the concept to WM, parent has p=pmax/2
+                        self.cp[newindex].rulestr=p_result[2]                           # add the rule string
                     else:
-                        if isquestion==1:                                           # for question set pmax/2 p value
-                            newindex=self.add_concept(int(gl.args.pmax/2),relType,parents)           # add the concept to WM
+                        if isquestion==1:                                               # for question set pmax/2 p value
+                            newindex=self.add_concept(int(gl.args.pmax/2),relType,parents)      # add the concept to WM
                         else:
-                            if isparent==-1:                                            # this is not a parent but the top concept
-                                newindex=self.add_concept(gl.args.pdefault,relType,parents)           # add the concept to WM
+                            if isparent==-1:                                                # this is not a parent but the top concept
+                                newindex=self.add_concept(gl.args.pdefault,relType,parents) # add the concept to WM
                             else:
-                                newindex=self.add_concept(gl.args.pmax/2,relType,parents)           # add the concept to WM, parent has p=pmax/2
+                                newindex=self.add_concept(gl.args.pmax/2,relType,parents)   # add the concept to WM, parent has p=pmax/2
                         
                     if r_result is not None:
                         self.cp[newindex].relevance=r_result[0]
