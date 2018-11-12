@@ -18,6 +18,7 @@ def process_testinput (tf):                     # input is the Testinput object
         endi = gl.WM.ci                             # end position in WM
         gl.reasoning.actual=starti+1
         if (tf.question[ri]==1):                    # if yes, then on endi we assume a question
+            if gl.args.loglevel>0: gl.log.add_log(("Question answering started. input row:",ri," ",tf.mentalese[ri]))
             if gl.act.act_qw==1:                    # activation and reasoning based on question necessary
                 gl.reasoning.recent_Activation(endi) # activate and reason on question on endi
             tf.systemanswer[ri][:] = gl.WM.answer_question(starti,endi)[:]    # answer question and record concept indices
@@ -25,6 +26,7 @@ def process_testinput (tf):                     # input is the Testinput object
                 gl.act.clean_Recentact()            # activations based on question are deleted
             starti = gl.WM.ci                       # do not reason on questions
             gl.reasoning.actual = gl.WM.ci
+            if gl.args.loglevel>0: gl.log.add_log(("Question answering ended. input row:",ri," ",tf.mentalese[ri]))
         gl.test.write_result(ri)                    # write result file
         nqflag = gl.reasoning.insert_Drel(starti,tf.next_question[ri])   # insert D(x) relation if next row is question
         gl.WM.set_General(starti)                   # compare new concepts with entire WM to find more general or special concept pairs

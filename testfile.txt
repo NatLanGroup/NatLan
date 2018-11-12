@@ -96,10 +96,10 @@ e/ What do dogs do?                  m/ A(dog,?)                 a/ not found:A(
 e/ Dogs are not the same as people.  m/ D(dog,people)p=0
 e/ Do dogs walk?                     m/ A(dog,walk)?             a/ A(dog,walk)p=2
 e/ Tired dogs walk slowly.           m/ F(A(F(dog,tired),walk),slowly)
-e/ How do tired dogs walk?           m/ F(A(F(dog,tired),walk),?)       a/ F(A(F(dog,tired),walk),slowly)p=1
-e/ Do tired dogs walk slowly?        m/ F(A(F(dog,tired),walk),slowly)? a/ F(A(F(dog,tired),walk),slowly)p=1
-e/ What dogs walk slowly?            m/ F(A(F(dog,?),walk),slowly)      a/ F(A(F(dog,tired),walk),slowly)p=1
-e/ What do tired dogs do slowly?     m/ F(A(F(dog,tired),?),slowly)     a/ F(A(F(dog,tired),walk),slowly)p=1
+e/ How do tired dogs walk?           m/ F(A(F(dog,tired),walk),?)       a/ F(A(F(dog,tired),walk),slowly)p=4
+e/ Do tired dogs walk slowly?        m/ F(A(F(dog,tired),walk),slowly)? a/ F(A(F(dog,tired),walk),slowly)p=4
+e/ What dogs walk slowly?            m/ F(A(F(dog,?),walk),slowly)      a/ F(A(F(dog,tired),walk),slowly)p=4
+e/ What do tired dogs do slowly?     m/ F(A(F(dog,tired),?),slowly)     a/ F(A(F(dog,tired),walk),slowly)p=4
 
 e/ Joe is a person.				 	 m/ C(Joe,person)
 e/ A garden is not a person.		 m/ C(garden,person)p=0
@@ -108,8 +108,8 @@ e/ People read.						 m/ A(people,read)
 e/ Does Joe read?					 m/ A(Joe,read)?   			a/ A(Joe,read)p=4
 
 // MAPPING. r=4 concept is mapping rule. row without mentalese is paragraph break. Mapping happens within paragraph.
-e/ He may mean a boy. 			m/ D(he,boy)p=0.5
-e/ She in general may mean a girl.	m/ D(F(she,R(in,general)),girl)p=0.5
+e/ He may mean a boy. 			m/ D(he,boy)p=2
+e/ She in general may mean a girl.	m/ D(F(she,R(in,general)),girl)p=2
 e/ He does not mean a girl.		m/ D(he,girl)p=0
 e/ She does not mean a boy.		m/ D(she,boy)p=0
 e/ He must always be identified with a person.  m/ C(he,person)r=4
@@ -122,6 +122,28 @@ e/ What is Joe like?			m/ F(Joe.g=0,?)			a/ F(Joe,strong)p=4 F(Joe.g=0,R(in,gard
 e/ Is he reading?				m/ A(he.g=0, read)?		a/ A(he,read)p=4
 e/ What is Joe?					m/ C(Joe.g=0,?)			a/ C(Joe,person)p=4
 
+// Reasoning using KB. Answering from KB. TO DO: C() concept in KB causes branching, C(Jack,person)r=4, this results error because of branching!!
+m/ IM(F(%1,nice)p=p1,F(%1,beautiful))p=pide1
+e/ Jack is a person.			m/ C(Jack,person)r=3  
+e/ Jack is my neighbour.		m/ D(Jack,Q(my,neighbour))r=3
+e/ Jack is nice.				m/ F(Jack,nice)r=3
+
+e/ If Jack is a person then Jack is a policeman.  		m/ IM(C(Jack,person),C(Jack,policeman))r=3
+e/ If Jack is my neighbour, then he lives next door.  	m/ IM(D(Jack,Q(my,neighbour)),A(Jack,F(live,R(next,door))))
+e/ My neighbour is tall.		m/ F(Q(my,neighbour),tall)
+m/ A(person,talk)
+e/ Joe is nice.					m/ F(Joe,nice)
+e/ Is Jack my neighbour?		m/ D(Jack,Q(my,neighbour))?			a/ D(Jack,Q(my,neighbour))p=4
+e/ Does Jack live next door?	m/ A(Jack,F(live,R(next,door)))?  	a/ A(Jack,F(live,R(next,door)))p=4
+e/ Who is nice?					m/ F(?,nice)						a/ F(Jack,nice)p=4  F(Joe,nice)p=4
+e/ Who is beautiful?			m/ F(?,beautiful)					a/ F(Jack,beautiful)  F(Joe,beautiful)
+e/ What is Jack like?			m/ F(Jack,?)						a/ F(Jack,tall)  F(Jack,nice)
+e/ What is Jack doing?			m/ A(Jack,?)						a/ A(Jack,talk)p=4
+e/ If Jack is nice then Jack likes father.  m/ IM(F(Jack,nice),A(Jack,I(like,father)))
+e/ Does Jack like father?		m/ A(Jack,I(like,father))?   		a/ A(Jack,I(like,father))p=4
+e/ If Joe is nice then Jack is fast.  m/ IM(F(Joe,nice),F(Jack,fast))
+e/ Is Jack a policeman?			m/ C(Jack,policeman)?   			a/ C(Jack,policeman)p=4
+e/ Is Jack fast?				m/ F(Jack,fast)?					a/ F(Jack,fast)p=4
 
 // D-reasoning
 
@@ -210,23 +232,23 @@ e/ The fox is white.                 m/ F(fox,white)
 e/ The fox is smart.                 m/ F(fox,smart)
 e/ The fox hunts in the forest.      m/ F(A(fox,hunt),R(in,forest))
 e/ The fox hunts in the forest at dawn.  m/ F(A(fox,hunt),R(in,forest),R(at,dawn))
-e/ What are foxes like?              m/ F(fox,?)                 a/ F(fox,red)p=1 F(fox,white)p=1 F(fox,smart)p=1
-e/ How do foxes hunt?                m/ F(A(fox,hunt),?)         a/ F(A(fox,hunt),R(in,forest),R(at,dawn))p=1
-e/ Where do foxes hunt?              m/ F(A(fox,hunt),R(in,?))   a/ F(A(fox,hunt),R(in,forest))p=1
+e/ What are foxes like?              m/ F(fox,?)                 a/ F(fox,red)p=4 F(fox,white)p=4 F(fox,smart)p=4
+e/ How do foxes hunt?                m/ F(A(fox,hunt),?)         a/ F(A(fox,hunt),R(in,forest),R(at,dawn))p=4
+e/ Where do foxes hunt?              m/ F(A(fox,hunt),R(in,?))   a/ F(A(fox,hunt),R(in,forest))p=4
 e/ When do foxes hunt?               m/ F(A(fox,hunt),T(?))      a/ not found:F(A(fox,hunt),T(?))
 
 //C-reasoning for feature
-e/ Does the Red Fox hunt?            m/ A(F(fox,red),hunt)?      a/ A(F(fox,red),hunt)p=1
-e/ Does the brown fox hunt?          m/ A(F(fox,brown),hunt)?    a/ A(F(fox,brown),hunt)p=1     //although F(fox,brown)p=0.5
+e/ Does the Red Fox hunt?            m/ A(F(fox,red),hunt)?      a/ A(F(fox,red),hunt)p=4
+e/ Does the brown fox hunt?          m/ A(F(fox,brown),hunt)?    a/ A(F(fox,brown),hunt)p=4
 
 
 // XOR-reasoning Understanding exclusive features and any kind of exclusive concepts
-e/ Does Joe run?                     m/ A(Joe,run)?              a/ A(Joe,run)p=0.5
+e/ Does Joe run?                     m/ A(Joe,run)?              a/ A(Joe,run)p=2
 e/ People either sit or run.         m/ A(people,XOR(sit,run)) 
 e/ Does Joe run?                     m/ A(Joe,run)?              a/ A(Joe,run)p=0
 e/ The fox is either red or white.   m/ F(fox,XOR(red,white))    // this is contradiction, not yet understood
-e/ Is the fox red?                   m/ F(fox,red)?              a/ F(fox,red)p=1
-e/ Is the fox white?                 m/ F(fox,white)?            a/ F(fox,white)p=1
+e/ Is the fox red?                   m/ F(fox,red)?              a/ F(fox,red)p=4
+e/ Is the fox white?                 m/ F(fox,white)?            a/ F(fox,white)p=4
 
 
 // understanding dimensions
@@ -235,14 +257,14 @@ e/ The shape of an object can be a circle, a trianlge, a square, a sphere, or a 
 e/ The color of a toy can be either red, green, blue, or yellow.      m/ F(P(color,toy),XOR(red,green,blue,yellow)) 
 e/ The button is an object.          m/ C(button,object)
 e/ The button`s shape is a circle.   m/ C(P(shape,button),circle)
-e/ What shape is the button?         m/ C(P(shape,button),?)          a/ C(P(shape,button),circle)p=1
-e/ Is the button`s shape a circle?   m/ C(P(shape,button),circle)?    a/ C(P(shape,button),circle)p=1
+e/ What shape is the button?         m/ C(P(shape,button),?)          a/ C(P(shape,button),circle)p=4
+e/ Is the button`s shape a circle?   m/ C(P(shape,button),circle)?    a/ C(P(shape,button),circle)p=4
 e/ Is the button`s shape a cube?     m/ C(P(shape,button),cube)?      a/ C(P(shape,button),cube)p=0
-e/ Is the button a circle?           m/ C(button,circle)?             a/ C(button,circle)p=0.5
+e/ Is the button a circle?           m/ C(button,circle)?             a/ C(button,circle)p=2
 e/ Shape is a feature.               m/ C(shape,feature)
 e/ Shape is a dimension.             m/ C(shape,dimension)
 e/ If %1 is a dimension and %2`s %1 is %3, then %2 is %3.  // IM(AND(C(%1,dimension),F(P(%1,%2),%3)),F(%2,%3))
-e/ Is the button a circle?           m/ C(button,circle)?             a/ C(button,circle)p=1
+e/ Is the button a circle?           m/ C(button,circle)?             a/ C(button,circle)p=4
 e/ Color is a feature.               m/ C(color,feature)
 e/ The toy`s color is red.           m/ F(P(color,toy),red)
 e/ Is the toy`s color green?         m/ F(P(color,toy),green)?        a/ F(P(color,toy),green)p=0
@@ -251,19 +273,19 @@ e/ Is the toy yellow?                m/ F(toy,yellow)?                a/ F(toy,y
 
 // Implicit C-reasoning for features
 e/ Bob is a nice person.             m/ C(bob,F(person,nice))
-e/ Does Bob talk?                    m/ A(bob,talk)?                  a/ A(bob,talk)p=1 
+e/ Does Bob talk?                    m/ A(bob,talk)?                  a/ A(bob,talk)p=4 
 e/ Girls are people.                 m/ C(girl,people)
-e/ Do little girls talk?             m/ A(F(girl,little),talk)?       a/ A(F(girl,little),talk)p=1
+e/ Do little girls talk?             m/ A(F(girl,little),talk)?       a/ A(F(girl,little),talk)p=4
 
 
 // Split word meaning using XOR reasoning
-e/ Are flies animals?                m/ C(fly,animal)?                a/ C(fly,animal)p=0.5
+e/ Are flies animals?                m/ C(fly,animal)?                a/ C(fly,animal)p=2
 e/ Fly means either a kind of move or a kind of animal.    m/ XOR(C(fly,move),C(fly,animal))
                                      // XOR-reasoning generates two meanings for fl 1:move 2:animal and creates the C-concepts
-e/ Is fly a kind of move?            m/ C(fly,move)?                  a/ C(fly,move)p=1
+e/ Is fly a kind of move?            m/ C(fly,move)?                  a/ C(fly,move)p=4
 e/ Are flies animals?                m/ C(fly,animal)?                a/ C(fly,animal)p=0     // XOR reasoning generates this!!
 e/ Birds fly.                        m/ A(bird,fly)                   // this concept will have the first meaning of fly as parent
-e/ Do birds move?                    m/ A(bird,move)?                 a/ A(bird,move)p=1      // because it takes fly first meaning, move
+e/ Do birds move?                    m/ A(bird,move)?                 a/ A(bird,move)p=4      // because it takes fly first meaning, move
 
 
 // C-reasoning to detect disjunct classes - not necessary for this specific example
@@ -274,12 +296,12 @@ e/ Are flies animals?                m/ C(fly,animal)?                a/ C(fly,a
 
 // split the meaning of "the" using XOR reasoning
 e/ The fox is big.                   m/ F(Q(the,fox),big)
-e/ Is the fox big?                   m/ F(Q(the,fox),big)?            a/ F(Q(the,fox),big)p=1
-e/ Are foxes big?                    m/ F(fox,big)?                   a/ F(fox,big)p=0.5       //what we know about "the fox" is not known about "fox"
+e/ Is the fox big?                   m/ F(Q(the,fox),big)?            a/ F(Q(the,fox),big)p=4
+e/ Are foxes big?                    m/ F(fox,big)?                   a/ F(fox,big)p=2       //what we know about "the fox" is not known about "fox"
 e/ The %1 is either the same as %1, or is a kind of %1.    // XOR(D(Q(the,%1),%1)p=1,C(Q(the,%1),%1)p=1)
                                      // XOR-reasoning generates two meanings of "the" and creates the D and C concepts
 e/ The fox is big.                   m/ F(Q(the,fox),big)                                      // F(fox,big) is now generated as we take the1
-e/ Are foxes big?                    m/ F(fox,big)?                   a/ F(fox,big)p=1         // we take meaning 1 and use D(Q(the,%1),%1)p=1
+e/ Are foxes big?                    m/ F(fox,big)?                   a/ F(fox,big)p=4         // we take meaning 1 and use D(Q(the,%1),%1)p=4
 
 
 // Word sense disambiguation using assumption branches and likelihood.
@@ -287,45 +309,45 @@ e/ Foxes are either big or small.    m/ F(fox,XOR(big,small))
 e/ The fox is small.                 m/ F(Q(the,fox),small)                                    //the2, "special" is taken as we now F(fox,big)
 e/ Are foxes small?                  m/ F(fox,small)?                 a/ F(fox,small)p=0       //the2 was taken so the answer is no
 e/ Are flies people?                 m/ C(fly,people)?                a/ C(fly,people)p=0
-// two assumptions are taken for 'fly' meaning. In 1 we generate C(fly,move), in 2 we generate C(fly,animal)p=1 and C(fly,people)p=0.
-e/ What are flies?                   m/ C(fly,?)                      a/ C(fly,move)p=1        // for now, meaning 1 will be taken.
+// two assumptions are taken for 'fly' meaning. In 1 we generate C(fly,move), in 2 we generate C(fly,animal)p=4 and C(fly,people)p=0.
+e/ What are flies?                   m/ C(fly,?)                      a/ C(fly,move)p=4        // for now, meaning 1 will be taken.
 
 
 // Quantifiers, unique instance versus general
 
-m/ D(Q(all,%1),%1)p=1                           // this defines 'all' as general
-m/ D(F(%1,general),%1)p=1 			// this defines "general" to mean general
-m/ D(F(%1,R(in,general)),%1)p=1 		// this defines "in general" to mean general
-m/ D(F(Q(%2,%1),R(in,general)),%1)p=1 		// this defines "in general" to mean general for any Q()
-m/ D(F(Q(%2,%1),general),%1)p=1 		// this defines "general" to mean general for any Q()
+m/ D(Q(all,%1),%1)p=4                           // this defines 'all' as general
+m/ D(F(%1,general),%1)p=4 			// this defines "general" to mean general
+m/ D(F(%1,R(in,general)),%1)p=4 		// this defines "in general" to mean general
+m/ D(F(Q(%2,%1),R(in,general)),%1)p=4 		// this defines "in general" to mean general for any Q()
+m/ D(F(Q(%2,%1),general),%1)p=4 		// this defines "general" to mean general for any Q()
 m/ D(F(Q(%2,%1),specific),%1)p=0		// this defines "specific" not meaning general 
-m/ C(F(Q(%2,%1),specific),%1)p=1		// this defines "specific" meaning an instance 
-m/ D(Q(some,%1),%1)p=0.5                        // this defines some as partially general
-m/ D(Q(all,%1),%1)p=1				// this defines all as general
+m/ C(F(Q(%2,%1),specific),%1)p=4		// this defines "specific" meaning an instance 
+m/ D(Q(some,%1),%1)p=2                        // this defines some as partially general
+m/ D(Q(all,%1),%1)p=4				// this defines all as general
 m/ The %1 is the same as a specific %1.         m/ D(Q(the,%1),F(Q(a,%1),specific))    // this concept will use the second meaning of 'the'
 // we already should have D(Q(the2,%1),%1)p=0  which means that the second meaning of 'the' is instance, not generalizing.
-e/ Are foxes smart?                  m/ F(fox,smart)?                a/ F(fox,smart)p=1
-e/ Is the fox smart?                 m/ F(Q(the,fox),smart)?         a/ F(Q(the,fox),smart)p=1
+e/ Are foxes smart?                  m/ F(fox,smart)?                a/ F(fox,smart)p=4
+e/ Is the fox smart?                 m/ F(Q(the,fox),smart)?         a/ F(Q(the,fox),smart)p=4
 e/ Foxes are fast.                   m/ F(fox,fast)
-e/ Are foxes fast?                   m/ F(fox,fast)?                 a/ F(fox,fast)p=1
-e/ Are foxes slow?                   m/ F(fox,slow)?                 a/ F(fox,slow)p=0.5
+e/ Are foxes fast?                   m/ F(fox,fast)?                 a/ F(fox,fast)p=4
+e/ Are foxes slow?                   m/ F(fox,slow)?                 a/ F(fox,slow)p=2
 e/ An animal is either fast or slow.  m/ F(animal, XOR(fast,slow))
-e/ Are foxes fast?                   m/ F(fox,fast)?                 a/ F(fox,fast)p=1
+e/ Are foxes fast?                   m/ F(fox,fast)?                 a/ F(fox,fast)p=4
 e/ Are foxes slow?                   m/ F(fox,slow)?                 a/ F(fox,slow)p=0
 e/ The fox is slow.                  m/ F(Q(the,fox),slow)           // second meaning of 'the' used
 e/ If the fox is slow then the fox runs slowly.   m/ IM(F(Q(the,fox),slow),F(A(Q(the,fox),run),slowly))
 e/ The fox runs slowly.              m/ F(A(Q(the,fox),run),slowly)
 e/ If the fox runs slowly then the fox is slow.  m/ IM(F(A(Q(the,fox),run),slowly),F(Q(the,fox),slow))
-e/ Are foxes fast?                   m/ F(fox,fast)?                 a/ F(fox,fast)p=1
+e/ Are foxes fast?                   m/ F(fox,fast)?                 a/ F(fox,fast)p=4
 e/ Are foxes slow?                   m/ F(fox,slow)?                 a/ F(fox,slow)p=0
-e/ Is the fox fast?                  m/ F(Q(the,fox),fast)?          a/ F(Q(the,fox),fast)p=1   // first meaning of 'the' used
-e/ Is the fox slow?                  m/ F(Q(the,fox),slow)?          a/ F(Q(the,fox),slow)p=1   // second meaning of 'the' used
+e/ Is the fox fast?                  m/ F(Q(the,fox),fast)?          a/ F(Q(the,fox),fast)p=4   // first meaning of 'the' used
+e/ Is the fox slow?                  m/ F(Q(the,fox),slow)?          a/ F(Q(the,fox),slow)p=4   // second meaning of 'the' used
 // because we know the fox runs slowly, so we have 2 sources of the fox being slow, this will add likelihood.
 
 
 // %-rules for mean and may
 // IM(A(%1,I(mean,%2)),D(%1,%2))                    // explains mean
-// IM(A(%1,I(Q(may,%2),%3)),A(%1,I(%2,%3)))p=0.5    // explains may
+// IM(A(%1,I(Q(may,%2),%3)),A(%1,I(%2,%3)))p=2    // explains may
 
 
 // reasoning on necessary condition (N)
@@ -333,8 +355,8 @@ e/ Is the fox slow?                  m/ F(Q(the,fox),slow)?          a/ F(Q(the,
 e/ Mary eats muffins if Mary is hungry.		m/ N(A(Mary,I(eat,muffin)),F(Mary,hungry))
 e/ Mary is not hungry.				m/ F(Mary,hungry)p=0
 e/ Does Mary eat muffins?			m/ A(Mary,I(eat,muffin))?		a/ A(Mary,I(eat,muffin))p=0
-e/ Mary is hungry.				m/ F(Mary,hungry)p=1
-e/ Does Mary eat muffins?			m/ A(Mary,I(eat,muffin))?		a/ A(Mary,I(eat,muffin))p=0.5
+e/ Mary is hungry.				m/ F(Mary,hungry)p=4
+e/ Does Mary eat muffins?			m/ A(Mary,I(eat,muffin))?		a/ A(Mary,I(eat,muffin))p=2
 	
 
 

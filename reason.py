@@ -26,6 +26,7 @@ class Reasoning:
         self.replaced = []              # show replacements happened
         self.imcount=0                  # number of concepts added
         self.addedconcfor={}            # note original concepts to be replaced
+        self.rtabname = ""              # remember reasoning table used now
         self.thisactiv = []             # concepts activated while a specific concept is being reasoned on
         self.processed_pairs = {}       # newconcept:set(old) to record which concept pairs has been reasoned on
     
@@ -286,16 +287,19 @@ class Reasoning:
                                 if wmitemcondi == int(indexitem[:indexitem.find("p=")]):    # this is teh first match, left to p=
                                     indexnow = int(gl.WM.cp[wmitem].p)
                     pep="p=p"
-                    indexlist[int(indexitem[indexitem.find(pep)+3:])] = indexnow    #serial number of index is right to p=p
+                    indexlist[int(indexitem[indexitem.find(pep)+3:])-1] = indexnow    #serial number of index is right to p=p
                 except:
-                    gl.log.add_log(("ERROR lookup_Rtable: could not get indices for reasoning table. Rule:",gl.KB.cp[rule[0]].mentstr," indices found:",indexlist))
+                    gl.log.add_log(("ERROR lookup_Rtable: could not get indices for reasoning table. Rule:",gl.KB.cp[rule[0]].mentstr," indices found:",indexlist," concepts used:",new," ",old))
         try:
             reasoned_p = gl.args.pmap[rtable[(rtable.find("=")+1):]]        #not yet p, but the entire table
             for index in indexlist:                                         #take indices one by one
                 reasoned_p = reasoned_p[index]
-            reasoned_p=int(gl.WM.convert_p(reasoned_p))
+            reasoned_p=int(reasoned_p)
+            self.rtabname = rtable[(rtable.find("=")+1):]                   # remember table name used
         except:
-            gl.log.add_log(("ERROR in lookup_Rtable: could not read p,map reasoning table. Table name not given or wrong, no =, too many indices, or too big index values. Rule:",gl.KB.cp[rule[0]].mentstr," Table name:",rtable," indexc attempted:",indexlist))
+            gl.log.add_log(("ERROR in lookup_Rtable: could not read pmap reasoning table. Table name not given or wrong, no =, too many indices, or too big index values. Rule:",gl.KB.cp[rule[0]].mentstr," Table name:",rtable," indexc attempted:",indexlist))
+        if gl.KB.cp[rule[0]].track==1:                          # rule tracked
+            print ("TRACK rule in lookup_Rtable. reasoning with rule:",rule[0]," table used:",rtable[(rtable.find("=")+1):]," index in table:",indexlist," p=",reasoned_p)
         return reasoned_p
 
     def reason_Inhibit (self,reasoned_rel,reasoned_parents):     #check reasoned concept to stop stupid reasoning
@@ -369,6 +373,7 @@ class Reasoning:
                             print ("TRACK an IM concept. IM attempted concept:",basec,"concepts used",clist)               
                     try: reasoned_p = gl.args.im[index1][index2]     # the table name "im" is hardcoded here.
                     except: gl.log.add_log(("ERROR in generate_IMconcept: reasoning table gl.args.im could not be accessed. Indices attempted:",index1,index2))
+                    self.rtabname="im"
                     reasoned_concept = gl.WM.cp[new].parent[1]      # the second parent of IM is the implication that we want to reason now.
                     matching=0
                     inhibit = self.reason_Inhibit(gl.KB.cp[implication].relation,gl.WM.cp[reasoned_concept].parent)      #inhibit if needed
@@ -436,9 +441,11 @@ class Reasoning:
         visitcond=[]; self.visit_concept(gl.KB,condition,visitcond)   # list of %1 %2 etc parents in KB rule condition part
         visitnew=[]; self.visit_concept(gl.WM,new,visitnew)         # list of parents in corresponding WM concept
         condimap = self.check_condition(visitnew,visitcond)         # check that %1 %2 etc in condition have the proper words in new
-        if len(condimap)>0:                                 # successful match of condition and new
+        if len(condimap)>0 and not (gl.KB.cp[implication].mentstr=="%2" and gl.KB.cp[rule[1]].relation == 13): # condition and new match, not the im rule
             if len(rtable)!=0:                              # reasoning table exist
-                try: reasoned_p=gl.args.pmap[rtable[(rtable.find("=")+1):]][int(gl.WM.cp[new].p)]   #index is p value of condition in WM
+                try:
+                    reasoned_p=gl.args.pmap[rtable[(rtable.find("=")+1):]][int(gl.WM.cp[new].p)]   #index is p value of condition in WM
+                    self.rtabname = rtable[(rtable.find("=")+1):]
                 except:
                     gl.log.add_log(("ERROR generate_Uniconcept: could not read pmap reasoning table. Too few dimensions? Rule:",gl.KB.cp[rule[0]].mentstr," table name:",rtable," index attempted:",int(gl.WM.cp[new].p)))
                 if type(reasoned_p) is list:                # error message for too many dimensions
@@ -574,7 +581,7 @@ class Reasoning:
             if plist not in self.addedconcfor[repl]:
                 self.addedconcfor[repl].append(plist)
 
-    def fix_imcount(self,repmap,pari,pix,rel):              # decrease imcount if disbaled replacement is occuring
+    def fix_imcount(self,repmap,pari,pix,rel):              # decrease imcount if disabled replacement is occuring
         if pari in repmap and pix in self.noreplace[rel]:   # parent needs replace, and is disabled !!
             if pari in self.addedconcfor:                   # for pari, concept already planned to be added
                 decr = len(self.addedconcfor[pari])
@@ -743,17 +750,18 @@ class Reasoning:
         gl.args.settimer("reason_013: enter_Rulematch process_CDrel", timer()-s)
 
         #reasoning follows based on rules
-        for ruleold in gl.WM.cp[old].kb_rules:              #all rules already added to old concept
-            for rulenew in gl.WM.cp[new].kb_rules:          #all pairs with the latest concept
-                if ruleold[0]==rulenew[0]:                  #IM level rule is th same
-                    if rulenew[1] not in ruleold:            #the new condition is not the same what we already had in old concept
+        self.rtabname=""
+        for ruleold in gl.WM.cp[old].kb_rules:              # all rules already added to old concept
+            for rulenew in gl.WM.cp[new].kb_rules:          # all pairs with the latest concept
+                if ruleold[0]==rulenew[0]:                  # IM level rule is th same
+                    if rulenew[1] not in ruleold:           # the new condition is not the same what we already had in old concept
                         finalmatch=self.final_RuleMatch(new,old,rulenew,ruleold)    #%1 %2 etc must mean the same thing in new and old
                         if enable==1 and finalmatch==1 and (new not in gl.WM.cp[old].rule_match[orulei]):     #not skipped, and new not in WM pack
                             self.append_Match(new,old,rulenew,ruleold,orulei)                   #add new to the current wm pack
                                         
                 # this might be the condition of an earlier IM concept. This has nothing in kb_rules for this.
-            if gl.KB.cp[ruleold[1]].relation==13:       #for old, the matching rule's condition is IM, as in IM(IM(%1,%2),%2)
-                if gl.WM.cp[old].relation==13:          #redundant for WM
+            if gl.KB.cp[ruleold[1]].relation==13:           # for old, the matching rule's condition is IM, as in IM(IM(%1,%2),%2)
+                if gl.WM.cp[old].relation==13:              # redundant for WM
                     if gl.WM.cp[new].relation==gl.WM.cp[gl.WM.cp[old].parent[0]].relation:  #condition in old IM() matches the new concept's relation
                         p2=gl.WM.cp[old].parent[0]
                         if gl.WM.rec_match(gl.WM.cp[new],gl.WM.cp[p2],[new,p2])==1:    # this is exactly the condition

@@ -1,0 +1,118 @@
+       // Rules
+       
+        m/  IM(IM(%1,%2),%2)p=im						// IM reasoning
+        m/  IM(NOT(A(%1,%2))p=p1,A(%1,%2))p=pnot1	// NOT reasoning with A
+        m/  IM(NOT(F(%1,%2))p=p1,F(%1,%2))p=pnot1	// NOT reasoning with F	
+       
+       // ACTORS : CAN, WANT, GOAL
+        m/ IM(A(%1, F(%2, can))p=p1, A(%1,%2))p=cando
+        m/ IM(A(%1, F(%2, cannot))p=p1, A(%1,%2))p=cannot
+        m/ IM(AND(A(%1,F(%2,can))p=p1,A(%1,F(%2,want))p=p2),A(%1,%2))p=can
+        m/ IM(C(A(%1,%2),P(%1,goal))p=p1, A(%1,F(%2,want)))p=pide1
+        m/ IM(A(%1,F(%2,want))p=p1, C(A(%1,%2),P(%1,goal)))p=pide1
+       
+       // TEMPORARY AND PERMANENT STATE
+        m/ IM(F(%1,F(%2,always))p=p1, F(%1,F(%2,permanent)))p=pide1
+        m/ IM(F(Q(many,%1),%2)p=p1, F(%1,F(%2,permanent)))p=pide1
+        m/ IM(F(%1,F(%2,often))p=p1, F(%1,F(%2,temporary)))p=pide1
+        m/ IM(F(%1,F(%2,temporary)),F(%1,F(%2,F(temporary,T(P(%1,timing))))))p=pide1
+        m/ D(P(animal,timing),T(hour))
+       // temporary states have a reason! This will launch reasoning for coherence. The question is, IM(?,F(%1,%2)).
+        m/ IM(F(%1,F(%2,temporary))p=p1,IM(%3,F(%1,%2)))p=pide1
+       
+       //ANIMALS: LIVE, DEAD, MOVE
+       
+        m/ F(dummy)
+        e/  Animals live.							 m/ A(animal,live)
+        e/  Dead animals do not live.				 m/ A(F(animal,dead),live)p=0
+        e/  An animal not living is dead.			 m/ IM(NOT(A(animal,live)),F(animal,dead))
+OK MORE e/  Do animals live?							 m/  A(animal,live)?				 a/ A(animal,live)p=4 s/ A(animal,live)4 A(animal,live)2 [[26, 10], [26, 18]]
+OK      e/  Do dead animals live?					 m/  A(F(animal,dead),live)?		 a/ A(F(animal,dead),live)p=0 s/ A(F(animal,dead),live)0 [[31, 15]]
+OK      e/  Does this animal live?					 m/  A(animal.g=0,live)?			 a/ A(animal.g=0,live)p=2 s/ A(animal,live)2 [[34, 34]]
+OK MORE e/  Which animals do not live? 	  			 m/  A(F(animal,?),live)			 a/ A(F(animal,dead),live)p=0 s/ A(F(animal,dead),live)0 A(F(animal,dead),live)2 [[39, 15], [39, 31]]
+       
+        e/  Dogs are animals.						 m/ C(dog,animal)
+OK      e/  Do dogs live?							 m/  A(dog,live)?					 a/ A(dog,live)p=4 s/ A(dog,live)4 [[52, 46]]
+OK      e/  Do dead dogs live?						 m/  A(F(dog,dead),live)?			 a/ A(F(dog,dead),live)p=0 s/ A(F(dog,dead),live)0 [[57, 48]]
+       
+        e/  Living animals move.						 m/ IM(A(animal,live),A(animal,move))
+        e/  Moving animals live.						 m/ IM(A(animal,live),A(animal,move))
+        e/  Animals move.							 m/ A(animal,move)
+        e/  Dead animals do not move.				 m/ A(F(animal,dead),move)p=0
+OK      e/  Do animals move?							 m/  A(animal,move)?				 a/ A(animal,move)p=4 s/ A(animal,move)4 A(animal,move)4 A(animal,move)4 A(animal,move)4 [[83, 63], [83, 65], [83, 71], [83, 75]]
+OK      e/  Do dead animals move?					 m/  A(F(animal,dead),move)?		 a/ A(F(animal,dead),move)p=0 s/ A(F(animal,dead),move)0 [[88, 80]]
+       
+       // ANIMALS: GOAL, GOOD and BAD. Bug if IM relation is in implication!
+        m/ IM(C(A(%1,I(avoid,F(%1,%2))),P(%1,goal))p=p1,C(NOT(F(%1,%2)),P(%1,goal)))p=pide1
+        m/ IM(AND(C(%2,P(%1,goal))p=p1,IM(%3,%2)p=p2),C(%3,P(%1,goal)))p=pclass
+        m/ IM(AND(A(%2,%3)p=p1,XOR(NOT(%1),NOT(A(%2,%3)))p=p2),XOR(%1,A(%2,%3)))p=im
+        e/  If something is good for an animal, then the animal`s goal is to achieve it.  	 m/ IM(F(%1,F(good,R(for,animal)))p=p1,C(%1,P(animal,goal)))p=pide1
+        e/  If something is bad for an animal, then the animal`s goal is to avoid it.  		 m/ IM(F(%1,F(bad,R(for,animal)))p=p1,C(A(animal,I(avoid,%1)),P(animal,goal)))p=pide1
+        e/  To live is good for the animal.			 m/ F(A(animal,live),F(good,R(for,animal)))
+        e/  To sleep is good for the animal.			 m/ F(A(animal,sleep),F(good,R(for,animal)))
+        e/  Being hungry is bad for the animal.  	 m/ F(F(animal,hungry),F(bad,R(for,animal)))
+OK      e/  Is the animal`s goal to live?			 m/  C(A(animal,live),P(animal,goal))?		 a/ C(A(animal,live),P(animal,goal))p=4 s/ C(A(animal,live),P(animal,goal))4 [[147, 100]]
+OK      e/  Is the animal`s goal to sleep?			 m/  C(A(animal,sleep),P(animal,goal))?		 a/ C(A(animal,sleep),P(animal,goal))p=4 s/ C(A(animal,sleep),P(animal,goal))4 [[154, 115]]
+       
+        e/  Animals are often hungry.				 m/ F(animal,hungry)p=3
+        e/  Animals are sometimes not hungry.		* m/ NOT(F(animal,hungry))p=3
+OK      e/  Is the animal`s goal to avoid being hungry?   m/  C(A(animal,I(avoid,F(animal,hungry))),P(animal,goal))?   a/ C(A(animal,I(avoid,F(animal,hungry))),P(animal,goal))p=4 s/ C(A(animal,I(avoid,F(animal,hungry))),P(animal,goal))4 [[173, 133]]
+OK      e/  Does the animal avoid being hungry?		 m/  A(animal,I(avoid,F(animal,hungry)))?      a/ A(animal,I(avoid,F(animal,hungry)))p=2 s/ A(animal,I(avoid,F(animal,hungry)))2 [[180, 169]]
+OK      e/  Is the animal`s goal not to be hungry?	 m/  C(NOT(F(animal,hungry)),P(animal,goal))?	 a/ C(NOT(F(animal,hungry)),P(animal,goal))p=4 s/ C(NOT(F(animal,hungry)),P(animal,goal))4 [[188, 140]]
+        e/  If an animal eats, it is not hungry. 	 m/ IM(A(animal,eat),NOT(F(animal,hungry)))
+       
+OK      e/  Is the animal`s goal to eat? 			 m/  C(A(animal,eat),P(animal,goal))?				 a/ C(A(animal,eat),P(animal,goal))p=4 s/ C(A(animal,eat),P(animal,goal))4 [[208, 205]]
+       
+        e/  Bats are animals.						 m/ C(bat,animal)
+        e/  The bat is hungry.						 m/ F(bat,hungry)
+OK      e/  Is the bat`s goal to eat? 				 m/  C(A(bat,eat),P(bat,goal))?	 a/ C(A(bat,eat),P(bat,goal))p=4 s/ C(A(bat,eat),P(bat,goal))4 [[229, 228]]
+OK      e/  Does the bat eat?						 m/  A(bat,eat)?					 a/ A(bat,eat)p=2 s/ A(bat,eat)2 A(bat,eat)2 [[232, 217], [232, 222]]
+OK      e/  Is the bat hungry?						 m/  F(bat,hungry)				 a/ F(bat,hungry)p=4 s/ F(bat,hungry)4 [[250, 214]]
+        e/  This bat is dead.						 m/ F(bat.g=0,dead)
+***BADP e/  Does this bat live?						 m/  A(bat.g=0,live)?				 a/ A(bat.g=0,live)p=0 s/ A(bat,live)2 [[275, 256]]
+OK      e/  Do bats live?							 m/  A(bat,live)?					 a/ A(bat,live)p=4 s/ A(bat,live)4 A(bat,live)4 [[278, 257], [278, 264]]
+OK      e/  Is to sleep good for the bat?			 m/  F(A(bat,sleep),F(good,R(for,bat)))?    a/ F(A(bat,sleep),F(good,R(for,bat)))p=4 s/ F(A(bat,sleep),F(good,R(for,bat)))4 [[295, 291]]
+***BADP e/  Is the dog hungry?						 m/  F(dog,hungry)?				 a/ F(dog,hungry)p=3 F(dog,hungry)p=1 s/ F(dog,hungry)3 F(dog,hungry)4 [[319, 312], [319, 315]]
+OK      e/  Does the dog eat?						 m/  A(dog,eat)?					 a/ A(dog,eat)p=2 s/ A(dog,eat)2 [[326, 322]]
+       
+       // ANIMALS : CAN, WANT, EAT
+       // this will work if 1) NOT() rule is not applied if we know more of the result: A(animal,F(eat,want)). 2) the IM bug removed. 3) the answer prefers the IM concept. 4) the answer includes the NOT() concept. 
+       // ANSWER okosabban:  if answer to %1? is conflicting, or both %1 and NOT(%1) are found and conflicting, then the preferred answer is the IM() concept: IM(%2,%1).
+       // NOT okosabban: ha %1 p=3,4 es NOT(%1) p=3,4 akkor NEM kovetkeztetunk arra ebbol hogy %1 p=0,1. Nem hozzuk letre az ellentmondast. mehet az alabbi contradiction feldolgozasban.
+       // CONTRADICTION okosabban: if we know %1, maybe NOT(%1), for sure IM(%2,%1), and these conflict, and g=1, then p=4 or p=0 for %1 must be reduced to p=3 or p=1.
+       // ebben az esetben az IM(%2,%1) lesz top relevans concept, emiatt lesz ez a top valasz!!
+       // with IM we have a bug, test it with XOR:
+        m/ XOR(NOT(F(animal,hungry)),NOT(A(animal,F(eat,want))))
+        e/  If an animal is not hungry, it doesn`t want to eat.  * m/ IM(NOT(F(animal,hungry)),NOT(A(animal,F(eat,want))))
+        e/  If an animal has food, it can eat.				* m/ A(animal,F(eat,can))p=2
+        e/  If an animal has no food, it cannot eat.  		 m/ IM(NOT(P(animal,food)),A(animal,F(eat,cannot)))
+        e/  If an animal finds food, it has food.  			 m/ IM(A(animal,I(find,food)),P(animal,food))
+        e/  If an animal doesn`t find food, it has no food.   m/ IM(NOT(A(animal,I(find,food))),NOT(P(animal,food)))
+        e/  If an animal doesn`t hunt, it has no food.		 m/ IM(NOT(A(animal,hunt)),NOT(P(animal,food)))
+       
+        e/  The fox is an animal.							 m/ C(fox,animal)
+***BADP e/  Does the fox want to eat?						 m/  A(fox,F(eat,want))?								 a/ A(fox,F(eat,want))p=3 s/ A(fox,F(eat,want))4 [[436, 419]]
+       
+***BADP e/  Is the fox hungry?								 m/  F(fox,hungry)?									 a/ F(fox,hungry)p=3 F(fox,hungry)p=1 s/ F(fox,hungry)3 F(fox,hungry)4 [[459, 453], [459, 456]]
+OK      e/  Is the goal of the fox to eat?					 m/  C(A(fox,eat),P(fox,goal))?						 a/ C(A(fox,eat),P(fox,goal))p=4 s/ C(A(fox,eat),P(fox,goal))4 [[466, 416]]
+       
+***BADP e/  Does the fox want to eat if it is hungry?		 m/  IM(F(fox,hungry),A(fox,F(eat,want)))?    		 a/ IM(F(fox,hungry),A(fox,F(eat,want)))p=4 s/ IM(F(fox,hungry),A(fox,F(eat,want)))2 [[475, 475]]
+OK      e/  Does the fox want to eat if it is not hungry?	 m/  IM(NOT(F(fox,hungry)),NOT(A(fox,F(eat,want))))?   a/ IM(NOT(F(fox,hungry)),NOT(A(fox,F(eat,want))))p=4 s/ IM(NOT(F(fox,hungry)),NOT(A(fox,F(eat,want))))4 [[486, 431]]
+***BADP e/  Does the fox eat?								 m/  A(fox,eat)?										 a/ A(fox,eat)p=2 s/ A(fox,eat)4 A(fox,eat)2 [[489, 432], [489, 462]]
+       
+       
+       
+        e/  The fox has no food. 							 m/ NOT(P(fox,food))
+        e/  Does the fox eat?								// A(fox,eat)?										// A(fox,eat)p=0
+       
+       
+       
+       // ANIMALS: GOOD things, USEFUL, HELP, PROTECT
+       
+       // ANIMALS: BAD things, DIE, THREATEN 
+       
+       // ANIMALS: INTENTIONAL MOVEMENT
+       
+       // ANIMALS: FAMILY, OFFSPRING
+       
+       // BIRDS: EGGS, WINGS, FLY

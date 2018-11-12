@@ -20,28 +20,29 @@ class Arguments:
         self.eachmax = 4        # concept each property: level of exceptions
         self.timecheck = {}      # time consumption mapped to function name
         self.debug = 0          # debug mode
+        self.loglevel = 1       # level of logging. 0 is least log.
         self.total_reasoncount = 0  # debug. all reasoning attempts.
         self.success_reasoncount=0  # debug. reasoned concepts.
         
         i=1.1                   # to be used instead of 1
         self.im = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 3, 3], [2, 2, 2, 3, 4]]         # IM rule
         self.can = [[0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 1, 2, 2, 2], [0, 1, 2, 3, 3], [0, 1, 2, 3, 4]]        # can rule
-        self.cando = [0,i,2,2,2]                                                                                # cando rule
-        self.cannot = [2,2,2,i,0]                                                                               # cannot rule
-        self.pide1 = [0,i,2,3,4]                                                                                # D-rule single arg
-        self.pnot1 = [4,3,2,i,0]                                                                                # NOT() rule
-        self.idedegrade = [i,i,2,3,3]                                                                           # degrading D rule
-        self.pide2 = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [i, i, 2, 2, 3], [0, i, 2, 3, 4]]      # D-rule IM(AND(D(),D()),D())
-        self.pand = [[0, 0, 0, 0, 0], [0, i, i, i, i], [0, i, 2, 2, 2], [0, i, 2, 3, 3], [0, i, 2, 3, 4]]       # AND-rule
-        self.pclass = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [i, i, 2, 2, 3], [0, i, 2, 3, 4]]     # class relation
-        self.degrade = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [i, i, 2, 2, 3], [i, i, 2, 3, 3]]    # degraded class
+        self.cando = [0,1,2,2,2]                                                                                # cando rule
+        self.cannot = [2,2,2,1,0]                                                                               # cannot rule
+        self.pide1 = [0,1,2,3,4]                                                                                # D-rule single arg
+        self.pnot1 = [4,3,2,1,0]                                                                                # NOT() rule
+        self.idedegrade = [1,1,2,3,3]                                                                           # degrading D rule
+        self.pide2 = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [1, 1, 2, 2, 3], [0, 1, 2, 3, 4]]      # D-rule IM(AND(D(),D()),D())
+        self.pand = [[0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 1, 2, 2, 2], [0, 1, 2, 3, 3], [0, 1, 2, 3, 4]]       # AND-rule
+        self.pclass = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [1, 1, 2, 2, 3], [0, 1, 2, 3, 4]]     # class relation
+        self.degrade = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [1, 1, 2, 2, 3], [1, 1, 2, 3, 3]]    # degraded class
         # pclass is the matrix for class reasoning. C(%1,%2)p1 and %X(%2,%3)p2 -> %x(%2,%3)pclas, pclass[p2,p1]
-        self.pxor = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, i, i], [2, 2, 2, i, 0]]
+        self.pxor = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 1, 1], [2, 2, 2, 1, 0]]
         self.consist = [[4,4,4,3,0],[4,4,4,3,3],[4,4,4,4,4],[3,3,4,4,4],[0,3,4,4,4]]        #consistency conversion for pair of concepts
         self.branchvalue = [[0,0,0,0,0],[0,1,1,1,1],[0,2,2,2,2],[0,2,3,3,3],[0,3,4,4,4]]   #consistency conversion for entire branch
-        self.branch_kill = [0,i,2,3,3]   # index = best branch value. output=limit below which branch is killed.
+        self.branch_kill = [0,1,2,3,3]   # index = best branch value. output=limit below which branch is killed.
         self.pmap = {
-            "pide1":self.pide1,"pide2":self.pide2,"pclass":self.pclass,"pxor":self.pxor,
+            "im":self.im, "pide1":self.pide1,"pide2":self.pide2,"pclass":self.pclass,"pxor":self.pxor,
             "idedegrade":self.idedegrade, "degrade":self.degrade, "pnot1":self.pnot1, "pand":self.pand,
             "can":self.can, "cando":self.cando, "cannot":self.cannot
         }
