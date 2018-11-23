@@ -182,16 +182,23 @@ class Testinput:
             mentout = line[mpos+2 : i][:].strip()
         return mentout
 
-    def locate_thisment(self,row,ment,lines):   # locate mentalese from row in lines
+    def locate_thisment(self,row,ment,lines,skip):   # locate mentalese from row in lines
+        start=row; skip[1]=0
         while row<len(lines):
             if ment in lines[row]:              # mentalese located
-                try: return lines[row][0:7]
-                except: return "notfound"
+                pos = lines[row].find(ment)-1   # mentalese in row
+                while lines[row][pos]==" ": pos-=1  # back until not a space before mentalese
+                if pos>0 and lines[row][pos]=="/" and lines[row][pos-1]=="m":     # /m means this mentalese is not commented out
+                    try:
+                        skip[1]=(row-start)-skip[0]   # count new rows that were now skipped in addition
+                        return lines[row][0:7]
+                    except: return "notfound"
             row+=1
         return "notfound"
 
     def check_result(self):                     # compare _base file with _result file
         match=0; diff=0; notf=0; message=""; r_eval=" "
+        skip=[0,0]                              # how many new rows were skipped
         try:                                    # if the files exist
             self.resultf.close()                # close current result file
             pos=self.name.find(".")
@@ -204,8 +211,9 @@ class Testinput:
                 try: bment=self.mentalese_fromrow(bline)   # get the mentalese
                 except: print ("ERROR in testing.mentalese_fromrow. row:",brow)
                 if len(bment)>0:
-                    try: r_eval=self.locate_thisment(brow,bment,resultlines)
+                    try: r_eval=self.locate_thisment(brow,bment,resultlines,skip)
                     except: print ("ERROR in testing.locate_thisment. row:",brow)
+                    if skip[1]>0: skip[0]=skip[0]+skip[1]   # incfrease skip counter with new skippings
                 if bline[0:7] == r_eval: match+=1   # match
                 else:
                     if r_eval == "notfound":

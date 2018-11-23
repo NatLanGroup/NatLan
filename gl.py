@@ -17,6 +17,9 @@ class Arguments:
         self.gmin = 0           # threshold for generality for concept to be specific
         self.amax = 4           # maximum activation
         self.asec = 2           # level of second round spreading activation
+        self.exmax = 4          # concept exception max value
+        self.exdef = 2          # concept exception default value
+        self.kmax = 4           # concept known max value
         self.eachmax = 4        # concept each property: level of exceptions
         self.timecheck = {}      # time consumption mapped to function name
         self.debug = 0          # debug mode
@@ -46,6 +49,34 @@ class Arguments:
             "idedegrade":self.idedegrade, "degrade":self.degrade, "pnot1":self.pnot1, "pand":self.pand,
             "can":self.can, "cando":self.cando, "cannot":self.cannot
         }
+
+        self.worst_known = [[0,0,0,0,0],[0,1,1,1,1],[0,1,2,2,2],[0,1,2,3,3],[0,1,2,3,4]]    # known conversion from two known values
+        self.k_advan = [[4,4,4,4,4],[4,0,1,2,3],[4,1,0,1,2],[4,2,1,0,1],[4,3,2,1,0]]    # known advantage conversion from two known values
+
+        self.pdiff = [                                                                  # p diff conversion, top level: known advantage. next:
+            [[0,1,2,3,4],[1,0,1,2,3],[2,1,0,1,2],[3,2,1,0,1],[4,3,2,1,0]],              # next: better known p last: less known p
+            [[0,0,1,2,3],[0,0,0,1,2],[1,0,0,0,1],[2,1,0,0,0],[3,2,1,0,0]],
+            [[0,0,0,1,2],[0,0,0,0,1],[0,0,0,0,0],[1,0,0,0,0],[2,1,0,0,0]],
+            [[0,0,0,0,1],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[1,0,0,0,0]],
+            [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]
+
+        self.pe_final = [                                                               # p or exception conversion, top level: known advantage. next:
+            [[0,1,2,2,2],[1,1,2,2,2],[2,2,2,2,3],[2,2,2,3,4],[2,2,2,3,4]],              # next: better known p/exception last: less known p/exception
+            [[0,0,1,2,2],[1,1,1,2,2],[2,2,2,2,2],[2,2,3,3,4],[2,2,3,3,4]],
+            [[0,0,1,1,1],[1,1,1,1,2],[2,2,2,2,2],[2,2,3,3,3],[2,3,3,4,4]],
+            [[0,0,0,1,1],[1,1,1,1,2],[2,2,2,2,2],[2,2,3,3,3],[3,3,4,4,4]],
+            [[0,0,0,0,0],[1,1,1,1,1],[2,2,2,2,2],[3,3,3,3,3],[4,4,4,4,4]]]
+
+        self.excep_final = [[0,0,1,1,1],[1,1,1,2,2],[2,2,2,2,3],[3,3,3,3,4],[4,4,4,4,4]]    # final exception value from pe_final and pdiff
+
+        self.consist_final = [[4,4,3,2,0],[4,4,4,3,0],[4,4,4,4,3],[4,4,4,4,4],[4,4,4,4,4]]  # final consistency. Top: final exception. last: pdiff.                                                                           # TO DO: take input consistency into account !!
+
+        self.known_final = [                                                            # final known. Top: final consistency.
+            [[0,1,2,3,4],[1,1,1,1,1],[2,1,1,1,1],[3,1,1,1,1],[4,1,1,1,1]],              # next: known1, known2.
+            [[0,0,1,2,3],[0,0,0,1,2],[1,0,0,0,1],[2,1,0,0,0],[3,2,1,0,0]],
+            [[0,0,0,1,2],[0,0,0,0,1],[0,0,0,0,0],[1,0,0,0,0],[2,1,0,0,0]],
+            [[0,0,0,0,1],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[1,0,0,0,0]],
+            [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]
 
         self.rcode = {
             "X":-1, "W": 1, "S": 2, "D": 3, "C": 4, "F": 5,

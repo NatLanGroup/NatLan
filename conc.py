@@ -7,7 +7,8 @@ class Concept:
         self.c = int(gl.args.cmax)          # consistency of this concept and previous concepts
         self.g = int(gl.args.gmax)          # generality: how specific (0) or general (1) is the concept
         self.acts = 0                       # activation level of concept
-        self.each = int(gl.args.eachmax/2)  # each property: 0 means exception, 4 means each=no exception for sure
+        self.exception = gl.args.exdef      # are exceptions possible? 4=yes. Also for rules. Concepts inherit from rule.        
+        self.known = int(gl.args.kmax/2)    # how solid is the knowledge of p, exception for this concept
         self.relevance = int(gl.args.rmax/2)  # relevance of the concept
         self.relation = rel # relation code
         self.parent = []    # parents list
@@ -28,6 +29,8 @@ class Concept:
         self.rule_match = []  # list of WM concepts that match the respective rule of kb_rules
         self.kbrules_converted=0    # flag to show if convert_KBrules was called for this concept
         self.track = 0      # track the usage of this concept for debugging
+        self.count = 0      # count the occurance of this concept weighted by known
+        self.excount = 0    # count pdiff that occured weighted by known
 
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
@@ -903,11 +906,13 @@ class Kbase:
                     else:
                         if isquestion==1:                                               # for question set pmax/2 p value
                             newindex=self.add_concept(int(gl.args.pmax/2),relType,parents)      # add the concept to WM
+                            self.cp[newindex].known=0                                   # question k value is zero
                         else:
                             if isparent==-1:                                                # this is not a parent but the top concept
                                 newindex=self.add_concept(gl.args.pdefault,relType,parents) # add the concept to WM
                             else:
                                 newindex=self.add_concept(gl.args.pmax/2,relType,parents)   # add the concept to WM, parent has p=pmax/2
+                                self.cp[newindex].known=0                                   # parent k value is zero
                         
                     if r_result is not None:
                         self.cp[newindex].relevance=r_result[0]

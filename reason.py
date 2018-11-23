@@ -297,7 +297,7 @@ class Reasoning:
             reasoned_p=int(reasoned_p)
             self.rtabname = rtable[(rtable.find("=")+1):]                   # remember table name used
         except:
-            gl.log.add_log(("ERROR in lookup_Rtable: could not read pmap reasoning table. Table name not given or wrong, no =, too many indices, or too big index values. Rule:",gl.KB.cp[rule[0]].mentstr," Table name:",rtable," indexc attempted:",indexlist))
+            gl.log.add_log(("ERROR in lookup_Rtable: could not read pmap reasoning table. Table name not given or wrong, no =, too many indices, or too big index values. Rule:",gl.KB.cp[rule[0]].mentstr," Table name:",rtable[(rtable.find("=")+1):]," indexc attempted:",indexlist))
         if gl.KB.cp[rule[0]].track==1:                          # rule tracked
             print ("TRACK rule in lookup_Rtable. reasoning with rule:",rule[0]," table used:",rtable[(rtable.find("=")+1):]," index in table:",indexlist," p=",reasoned_p)
         return reasoned_p
@@ -379,10 +379,10 @@ class Reasoning:
                     inhibit = self.reason_Inhibit(gl.KB.cp[implication].relation,gl.WM.cp[reasoned_concept].parent)      #inhibit if needed
                     if condi_p!=-1:                     # if we found the condition, we may not add the implication again
                         matching = gl.WM.search_fullmatch(reasoned_p, gl.WM.cp[reasoned_concept].relation, gl.WM.cp[reasoned_concept].parent,rule)  #this is probably ok: we may not reason in case we would have a new p value!!
-                    if 0==inhibit and 0==matching and reasoned_p!=gl.WM.convert_p(gl.args.pmax/2):     # we do not reason if p will be 0.5
+                    if 0==inhibit and 0==matching and reasoned_p!=int(gl.args.pmax/2):     # we do not reason if p will be 0.5
                         self.finaladd_Concept(clist[:],reasoned_p, gl.WM.cp[reasoned_concept].relation, gl.WM.cp[reasoned_concept].parent,rule)
                         if condi_p==-1:                 # IM was the last concept we found
-                            gl.WM.cp[gl.WM.cp[new].parent[1]].p = int(gl.WM.convert_p(reasoned_p))   # set reasoned p value in IM parent occurance too. Consistency.
+                            gl.WM.cp[gl.WM.cp[new].parent[1]].p = int(reasoned_p)   # set reasoned p value in IM parent occurance too. Consistency.
                             gl.log.add_log(("PVALUE set in generate_IMconcept: implication p=",reasoned_p," in WM concept:",gl.WM.cp[new].parent[1] ))
                      
     def visit_concept(self,db,curri,visitmap,nextp=0,relation_remember="0"):    # recursive walk over db from curri towards parents. Call without nextp.
@@ -447,9 +447,9 @@ class Reasoning:
                     reasoned_p=gl.args.pmap[rtable[(rtable.find("=")+1):]][int(gl.WM.cp[new].p)]   #index is p value of condition in WM
                     self.rtabname = rtable[(rtable.find("=")+1):]
                 except:
-                    gl.log.add_log(("ERROR generate_Uniconcept: could not read pmap reasoning table. Too few dimensions? Rule:",gl.KB.cp[rule[0]].mentstr," table name:",rtable," index attempted:",int(gl.WM.cp[new].p)))
+                    gl.log.add_log(("ERROR generate_Uniconcept: could not read pmap reasoning table. Too few dimensions? Rule:",gl.KB.cp[rule[0]].mentstr," table name:",rtable[(rtable.find("=")+1):]," index attempted:",int(gl.WM.cp[new].p)))
                 if type(reasoned_p) is list:                # error message for too many dimensions
-                    gl.log.add_log(("ERROR generate_Uniconcept: bad pmap reasoning table: Too many dimensions! Rule:",gl.KB.cp[rule[0]].mentstr," table name:",rtable," index attempted:",int(gl.WM.cp[new].p)))
+                    gl.log.add_log(("ERROR generate_Uniconcept: bad pmap reasoning table: Too many dimensions! Rule:",gl.KB.cp[rule[0]].mentstr," table name:",rtable[(rtable.find("=")+1):]," index attempted:",int(gl.WM.cp[new].p)))
             self.imparents=[]; self.recordparents=[]
             self.recordrel=[]; self.imcount=0
             if gl.KB.cp[implication].mentstr!="%2" or gl.KB.cp[rule[1]].relation!=13:   # this is not the IM(IM(%1,%2),%2) rule
@@ -662,7 +662,7 @@ class Reasoning:
             reasoned_p=gl.args.pmap[tname]              #entire table
             for index in indexlist:                     #take indices one by one
                 reasoned_p=reasoned_p[index]
-            reasoned_p=int(gl.WM.convert_p(reasoned_p))
+            reasoned_p=int(reasoned_p)
         except:
             gl.log.add_log(("ERROR in read_ptable (reason.py): could not read pmap reasoning table:",tname," table name wrong or too many indices or too big index values. Indices:",indexlist))
         return reasoned_p
@@ -921,14 +921,7 @@ class Reasoning:
         for leaf in gl.WM.new_activ:                        # leafs where concepts are now activated
             for actnew in sorted(list(gl.WM.new_activ[leaf])):  # activated concepts
                 self.perform_Reason(actnew,actnew+1,False,None,recent_activ=True)  # perform reasining on newly activated concept
-        nowadded = ciremember+1
-        answerfound = 0
-        while nowadded < gl.WM.ci:                          # check whether answer is found in reasoned concepts
-            gl.WM.rec_set_undefined_parents(question)       # sets -1 parents insetad of ? character
-            if gl.WM.rec_match(gl.WM.cp[question],gl.WM.cp[nowadded],[question,nowadded]) == 1:   # answer found
-                answerfound=1
-            nowadded +=1
-        while answerfound==0 and gl.WM.ci>ciremember:       # something was added. But no answer. Reason on those that was added.
+        while gl.WM.ci>ciremember:       # something was added. Reason on those that was added.
             endiremember=gl.WM.ci
             self.createConceptRules(ciremember,gl.WM.cp.__len__())   # add initial kb_rules
             self.perform_Reason(ciremember+1,len(gl.WM.cp),False,None)  # perform reasoning on these
