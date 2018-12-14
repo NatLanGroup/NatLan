@@ -232,18 +232,6 @@ class Branch:           #branching in WM
             if addc!=-1:
                 gl.WM.update_Samestring(addc,leaf)              #update samestring
         
-
-    def update_Consistency(self,new,old):   # update consistency value for wm item new
-        s=timer()
-        if new!=old:
-            if gl.WM.rec_match(gl.WM.cp[new],gl.WM.cp[old])==1:     #concepts match
-                index1 = int(gl.WM.cp[new].p)
-                index2 = int(gl.WM.cp[old].p)
-                cons = gl.args.consist[index1][index2]              #read the consist table
-                if cons<gl.WM.cp[new].c:                            #consistency is worse than stored
-                    gl.WM.cp[new].c=cons                            #currently we just store the top inconsistency per concept
-        gl.args.settimer("branch_02: update_consistency",timer()-s)
-
     def get_Lastmulti(self,thisbranch):                 #get position of last branching
         self.lastbrpos=-1
         for pos in thisbranch:                          #this is a reverese list, we go from top to origin

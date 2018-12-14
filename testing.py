@@ -193,6 +193,8 @@ class Testinput:
                         skip[1]=(row-start)-skip[0]   # count new rows that were now skipped in addition
                         return lines[row][0:7]
                     except: return "notfound"
+                if pos>0 and lines[row][pos]=="/" and lines[row][pos-1]=="/":  # a mentalese that is commented out by //
+                    return "notfound"
             row+=1
         return "notfound"
 
@@ -205,15 +207,17 @@ class Testinput:
             self.resultf=open(self.name[:pos]+"_result"+self.name[pos:],"r")    # open result file for read
             resultlines=[]
             for rline in self.resultf:
-                resultlines.append(rline[:])    # loafd entire result file
+                resultlines.append(rline[:])        # loafd entire result file
             brow=0
-            for bline in self.basef:            # rows in base file
+            for bline in self.basef:                # rows in base file
                 try: bment=self.mentalese_fromrow(bline)   # get the mentalese
                 except: print ("ERROR in testing.mentalese_fromrow. row:",brow)
                 if len(bment)>0:
                     try: r_eval=self.locate_thisment(brow,bment,resultlines,skip)
                     except: print ("ERROR in testing.locate_thisment. row:",brow)
-                    if skip[1]>0: skip[0]=skip[0]+skip[1]   # incfrease skip counter with new skippings
+                    if skip[1]>0:
+                        skip[0]=skip[0]+skip[1]     # increase skip counter with new skippings
+                        print ("SKIPPED new rows in _result from row:",brow," number of skipped rows:",skip[1])
                 if bline[0:7] == r_eval: match+=1   # match
                 else:
                     if r_eval == "notfound":
@@ -229,7 +233,7 @@ class Testinput:
         if diff==0 and notf==0: alleval=" ALL OK"
         else: alleval=""
         if "ERROR" in message: print (message)
-        else: print ("RESULT CHECK.",alleval,"match:",match,"difference:",diff,"not found:",notf, message)
+        else: print ("RESULT CHECK.",alleval,"match:",match,"difference:",diff,"not found:",notf, "new rows skipped:",skip[0],message)
                     
             
 class Temptest:                                 # unit tests and other temporary data

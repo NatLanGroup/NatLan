@@ -24,6 +24,7 @@ class Arguments:
         self.timecheck = {}      # time consumption mapped to function name
         self.debug = 0          # debug mode
         self.loglevel = 1       # level of logging. 0 is least log.
+        self.upd_pvalue = 1     # switch on p (etc) value update when contradicting, in update_Dimensions
         self.total_reasoncount = 0  # debug. all reasoning attempts.
         self.success_reasoncount=0  # debug. reasoned concepts.
         
@@ -31,6 +32,7 @@ class Arguments:
         self.im = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 3, 3], [2, 2, 2, 3, 4]]         # IM rule
         self.can = [[0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 1, 2, 2, 2], [0, 1, 2, 3, 3], [0, 1, 2, 3, 4]]        # can rule
         self.cando = [0,1,2,2,2]                                                                                # cando rule
+        self.does = [2,3,4,4,4]                                                                                 # does rule: doing sth means can do it
         self.cannot = [2,2,2,1,0]                                                                               # cannot rule
         self.pide1 = [0,1,2,3,4]                                                                                # D-rule single arg
         self.pnot1 = [4,3,2,1,0]                                                                                # NOT() rule
@@ -47,9 +49,9 @@ class Arguments:
         self.pmap = {
             "im":self.im, "pide1":self.pide1,"pide2":self.pide2,"pclass":self.pclass,"pxor":self.pxor,
             "idedegrade":self.idedegrade, "degrade":self.degrade, "pnot1":self.pnot1, "pand":self.pand,
-            "can":self.can, "cando":self.cando, "cannot":self.cannot
+            "can":self.can, "cando":self.cando, "does":self.does,"cannot":self.cannot
         }
-
+        self.avg_lookback = 10                                                  # rolling average on this number of occurence. avg=0.9*avg+0.1*current
         self.worst_known = [[0,0,0,0,0],[0,1,1,1,1],[0,1,2,2,2],[0,1,2,3,3],[0,1,2,3,4]]    # known conversion from two known values
         self.k_advan = [[4,4,4,4,4],[4,0,1,2,3],[4,1,0,1,2],[4,2,1,0,1],[4,3,2,1,0]]    # known advantage conversion from two known values
 
@@ -61,22 +63,18 @@ class Arguments:
             [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]
 
         self.pe_final = [                                                               # p or exception conversion, top level: known advantage. next:
-            [[0,1,2,2,2],[1,1,2,2,2],[2,2,2,2,3],[2,2,2,3,4],[2,2,2,3,4]],              # next: better known p/exception last: less known p/exception
-            [[0,0,1,2,2],[1,1,1,2,2],[2,2,2,2,2],[2,2,3,3,4],[2,2,3,3,4]],
+            [[0,1,2,2,2],[1,1,2,2,2],[2,2,2,2,3],[2,2,2,3,3],[2,3,3,3,4]],              # next: better known p/exception last: less known p/exception
+            [[0,0,1,2,2],[1,1,1,2,2],[2,2,2,2,2],[2,2,3,3,3],[2,2,3,3,4]],
             [[0,0,1,1,1],[1,1,1,1,2],[2,2,2,2,2],[2,2,3,3,3],[2,3,3,4,4]],
-            [[0,0,0,1,1],[1,1,1,1,2],[2,2,2,2,2],[2,2,3,3,3],[3,3,4,4,4]],
+            [[0,0,0,1,1],[1,1,1,1,2],[2,2,2,2,2],[2,3,3,3,3],[3,3,4,4,4]],
             [[0,0,0,0,0],[1,1,1,1,1],[2,2,2,2,2],[3,3,3,3,3],[4,4,4,4,4]]]
 
         self.excep_final = [[0,0,1,1,1],[1,1,1,2,2],[2,2,2,2,3],[3,3,3,3,4],[4,4,4,4,4]]    # final exception value from pe_final and pdiff
 
         self.consist_final = [[4,4,3,2,0],[4,4,4,3,0],[4,4,4,4,3],[4,4,4,4,4],[4,4,4,4,4]]  # final consistency. Top: final exception. last: pdiff.                                                                           # TO DO: take input consistency into account !!
 
-        self.known_final = [                                                            # final known. Top: final consistency.
-            [[0,1,2,3,4],[1,1,1,1,1],[2,1,1,1,1],[3,1,1,1,1],[4,1,1,1,1]],              # next: known1, known2.
-            [[0,0,1,2,3],[0,0,0,1,2],[1,0,0,0,1],[2,1,0,0,0],[3,2,1,0,0]],
-            [[0,0,0,1,2],[0,0,0,0,1],[0,0,0,0,0],[1,0,0,0,0],[2,1,0,0,0]],
-            [[0,0,0,0,1],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[1,0,0,0,0]],
-            [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]
+        self.known_final = [[0,0,0,0,0],[0,1,1,1,1],[1,1,1,2,2],[1,2,2,2,3],[1,2,2,3,4]]  # final klnown value. top:higher known value. next: avg consistency
+
 
         self.rcode = {
             "X":-1, "W": 1, "S": 2, "D": 3, "C": 4, "F": 5,

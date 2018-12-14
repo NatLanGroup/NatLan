@@ -6,10 +6,12 @@ class Concept:
         self.p = int(gl.args.pmax/2)        # p value of concept
         self.c = int(gl.args.cmax)          # consistency of this concept and previous concepts
         self.g = int(gl.args.gmax)          # generality: how specific (0) or general (1) is the concept
+        self.cons_avg = int(gl.args.cmax)   # rolling average of consistency of this concept 
         self.acts = 0                       # activation level of concept
         self.exception = gl.args.exdef      # are exceptions possible? 4=yes. Also for rules. Concepts inherit from rule.        
         self.known = int(gl.args.kmax/2)    # how solid is the knowledge of p, exception for this concept
         self.relevance = int(gl.args.rmax/2)  # relevance of the concept
+        self.count = 1      # count the occurance of this concept
         self.relation = rel # relation code
         self.parent = []    # parents list
         self.child = []     # children list
@@ -29,8 +31,7 @@ class Concept:
         self.rule_match = []  # list of WM concepts that match the respective rule of kb_rules
         self.kbrules_converted=0    # flag to show if convert_KBrules was called for this concept
         self.track = 0      # track the usage of this concept for debugging
-        self.count = 0      # count the occurance of this concept weighted by known
-        self.excount = 0    # count pdiff that occured weighted by known
+        self.compared_upto=0 # this comcept was already compared to older ones up to this index
 
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
@@ -84,7 +85,7 @@ class Kbase:
         # TO DO: if new concept is more specific, than input used for the old concept, override p value of old !!!!! MISSING
         return 0
 
-    def search_fullmatch(self,pin,rel,parents,rule,branch=[],conclist=[]):
+    def search_fullmatch(self,pin,rel,parents,rule,samelist,branch=[],conclist=[]):
         found=0; s=timer()
         if self.convert_p(pin) == self.convert_p(gl.args.pmax/2):   #p70.5 will not be reasoned
             found=1
@@ -107,6 +108,7 @@ class Kbase:
                                 allsame=0
                             pari+=1
                         if allsame==1:
+                            samelist.append(sindex)                 #remember that in sindex the concept matches
                             foundnow=self.check_Contradiction(sindex,rule,pin,conclist)    # check whether we have contradiction and resolve it
                             if foundnow == 1: found=1
         gl.args.settimer("concep_902: search_fullmatch",timer()-s)
@@ -159,6 +161,16 @@ class Kbase:
                                 gl.log.add_log(("PVALUE modification in add_concept. WM index:",par," concept found in KB:",condinkb[1][0]," new p value:",self.cp[par].p))                   
             pari+=1
 
+    def update_Same(self,con):                          # update same field based on D relation, con is a D()
+        same_g=self.cp[self.cp[con].parent[0]].g        # generality of first parent
+        for par in self.cp[con].parent:
+            if same_g != self.cp[par].g or self.cp[par].mentstr=="?":   # different g values
+                same_g=-1                               # indicate difference
+        if same_g != -1:                                # all g the same
+            for par1 in self.cp[con].parent:
+                for par2 in self.cp[con].parent:
+                    if par1!=par2:
+                        self.cp[par1].same.add(par2)     # add par2 in the same list of par1 (the cyvcle also adds par1 to par2.same)
                 
     def add_concept(self, new_p, new_rel, new_parents,kbl=[],gvalue=None):        #add new concept to WM or KB. parents argument is list
         self.cp.append(Concept(new_rel))                        #concept added
@@ -191,6 +203,8 @@ class Kbase:
             self.update_Samestring(gl.WM.ci-1,gl.WM.ci)         #update the leaf in samestring
         if new_rel == 13 and self.name=="WM" :                  # IM relation
             self.update_Condip()                                # update p value of condition if needed
+        if new_rel==3 and len(self.cp[self.ci].parent)>1:       # D relation with 2+ parents
+            self.update_Same(self.ci)                           # update same field based on D()
         gl.log.add_log((self.name," add_concept index=",self.ci," p=",self.cp[self.ci].p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
         return self.ci
 
