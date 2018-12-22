@@ -32,51 +32,53 @@ class Testinput:
 
     def readtest(self):
         gl.log.add_log(("Test file started:", self.name))
-        for line in self.testf:
-            i = 0;
-            epos = -1;
-            mpos = -1;
-            apos = -1;
-            comment = -1
-            self.eng.append("");
-            self.mentalese.append("")  # each list must have a new item
-            self.goodanswer.append("");
-            self.question.append(0)
-            self.next_question.append("")
-            self.systemanswer.append([]);
-            self.evaluation.append("")
-            self.comment.append("")
-            self.debug.append(0)
-            rowi = len(self.eng) - 1  # index of the new item
-            while i < len(line):
-                if "e/" in line[i:i + 2]: epos = i  # order of e/ m/ a/ // is fixed but all are optioonal
-                if "m/" in line[i:i + 2]:
-                    mpos = i
-                    if epos > -1: self.eng[rowi] = line[epos + 2:mpos]
-                    if "*" in line[i-1:i]:         # * means debug this row
-                        self.debug[rowi]=1
-                if "a/" in line[i:i + 2]:
-                    apos = i
-                    if mpos > -1: self.question[rowi] = 1
-                    if mpos > -1: self.mentalese[rowi] = line[mpos + 2:apos]
-                    if mpos == -1 and epos > -1: self.eng[rowi] = line[epos + 2:apos]
-                    prerow = rowi-1
-                    while prerow>0 and self.mentalese[prerow]=="": prerow-=1    # find previous nonempty row
-                    if prerow >=0: self.next_question [prerow] = self.mentalese[rowi][:]    # store question mentalese
-                if "//" in line[i:i + 2]:
-                    comment = i
-                    self.comment[rowi]=line[comment:]
-                    if epos > -1 and mpos == -1: self.eng[rowi] = line[epos + 2:comment]
-                    if mpos > -1 and apos == -1: self.mentalese[rowi] = line[mpos + 2:comment]
-                    if apos > -1: self.goodanswer[rowi] = line[apos + 2:comment]
-                i += 1
-            if epos > -1 and mpos == -1 and apos == -1 and comment == -1:
-                self.eng[rowi] = line[epos + 2:i].strip()
-            if mpos > -1 and apos == -1 and comment == -1:
-                self.mentalese[rowi] = line[mpos + 2:i].strip()
-            if apos > -1 and comment == -1:
-                self.question[rowi] = 1
-                self.goodanswer[rowi] = line[apos + 2:i].strip()
+        try:
+            for line in self.testf:
+                i = 0;
+                epos = -1;
+                mpos = -1;
+                apos = -1;
+                comment = -1
+                self.eng.append("");
+                self.mentalese.append("")  # each list must have a new item
+                self.goodanswer.append("");
+                self.question.append(0)
+                self.next_question.append("")
+                self.systemanswer.append([]);
+                self.evaluation.append("")
+                self.comment.append("")
+                self.debug.append(0)
+                rowi = len(self.eng) - 1  # index of the new item
+                while i < len(line):
+                    if "e/" in line[i:i + 2]: epos = i  # order of e/ m/ a/ // is fixed but all are optioonal
+                    if "m/" in line[i:i + 2]:
+                        mpos = i
+                        if epos > -1: self.eng[rowi] = line[epos + 2:mpos]
+                        if "*" in line[i-1:i]:         # * means debug this row
+                            self.debug[rowi]=1
+                    if "a/" in line[i:i + 2]:
+                        apos = i
+                        if mpos > -1: self.question[rowi] = 1
+                        if mpos > -1: self.mentalese[rowi] = line[mpos + 2:apos]
+                        if mpos == -1 and epos > -1: self.eng[rowi] = line[epos + 2:apos]
+                        prerow = rowi-1
+                        while prerow>0 and self.mentalese[prerow]=="": prerow-=1    # find previous nonempty row
+                        if prerow >=0: self.next_question [prerow] = self.mentalese[rowi][:]    # store question mentalese
+                    if "//" in line[i:i + 2]:
+                        comment = i
+                        self.comment[rowi]=line[comment:]
+                        if epos > -1 and mpos == -1: self.eng[rowi] = line[epos + 2:comment]
+                        if mpos > -1 and apos == -1: self.mentalese[rowi] = line[mpos + 2:comment]
+                        if apos > -1: self.goodanswer[rowi] = line[apos + 2:comment]
+                    i += 1
+                if epos > -1 and mpos == -1 and apos == -1 and comment == -1:
+                    self.eng[rowi] = line[epos + 2:i].strip()
+                if mpos > -1 and apos == -1 and comment == -1:
+                    self.mentalese[rowi] = line[mpos + 2:i].strip()
+                if apos > -1 and comment == -1:
+                    self.question[rowi] = 1
+                    self.goodanswer[rowi] = line[apos + 2:i].strip()
+        except: print("INPUT FILE ERROR. File name parameter missing, or could not be opened. ")
 
     def goodanswer_list(self,starti,endi):              # get indices of good answers
         subanswerlist=[]

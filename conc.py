@@ -21,6 +21,7 @@ class Concept:
         self.kblink = []    # link to KB, if this is in WM
         self.mapto = -1     # another concept in WM where this one is mapped to
         self.wmuse = [-1]   # what concepts were used to get this one by reasoning. Or -1 if original input.
+        self.override = set()   # what were the wmuse concepts, based on which this concept was overridden
         self.reasonuse = [] # rule and concepts directly used for reasoning
         self.usedby = set() # new concepts that use this old concept for reasoning
         self.general = set([])  # set of lists of concepts more general than this one
@@ -87,9 +88,11 @@ class Kbase:
 
     def search_fullmatch(self,pin,rel,parents,rule,samelist,branch=[],conclist=[]):
         found=0; s=timer()
-        if self.convert_p(pin) == self.convert_p(gl.args.pmax/2):   #p70.5 will not be reasoned
-            found=1
-        else:
+        not_known=0
+        for basec in conclist:                                      # base concepts used for reasoning
+            if self.cp[basec].known==0:                             # one of them  not known
+                not_known=1; found=1                                # return found=1, inhibit reasoning for not known base
+        if not_known==0:                                            # all base wmuse concepts are known
             for sindex in range(0,self.ci+1):                       # search for match in entire WM (on branch)
                 con=self.cp[sindex]
                 if con.relation==rel and (branch==[] or sindex in branch):   #only match to concepts in branch
@@ -109,7 +112,7 @@ class Kbase:
                             pari+=1
                         if allsame==1:
                             samelist.append(sindex)                 #remember that in sindex the concept matches
-                            foundnow=self.check_Contradiction(sindex,rule,pin,conclist)    # check whether we have contradiction and resolve it
+                            foundnow=self.check_Contradiction(sindex,rule,pin,conclist[:])    # check whether we have contradiction and resolve it
                             if foundnow == 1: found=1
         gl.args.settimer("concep_902: search_fullmatch",timer()-s)
         return found    # TO DO: feed back allsame in found, to populate .general in reasoned concept in finaladd
@@ -124,17 +127,30 @@ class Kbase:
         if out>1: out=round(out)                    # this converts 1.1
         return out
 
-    def getp_backward(self,swhat,pback):            # search earlier occurence of swhat and return p
+    def getp_backward(self,swhat):                  # search earlier occurence of swhat and return p
         sindex=self.cp[swhat].previous              # proceed on branch
-        found=0
-        while sindex>-1 and pback==gl.args.pmax/2:  #do not stop on p=2
+        wmfound=0; kback=0
+        while sindex>-1 and kback==0:               # do not stop on unknown concept
             if self.rec_match(self.cp[swhat], self.cp[sindex], [swhat,sindex]) == 1:
-                found=1
-                pback=self.cp[sindex].p
-                self.cp[swhat].wmuse=[sindex]       #set wmuse to see whjere we get the p value from
+                kback=self.cp[sindex].known         # the known value of this earlier occurence
+                if kback>0: wmfound=sindex          # this is the earlier occurence
             sindex=self.cp[sindex].previous
-        return pback
+        return wmfound                              # return the latest, same concept occurence
 
+    def clone_Values(self,new,fromwm,fromkb):       # clone dimensions onto new, from earlier concept in wm (fromwm) or kb (fromkb)
+        if fromkb>0:                                # we have an occurence in KB - we only use this for cloning
+            gl.log.add_log(("DIMENSION OVERRIDE during add_concept, on concept:",new," ",self.cp[new].mentstr," earlier KB occurence:",fromkb, " old p,known,c:",self.cp[new].p," ",self.cp[new].known," ",self.cp[new].c," new p,known,c:",gl.KB.cp[fromkb].p," ",gl.KB.cp[fromkb].known," ",gl.KB.cp[fromkb].c))  
+            self.cp[new].p = gl.KB.cp[fromkb].p     # p value updated
+            self.cp[new].known = gl.KB.cp[fromkb].known     
+            self.cp[new].c = gl.KB.cp[fromkb].c     #  value updated
+            self.cp[new].relevance = gl.KB.cp[fromkb].relevance    
+        if fromwm>0 and fromkb==0:                              
+            gl.log.add_log(("DIMENSION OVERRIDE during add_concept, on concept:",new," ",self.cp[new].mentstr," earlier WM occurence:",fromwm, " old p,known,c:",self.cp[new].p," ",self.cp[new].known," ",self.cp[new].c," new p,known,c:",gl.WM.cp[fromwm].p," ",gl.WM.cp[fromwm].known," ",gl.WM.cp[fromwm].c))  
+            self.cp[new].p = gl.WM.cp[fromwm].p     # p value updated
+            self.cp[new].known = gl.WM.cp[fromwm].known     
+            self.cp[new].c = gl.WM.cp[fromwm].c     #  value updated
+            self.cp[new].relevance = gl.WM.cp[fromwm].relevance    
+            
     def update_Samestring(self,oldleaf,newleaf):                #update WM.samestring dictionary key and WM.brelevant set
         if self.name=="WM":
             if oldleaf in gl.WM.samestring:
@@ -148,17 +164,13 @@ class Kbase:
         for par in self.cp[self.ci].parent : 
             self.cp[par].p = gl.args.pdef_unknown       #this is after concept is added. So log file is bad.
             if pari==0:                                 # condition in IM
-                newpval = self.getp_backward(par,gl.args.pdef_unknown)   # use the p value of earlier occurence of concept
-                if self.cp[par].p != newpval:           # p value needs update
-                    self.cp[par].p= newpval             # updated
-                    gl.log.add_log(("PVALUE modification in add_concept. WM index:",par," new p value:",self.cp[par].p))
+                wmfound = self.getp_backward(par)       # use the p value of earlier occurence of concept
+                if wmfound > 0:                         # earlier occurence found
+                    self.clone_Values(par,wmfound,0)    # copy dimensions from wmfound to par
                 elif par>0 and self.name=="WM" and "%" not in self.cp[par].mentstr:   # no new p found in WM, then search KB
                         condinkb = self.search_KB(par)  # search the condition in KB
-                        if condinkb[1]!=[-1]:             # found
-                            kbpval = gl.KB.cp[condinkb[1][0]].p  # the p value of the condition in KB
-                            if self.cp[par].p != kbpval:        # p value needs update
-                                self.cp[par].p= kbpval         # updated
-                                gl.log.add_log(("PVALUE modification in add_concept. WM index:",par," concept found in KB:",condinkb[1][0]," new p value:",self.cp[par].p))                   
+                        if condinkb[1]!=[-1]:           # found
+                            self.clone_Values(par,0,condinkb[1][0])  # copy dimensions from the same concept found in KB
             pari+=1
 
     def update_Same(self,con):                          # update same field based on D relation, con is a D()
@@ -284,10 +296,10 @@ class Kbase:
                 if self.rec_match(self.cp[pn1],self.cp[po0],[pn1,po0]):     #other pair also match
                     if self.cp[new].p==gl.args.pmax/2:                  #new needs update
                         self.cp[new].p=self.cp[old].p                   #new updated
-                        gl.log.add_log(("PVALUE OVERRIDE in reverse_Drel. overridden=",new," based on:",old,"new p=",self.cp[old].p))
+                        gl.log.add_log(("PVALUE OVERRIDE in reverse_Drel. overridden=",new," ",self.cp[new].mentstr," based on:",old,"new p=",self.cp[new].p))
                     if self.cp[old].p==gl.args.pmax/2:                  #old needs update
                         self.cp[old].p=self.cp[new].p                   #old updated
-                        gl.log.add_log(("PVALUE OVERRIDE in reverse_Drel. overridden=",old," based on:",new,"new p=",self.cp[old].p))
+                        gl.log.add_log(("PVALUE OVERRIDE in reverse_Drel. overridden=",old," ",self.cp[old].mentstr," based on:",new,"new p=",self.cp[old].p))
                         
     def search_onbranch(self,swhat,swhatindex):                     # search answer on branches separately
         found=[]
@@ -792,11 +804,12 @@ class Kbase:
                 genset.update(self.cp[gen].same)
             gen_used=set(self.cp[old].reasonuse) & genset   # general items that were used to reason old
             if len(gen_used)>0:                     # any used: p needs override
-                gl.log.add_log(("CONTRADICTION: PVALUE OVERRIDE from set_General: old p was based on more general input. index=",old," old p=",self.cp[old].p," new index=",newi," new p=",self.cp[newi].p))
-                self.cp[old].p = self.cp[newi].p    # override old p
+                gl.log.add_log(("CONTRADICTION: KNOWN=0 OVERRIDE from set_General: old p was based on more general input. index=",old," old p=",self.cp[old].p," new index=",newi," new p=",self.cp[newi].p))
+                self.cp[old].known = 0              # override known
                 for used in self.cp[old].usedby:    # reasoned concepts that use this old
-                    gl.log.add_log(("CONTRADICTION: PVALUE OVERRIDE TO MAX/2 from set_General: make concept unknown. This concept used a too general input. index=",used," old p=",self.cp[used].p," contradicting concept:",old))
+                    gl.log.add_log(("CONTRADICTION: PVALUE and KNOWN OVERRID from set_General: make concept unknown. This concept used a too general input. index=",used," old p=",self.cp[used].p," contradicting concept:",old))
                     self.cp[used].p=gl.args.pmax/2  # set this concept to unknown
+                    self.cp[used].known=0           # set this concept unknown
 
     def set_General(self,startpos):                 # investigate if latest input concepts involve a generality relation
         s=timer()
