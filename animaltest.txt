@@ -3,22 +3,16 @@
 m/ IM(IM(%1,%2),%2)p=im						// IM reasoning
 m/ IM(NOT(A(%1,%2))p=p1,A(%1,%2))p=pnot1	// NOT reasoning with A
 m/ IM(NOT(F(%1,%2))p=p1,F(%1,%2))p=pnot1	// NOT reasoning with F	
+m/ IM(NOT(P(%1,%2))p=p1,P(%1,%2))p=pnot1	// NOT reasoning with P
 
-// ACTORS : CAN, WANT, GOAL
+// ACTORS : CAN, WANT, GOAL, TOOL
 m/ IM(A(%1, F(%2, can))p=p1, A(%1,%2))p=cando
+// IM(A(%1,%2)p=p1,A(%1,F(%2,can)))p=does  BUG: creates A(animal, F(F(eat,can),can)) etc. Ezt az ismetlest le kell tiltani!! legjobb mentalese-bol.
 m/ IM(A(%1, F(%2, cannot))p=p1, A(%1,%2))p=cannot
 *m/ IM(AND(A(%1,F(%2,can))p=p1,A(%1,F(%2,want))p=p2),A(%1,%2))p=can
 m/ IM(C(A(%1,%2),P(%1,goal))p=p1, A(%1,F(%2,want)))p=pide1
 m/ IM(A(%1,F(%2,want))p=p1, C(A(%1,%2),P(%1,goal)))p=pide1
-
-// TEMPORARY AND PERMANENT STATE
-m/ IM(F(%1,F(%2,always))p=p1, F(%1,F(%2,permanent)))p=pide1
-m/ IM(F(Q(many,%1),%2)p=p1, F(%1,F(%2,permanent)))p=pide1
-m/ IM(F(%1,F(%2,often))p=p1, F(%1,F(%2,temporary)))p=pide1
-m/ IM(F(%1,F(%2,temporary)),F(%1,F(%2,F(temporary,T(P(%1,timing))))))p=pide1
-m/ D(P(animal,timing),T(hour))
-// temporary states have a reason! This will launch reasoning for coherence. The question is, IM(?,F(%1,%2)).
-m/ IM(F(%1,F(%2,temporary))p=p1,IM(%3,F(%1,%2)))p=pide1
+// TOOL rules like F(x, R(to, y)) means y is goal, x is tool to achieve goal
 
 //ANIMALS: LIVE, DEAD, MOVE
 
@@ -55,7 +49,7 @@ e/ Is the animal`s goal to live?			m/ C(A(animal,live),P(animal,goal))?		a/ C(A(
 e/ Is the animal`s goal to sleep?			m/ C(A(animal,sleep),P(animal,goal))?		a/ C(A(animal,sleep),P(animal,goal))p=4
 
 e/ Animals are often hungry.				m/ F(animal,hungry)p=3
-e/ Animals are sometimes not hungry.		*m/ NOT(F(animal,hungry))p=3
+e/ Animals are sometimes not hungry.		m/ NOT(F(animal,hungry))p=3
 e/ Is the animal`s goal to avoid being hungry?  m/ C(A(animal,I(avoid,F(animal,hungry))),P(animal,goal))?  a/ C(A(animal,I(avoid,F(animal,hungry))),P(animal,goal))p=4
 e/ Does the animal avoid being hungry?		m/ A(animal,I(avoid,F(animal,hungry)))?     a/ A(animal,I(avoid,F(animal,hungry)))p=2
 e/ Is the animal`s goal not to be hungry?	m/ C(NOT(F(animal,hungry)),P(animal,goal))?	a/ C(NOT(F(animal,hungry)),P(animal,goal))p=4
@@ -67,43 +61,47 @@ e/ Bats are animals.						m/ C(bat,animal)
 e/ The bat is hungry.						m/ F(bat,hungry)
 e/ Is the bat`s goal to eat? 				m/ C(A(bat,eat),P(bat,goal))?	a/ C(A(bat,eat),P(bat,goal))p=4
 e/ Does the bat eat?						m/ A(bat,eat)?					a/ A(bat,eat)p=2
-e/ Is the bat hungry?						m/ F(bat,hungry)				a/ F(bat,hungry)p=4
+e/ Is the bat hungry?						m/ F(bat,hungry)?				a/ F(bat,hungry)p=4 F(bat,hungry)p=2
 e/ This bat is dead.						m/ F(bat.g=0,dead)
 e/ Does this bat live?						m/ A(bat.g=0,live)?				a/ A(bat.g=0,live)p=0
 e/ Do bats live?							m/ A(bat,live)?					a/ A(bat,live)p=4
 e/ Is to sleep good for the bat?			m/ F(A(bat,sleep),F(good,R(for,bat)))?   a/ F(A(bat,sleep),F(good,R(for,bat)))p=4
-e/ Is the dog hungry?						m/ F(dog,hungry)?				a/ F(dog,hungry)p=3 F(dog,hungry)p=1
+e/ Is the dog hungry?						m/ F(dog,hungry)?				a/ F(dog,hungry)p=3 F(dog,hungry)p=2
 e/ Does the dog eat?						m/ A(dog,eat)?					a/ A(dog,eat)p=2
 
-// ANIMALS : CAN, WANT, EAT
-// this will work if 1) NOT() rule is not applied if we know more of the result: A(animal,F(eat,want)). 2) the IM bug removed. 3) the answer prefers the IM concept. 4) the answer includes the NOT() concept. 
-// ANSWER okosabban:  if answer to %1? is conflicting, or both %1 and NOT(%1) are found and conflicting, then the preferred answer is the IM() concept: IM(%2,%1).
-// NOT okosabban: ha %1 p=3,4 es NOT(%1) p=3,4 akkor NEM kovetkeztetunk arra ebbol hogy %1 p=0,1. Nem hozzuk letre az ellentmondast. mehet az alabbi contradiction feldolgozasban.
-// CONTRADICTION okosabban: if we know %1, maybe NOT(%1), for sure IM(%2,%1), and these conflict, and g=1, then p=4 or p=0 for %1 must be reduced to p=3 or p=1.
-// ebben az esetben az IM(%2,%1) lesz top relevans concept, emiatt lesz ez a top valasz!!
+// ANIMALS : CAN, CANNOT, WANT, HUNGRY, EAT, FOOD, HUNT
 // with IM we have a bug, test it with XOR:
 m/ XOR(NOT(F(animal,hungry)),NOT(A(animal,F(eat,want))))
-e/ If an animal is not hungry, it doesn`t want to eat.  *m/ IM(NOT(F(animal,hungry)),NOT(A(animal,F(eat,want))))
-e/ If an animal has food, it can eat.				*m/ A(animal,F(eat,can))p=2
+m/ IM(A(%1,F(%2,cannot))p=p1,A(%1,F(%2,can)))p=pnot1
+e/ If an animal is hungry, it wants to eat.  		m/ IM(F(animal,hungry),A(animal,F(eat,want)))
+e/ If an animal is not hungry, it doesn`t want to eat.  m/ IM(NOT(F(animal,hungry)),NOT(A(animal,F(eat,want))))
+e/ If an animal has food, it can eat.				m/ A(animal,F(eat,can))p=2
+e/ If an animal has food, it can eat.				m/ IM(P(animal,food),A(animal,F(eat,can)))
 e/ If an animal has no food, it cannot eat.  		m/ IM(NOT(P(animal,food)),A(animal,F(eat,cannot)))
 e/ If an animal finds food, it has food.  			m/ IM(A(animal,I(find,food)),P(animal,food))
 e/ If an animal doesn`t find food, it has no food.  m/ IM(NOT(A(animal,I(find,food))),NOT(P(animal,food)))
 e/ If an animal doesn`t hunt, it has no food.		m/ IM(NOT(A(animal,hunt)),NOT(P(animal,food)))
-
+e/ If an animal eats, it usually eats food.			m/ IM(A(animal,eat),A(animal,I(eat,food)))
 e/ The fox is an animal.							m/ C(fox,animal)
-e/ Does the fox want to eat?						m/ A(fox,F(eat,want))?								a/ A(fox,F(eat,want))p=3
-
-e/ Is the fox hungry?								m/ F(fox,hungry)?									a/ F(fox,hungry)p=3 F(fox,hungry)p=1
-e/ Is the goal of the fox to eat?					m/ C(A(fox,eat),P(fox,goal))?						a/ C(A(fox,eat),P(fox,goal))p=4
-
+e/ Does the fox want to eat?						m/ A(fox,F(eat,want))?								a/ A(fox,F(eat,want))p=3 A(fox,F(eat,want))p=2
+e/ Is the fox hungry?								m/ F(fox,hungry)?									a/ F(fox,hungry)p=3 F(fox,hungry)p=2
+e/ Is the goal of the fox to eat?					m/ C(A(fox,eat),P(fox,goal))?						a/ C(A(fox,eat),P(fox,goal))p=3 C(A(fox,eat),P(fox,goal))p=2
 e/ Does the fox want to eat if it is hungry?		m/ IM(F(fox,hungry),A(fox,F(eat,want)))?    		a/ IM(F(fox,hungry),A(fox,F(eat,want)))p=4
 e/ Does the fox want to eat if it is not hungry?	m/ IM(NOT(F(fox,hungry)),NOT(A(fox,F(eat,want))))?  a/ IM(NOT(F(fox,hungry)),NOT(A(fox,F(eat,want))))p=4
 e/ Does the fox eat?								m/ A(fox,eat)?										a/ A(fox,eat)p=2
+e/ The fox doesn`t find food.						m/ NOT(A(fox,I(find,food)))
+e/ Does the fox eat?								m/ A(fox,eat)?										a/ A(fox,eat)p=1
+e/ The fox has food.								*m/ P(fox,food)
+e/ The fox is hungry. 								m/ F(fox,hungry)
+e/ Does the fox eat?								m/ A(fox,eat)?										a/ A(fox,eat)p=3
 
-FOOD, FIND, HUNT
+// MODALITY LIST: ABLE CAN COULD DARE HAS TO MAY MIGHT MUST NEED SHALL SHOULD WOULD WILL NOT PERMIT PROMISE ADVISE ASK FORBID OFFER OBLIGATED POSSIBLE 
 
-e/ The fox has no food. 							m/ NOT(P(fox,food))
-e/ Does the fox eat?								// A(fox,eat)?										// A(fox,eat)p=0
+// ACTIONS: CONTACT ACTIONS, TOUCH, HAVE
+m/ C(eat, contact_action)
+m/ IM(AND(C(%1,contact_action)p=p1,NOT(A(%2,I(F(touch,can),%3)))p=p2), NOT(A(%2,I(F(%1,can),%3))))p=im
+// IM(A(%1,I(have,%2))p=p1,A(%1,I(F(touch,can),%2)))p=[2,2,2,3,3] we need this new table
+
 
  
 

@@ -19,20 +19,20 @@ OK      e/  Are whales mammals?				  m/  C(mammal, whale)?		 a/ C(mammal,whale)p
         e/  Dead animals do not live.		  m/ A(F(animal,dead),live)p=0
         e/  An animal not living is dead.	  m/ IM(NOT(A(animal,live)),F(animal,dead))
         e/  Dead animals do not live anymore.  m/ AND(A(F(animal,dead),F(live,T(now))p=0),A(animal,F(live,T(before))))
-OK MORE e/  Do animals live? Yes.			  m/  A(animal,live)?			 a/ A(animal,live)p=4 s/ A(animal,live)4 A(animal,live)2 [[47, 16], [47, 24]]
+OK      e/  Do animals live? Yes.			  m/  A(animal,live)?			 a/ A(animal,live)p=4 s/ A(animal,live)4 [[47, 16]]
 OK      e/  Do dead animals live? No.		  m/  A(F(animal,dead),live)?	 a/ A(F(animal,dead),live)p=0 s/ A(F(animal,dead),live)0 [[52, 21]]
         e/  Dogs are animals.                  m/ C(dog,animal)
 OK      e/  Do dogs live?					  m/  A(dog,live)?			 a/ A(dog,live)p=4 s/ A(dog,live)4 [[69, 56]]
 OK      e/  Do dead dogs live?				  m/  A(F(dog,dead),live)?	 a/ A(F(dog,dead),live)p=0 s/ A(F(dog,dead),live)0 [[74, 58]]
 OK      e/  Does this animal live?			  m/  A(animal.g=0,live)?			 a/ A(animal.g=0,live)p=2 s/ A(animal,live)2 [[77, 77]]
         e/  Do all animals live? No.			 // A(Q(all,animal),live)?		// A(Q(all,animal),live)p=0
-OK MORE e/  Which animals do not live? Dead animals do not live.	   m/  A(F(animal,?),live)		 a/ A(F(animal,dead),live)p=0 s/ A(F(animal,dead),live)0 A(F(animal,dead),live)2 [[82, 21], [82, 52]]
+OK      e/  Which animals do not live? Dead animals do not live.	   m/  A(F(animal,?),live)		 a/ A(F(animal,dead),live)p=0 s/ A(F(animal,dead),live)0 [[82, 21]]
        
         e/  Living animals move.						 m/ IM(A(animal,live),A(animal,move))
         e/  Animals move.							 m/ A(animal,move)
         e/  Dead animals do not move.				 m/ A(F(animal,dead),move)p=0
         e/  Animals can move.						 m/ A(animal,F(move,can))
-OK      e/  Do animals move? Yes.					 m/  A(animal,move)?				 a/ A(animal,move)p=4 s/ A(animal,move)4 A(animal,move)4 A(animal,move)4 [[106, 88], [106, 90], [106, 93]]
+OK      e/  Do animals move? Yes.					 m/  A(animal,move)?				 a/ A(animal,move)p=4 s/ A(animal,move)4 A(animal,move)4 [[106, 90], [106, 93]]
 OK      e/  Do dead animals move? No.				 m/  A(F(animal,dead),move)?		 a/ A(F(animal,dead),move)p=0 s/ A(F(animal,dead),move)0 [[111, 98]]
        
        //BIRDS and PENGUINS an error because of 3-level nesting:  A(AND(bird,F(penguin,R(different,R(from,bird)))),fly)
@@ -42,15 +42,15 @@ OK      e/  Do dead animals move? No.				 m/  A(F(animal,dead),move)?		 a/ A(F(a
         e/  Birds have wings.						     m/ P(bird,wing)
        
         e/  Penguins are strange birds.		             m/ C(penguin, F(bird,strange))
-OK      e/  Are penguins birds?				             m/  C(penguin,bird)?		 a/ C(penguin,bird)p=3 s/ C(penguin,bird)3 C(penguin,bird)3 [[133, 126], [133, 127]]
+OK      e/  Are penguins birds?				             m/  C(penguin,bird)?		 a/ C(penguin,bird)p=3 s/ C(penguin,bird)3 [[132, 126]]
         e/  They are very different than most birds because they do not fly.      m/ F(penguin,F(different,R(from,bird)))
-        m/ A(penguin,fly)p=0
+        e/  Penguins do not fly.                          m/ A(penguin,fly)p=0
         e/  Penguins swim.   	                         m/ A(penguin,swim)
         e/  They are birds of the water. 				 m/ C(penguin,P(water,bird))
         e/  Penguins are great at living in the ocean.	 m/ A(penguin,F(live, well, R(in,ocean)))
-OK MORE e/  Are penguins birds? Yes, mostly.				 m/  C(penguin,bird)?			 a/ C(penguin,bird)p=3 s/ C(penguin,bird)3 C(penguin,bird)3 C(penguin,bird)2 [[179, 126], [179, 127], [179, 130]]
-OK      e/  Do penguins have wings? yes probably.		 m/  P(penguin,wing)?			 a/ P(penguin,wing)p=3 s/ P(penguin,wing)3 [[182, 133]]
-OK MORE e/  What do penguins do? 						 m/  A(penguin,?)				 a/ A(penguin,fly)p=0 A(penguin,swim)p=4 s/ A(penguin,fly)0 A(penguin,fly)0 A(penguin,swim)4 A(penguin,F(live,well,R(in,ocean)))4 [[185, 132], [185, 148], [185, 155], [185, 172]]
+OK      e/  Are penguins birds? Yes, mostly.				 m/  C(penguin,bird)?			 a/ C(penguin,bird)p=3 s/ C(penguin,bird)3 [[180, 126]]
+OK      e/  Do penguins have wings? yes probably.		 m/  P(penguin,wing)?			 a/ P(penguin,wing)p=3 s/ P(penguin,wing)3 [[183, 132]]
+OK MORE e/  What do penguins do? 						 m/  A(penguin,?)				 a/ A(penguin,fly)p=0 A(penguin,swim)p=4 s/ A(penguin,fly)0 A(penguin,swim)4 A(penguin,F(live,well,R(in,ocean)))4 [[186, 149], [186, 156], [186, 173]]
 ***MISS e/  Where do penguins live? 						 m/  A(penguin,F(live,?))		 a/ A(penguin,F(live,R(in,water)))p=4 A(penguin,F(live,R(in,ocean)))p=4 s/ 
         e/  Instead of wings, penguins have flippers.     m/ P(penguin,flipper)
         m/ P(penguin,wing)p=0
@@ -70,57 +70,57 @@ OK MORE e/  What do penguins do? 						 m/  A(penguin,?)				 a/ A(penguin,fly)p=
         e/  Persons are the same as people.    m/ D(person,people)
         e/  Animals are not people.            m/ C(animal,people)p=0
         e/  People are not animals.            m/ C(people,animal)p=0
-OK      e/  What is a garden?                  m/  C(garden,?)               a/ C(garden,place)p=4 s/ C(garden,place)4 [[322, 4]]
+OK      e/  What is a garden?                  m/  C(garden,?)               a/ C(garden,place)p=4 s/ C(garden,place)4 [[336, 4]]
 OK      e/  What is a place?                   m/  C(place,?)                a/ not found:C(place,?) s/ 
 OK      e/  What is a toy?                     m/  C(toy,?)                  a/ not found:C(toy,?) s/ 
-OK MORE e/  What is a person?                  m/  C(person,?)               a/ not found:C(person,?) s/ C(person,animal)0 [[331, 319]]
-OK      e/  Who are persons?                   m/  D(person,?)               a/ D(person,people)p=4 s/ D(person,people)4 [[334, 311]]
+OK MORE e/  What is a person?                  m/  C(person,?)               a/ not found:C(person,?) s/ C(person,animal)0 [[345, 333]]
+OK      e/  Who are persons?                   m/  D(person,?)               a/ D(person,people)p=4 s/ D(person,people)4 [[348, 325]]
 OK      e/  Who are people?                    m/  D(people,?)               a/ not found:D(people,?) s/ 
-OK      e/  Is the garden a place?             m/  C(garden,place)?          a/ C(garden,place)p=4 s/ C(garden,place)4 [[340, 4]]
-OK      e/  Is the place a garden?             m/  C(place,garden)?          a/ C(place,garden)p=2 s/ C(place,garden)2 [[343, 343]]
-OK      e/  Are toys dogs?                     m/  C(toy,dog)?               a/ C(toy,dog)p=2 s/ C(toy,dog)2 [[348, 346]]
-OK      e/  Are people same as persons?        m/  D(people,person)?         a/ D(people,person)p=4 s/ D(people,person)4 [[351, 351]]
-OK      e/  Are persons same as people?        m/  D(person,people)?         a/ D(person,people)p=4 s/ D(person,people)4 [[354, 311]]
-OK      e/  Are people animals?                m/  C(people,animal)?         a/ C(people,animal)p=0 s/ C(people,animal)0 [[357, 318]]
-OK MORE e/  What are people?                   m/  C(people,?)               a/ C(people,animal)p=0 s/ C(people,animal)0 C(people,animal)2 [[360, 318], [360, 357]]
-OK MORE e/  What are animals?                  m/  C(animal,?)               a/ not found:C(animal,?) s/ C(animal,people)0 C(animal,person)0 [[363, 314], [363, 315]]
-OK MORE e/  What animals are there?            m/  C(?,animal)               a/ C(people,animal)p=0 C(dog,animal)p=4 s/ C(dog,animal)4 C(bird,animal)4 C(penguin,animal)3 C(people,animal)0 C(person,animal)0 C(people,animal)2 [[366, 55], [366, 114], [366, 131], [366, 318], [366, 319], [366, 357]]
+OK      e/  Is the garden a place?             m/  C(garden,place)?          a/ C(garden,place)p=4 s/ C(garden,place)4 [[354, 4]]
+OK      e/  Is the place a garden?             m/  C(place,garden)?          a/ C(place,garden)p=2 s/ C(place,garden)2 [[357, 357]]
+OK      e/  Are toys dogs?                     m/  C(toy,dog)?               a/ C(toy,dog)p=2 s/ C(toy,dog)2 [[362, 360]]
+OK      e/  Are people same as persons?        m/  D(people,person)?         a/ D(people,person)p=4 s/ D(people,person)4 [[365, 365]]
+OK      e/  Are persons same as people?        m/  D(person,people)?         a/ D(person,people)p=4 s/ D(person,people)4 [[368, 325]]
+OK      e/  Are people animals?                m/  C(people,animal)?         a/ C(people,animal)p=0 s/ C(people,animal)0 [[371, 332]]
+OK      e/  What are people?                   m/  C(people,?)               a/ C(people,animal)p=0 s/ C(people,animal)0 [[374, 332]]
+OK MORE e/  What are animals?                  m/  C(animal,?)               a/ not found:C(animal,?) s/ C(animal,people)0 C(animal,person)0 [[377, 328], [377, 329]]
+OK MORE e/  What animals are there?            m/  C(?,animal)               a/ C(people,animal)p=0 C(dog,animal)p=4 s/ C(dog,animal)4 C(bird,animal)4 C(penguin,animal)3 C(people,animal)0 C(person,animal)0 [[380, 55], [380, 114], [380, 130], [380, 332], [380, 333]]
         e/  People walk.                       m/ A(people,walk)
         e/  People talk.                       m/ A(people,talk)
         e/  Animals don`t talk.				  m/ A(animal,talk)p=0
-OK      e/  What do people do?                 m/  A(people,?)               a/ A(people,walk)p=4 A(people,talk)p=4 s/ A(people,walk)4 A(people,talk)4 [[380, 369], [380, 373]]
-OK MORE e/  Who walks?                         m/  A(?,walk)                 a/ A(people,walk)p=4 s/ A(people,walk)4 A(person,walk)4 [[383, 369], [383, 370]]
-OK      e/  Do people walk?                    m/  A(people,walk)?           a/ A(people,walk)p=4 s/ A(people,walk)4 [[386, 369]]
-OK      e/  Do people sing?                    m/  A(people,sing)?           a/ A(people,sing)p=2 s/ A(people,sing)2 [[389, 389]]
-OK MORE e/  What do dogs do?                   m/  A(dog,?)                  a/ not found:A(dog,?) s/ A(dog,live)4 A(dog,live)2 A(dog,talk)0 [[393, 56], [393, 69], [393, 393]]
+OK      e/  What do people do?                 m/  A(people,?)               a/ A(people,walk)p=4 A(people,talk)p=4 s/ A(people,walk)4 A(people,talk)4 [[394, 383], [394, 387]]
+OK MORE e/  Who walks?                         m/  A(?,walk)                 a/ A(people,walk)p=4 s/ A(people,walk)4 A(person,walk)4 [[397, 383], [397, 384]]
+OK      e/  Do people walk?                    m/  A(people,walk)?           a/ A(people,walk)p=4 s/ A(people,walk)4 [[400, 383]]
+OK      e/  Do people sing?                    m/  A(people,sing)?           a/ A(people,sing)p=2 s/ A(people,sing)2 [[403, 403]]
+OK MORE e/  What do dogs do?                   m/  A(dog,?)                  a/ not found:A(dog,?) s/ A(dog,live)4 A(dog,talk)0 [[407, 56], [407, 407]]
         e/  Dogs are not the same as people.   m/ D(dog,people)p=0
-OK      e/  Do dogs walk?                      m/  A(dog,walk)?              a/ A(dog,walk)p=2 s/ A(dog,walk)2 [[400, 400]]
+OK      e/  Do dogs walk?                      m/  A(dog,walk)?              a/ A(dog,walk)p=2 s/ A(dog,walk)2 [[414, 414]]
         e/  Tired dogs walk slowly.            m/ F(A(F(dog,tired),walk),slowly)
-OK      e/  How do tired dogs walk?            m/  F(A(F(dog,tired),walk),?)        a/ F(A(F(dog,tired),walk),slowly)p=4 s/ F(A(F(dog,tired),walk),slowly)4 [[414, 407]]
-OK      e/  Do tired dogs walk slowly?         m/  F(A(F(dog,tired),walk),slowly)?  a/ F(A(F(dog,tired),walk),slowly)p=4 s/ F(A(F(dog,tired),walk),slowly)4 [[421, 407]]
-OK MORE e/  What dogs walk slowly?             m/  F(A(F(dog,?),walk),slowly)       a/ F(A(F(dog,tired),walk),slowly)p=4 s/ F(A(F(dog,tired),walk),slowly)4 F(A(F(dog,tired),walk),slowly)2 [[428, 407], [428, 421]]
-OK MORE e/  What do tired dogs do slowly?      m/  F(A(F(dog,tired),?),slowly)      a/ F(A(F(dog,tired),walk),slowly)p=4 s/ F(A(F(dog,tired),walk),slowly)4 F(A(F(dog,tired),walk),slowly)2 [[435, 407], [435, 421]]
+OK      e/  How do tired dogs walk?            m/  F(A(F(dog,tired),walk),?)        a/ F(A(F(dog,tired),walk),slowly)p=4 s/ F(A(F(dog,tired),walk),slowly)4 [[428, 421]]
+OK      e/  Do tired dogs walk slowly?         m/  F(A(F(dog,tired),walk),slowly)?  a/ F(A(F(dog,tired),walk),slowly)p=4 s/ F(A(F(dog,tired),walk),slowly)4 [[435, 421]]
+OK      e/  What dogs walk slowly?             m/  F(A(F(dog,?),walk),slowly)       a/ F(A(F(dog,tired),walk),slowly)p=4 s/ F(A(F(dog,tired),walk),slowly)4 [[442, 421]]
+OK      e/  What do tired dogs do slowly?      m/  F(A(F(dog,tired),?),slowly)      a/ F(A(F(dog,tired),walk),slowly)p=4 s/ F(A(F(dog,tired),walk),slowly)4 [[449, 421]]
        
         e/  Joe is a person.				 	  m/ C(Joe,person)
         e/  A garden is not a person.		  m/ C(garden,person)p=0
         e/  People read.						  m/ A(people,read)
        
-***BADP e/  Does Joe read?					  m/  A(Joe,read)?   			 a/ A(Joe,read)p=4 s/ A(Joe,read)2 [[447, 447]]
+***BADP e/  Does Joe read?					  m/  A(Joe,read)?   			 a/ A(Joe,read)p=4 s/ A(Joe,read)2 [[461, 461]]
        
        // MAPPING. r=4 concept is mapping rule. row without mentalese is paragraph break. Mapping happens within paragraph.
-        e/  He may mean a boy. 			 m/ D(he,boy)p=2
-        e/  She in general may mean a girl.	 m/ D(F(she,R(in,general)),girl)p=2
-        e/  He does not mean a girl.		 m/ D(he,girl)p=0
-        e/  She does not mean a boy.		 m/ D(she,boy)p=0
+       // D(he,boy)p=2
+       // D(F(she,R(in,general)),girl)p=2
+       // D(he,girl)p=0
+       // D(she,boy)p=0
         e/  He must always be identified with a person.   m/ C(he,person)r=4
         e/  She must always be identified with a person.  m/ C(she,person)r=4
        //paragraph start
         e/  Joe is reading.				 m/ A(Joe.g=0,read)
         e/  Joe is in the garden.		 m/ F(Joe.g=0,R(in,garden))
         e/  He is strong.				 m/ F(he.g=0,strong)
-OK      e/  What is Joe like?			 m/  F(Joe.g=0,?)			 a/ F(Joe,strong)p=4 F(Joe.g=0,R(in,garden))p=4 s/ F(Joe,R(in,garden))4 F(Joe,strong)4 [[500, 471], [500, 492]]
-OK      e/  Is he reading?				 m/  A(he.g=0, read)?		 a/ A(he,read)p=4 s/ A(he,read)4 [[532, 508]]
-OK      e/  What is Joe?					 m/  C(Joe.g=0,?)			 a/ C(Joe,person)p=4 s/ C(Joe,person)4 [[535, 493]]
+OK      e/  What is Joe like?			 m/  F(Joe.g=0,?)			 a/ F(Joe,strong)p=4 F(Joe.g=0,R(in,garden))p=4 s/ F(Joe,R(in,garden))4 F(Joe,strong)4 [[505, 469], [505, 490]]
+OK      e/  Is he reading?				 m/  A(he.g=0, read)?		 a/ A(he,read)p=4 s/ A(he,read)4 [[624, 583]]
+***BADP e/  What is Joe?					 m/  C(Joe.g=0,?)			 a/ C(Joe,person)p=4 s/ C(Joe,person)4 C(Joe,person)3 C(Joe,person)3 [[627, 491], [627, 605], [627, 611]]
        
        // Reasoning using KB. Answering from KB. TO DO: C() concept in KB causes branching, C(Jack,person)r=4, this results error because of branching!!
         m/ IM(F(%1,nice)p=p1,F(%1,beautiful))p=pide1
@@ -133,97 +133,97 @@ OK      e/  What is Joe?					 m/  C(Joe.g=0,?)			 a/ C(Joe,person)p=4 s/ C(Joe,p
         e/  My neighbour is tall.		 m/ F(Q(my,neighbour),tall)
         m/ A(person,talk)
         e/  Joe is nice.					 m/ F(Joe,nice)
-OK      e/  Is Jack my neighbour?		 m/  D(Jack,Q(my,neighbour))?			 a/ D(Jack,Q(my,neighbour))p=4 s/ D(Jack,Q(my,neighbour))4 D(Jack,Q(my,neighbour))4 [[578, 540], [0, 93]]
-OK MORE e/  Does Jack live next door?	 m/  A(Jack,F(live,R(next,door)))?  	 a/ A(Jack,F(live,R(next,door)))p=4 s/ A(Jack,F(live,R(next,door)))2 A(Jack,F(live,R(next,door)))4 [[585, 547], [585, 549]]
-OK      e/  Who is nice?					 m/  F(?,nice)						 a/ F(Jack,nice)p=4  F(Joe,nice)p=4 s/ F(Joe,nice)4 F(Jack,nice)4 [[588, 560], [0, 94]]
-***MISS e/  Who is beautiful?			 m/  F(?,beautiful)					 a/ F(Jack,beautiful)  F(Joe,beautiful) s/ F(Joe,beautiful)4 [[591, 562]]
-OK      e/  What is Jack like?			 m/  F(Jack,?)						 a/ F(Jack,tall)  F(Jack,nice) s/ F(Jack,tall)4 F(Jack,nice)4 [[594, 574], [0, 94]]
-***MISS e/  What is Jack doing?			 m/  A(Jack,?)						 a/ A(Jack,talk)p=4 s/ A(Jack,F(live,R(next,door)))2 A(Jack,F(live,R(next,door)))4 A(Jack,F(live,R(next,door)))2 [[597, 547], [597, 549], [597, 585]]
+OK      e/  Is Jack my neighbour?		 m/  D(Jack,Q(my,neighbour))?			 a/ D(Jack,Q(my,neighbour))p=4 s/ D(Jack,Q(my,neighbour))4 D(Jack,Q(my,neighbour))4 [[670, 632], [0, 90]]
+OK      e/  Does Jack live next door?	 m/  A(Jack,F(live,R(next,door)))?  	 a/ A(Jack,F(live,R(next,door)))p=4 s/ A(Jack,F(live,R(next,door)))4 [[677, 641]]
+OK      e/  Who is nice?					 m/  F(?,nice)						 a/ F(Jack,nice)p=4  F(Joe,nice)p=4 s/ F(Joe,nice)4 F(Jack,nice)4 [[680, 652], [0, 91]]
+***MISS e/  Who is beautiful?			 m/  F(?,beautiful)					 a/ F(Jack,beautiful)  F(Joe,beautiful) s/ F(Joe,beautiful)4 [[683, 654]]
+OK      e/  What is Jack like?			 m/  F(Jack,?)						 a/ F(Jack,tall)  F(Jack,nice) s/ F(Jack,tall)4 F(Jack,nice)4 [[686, 666], [0, 91]]
+***MISS e/  What is Jack doing?			 m/  A(Jack,?)						 a/ A(Jack,talk)p=4 s/ A(Jack,F(live,R(next,door)))4 [[689, 641]]
         e/  If Jack is nice then Jack likes father.   m/ IM(F(Jack,nice),A(Jack,I(like,father)))
-OK      e/  Does Jack like father?		 m/  A(Jack,I(like,father))?   		 a/ A(Jack,I(like,father))p=4 s/ A(Jack,I(like,father))4 A(Jack,I(like,father))4 [[639, 605], [639, 611]]
+OK      e/  Does Jack like father?		 m/  A(Jack,I(like,father))?   		 a/ A(Jack,I(like,father))p=4 s/ A(Jack,I(like,father))4 [[732, 703]]
         e/  If Joe is nice then Jack is fast.   m/ IM(F(Joe,nice),F(Jack,fast))
-***BADP e/  Is Jack a policeman?			 m/  C(Jack,policeman)?   			 a/ C(Jack,policeman)p=4 s/ C(Jack,policeman)2 C(Jack,policeman)2 [[661, 654], [0, 96]]
-OK      e/  Is Jack fast?				 m/  F(Jack,fast)?					 a/ F(Jack,fast)p=4 s/ F(Jack,fast)4 F(Jack,fast)4 [[664, 645], [664, 647]]
+***BADP e/  Is Jack a policeman?			 m/  C(Jack,policeman)?   			 a/ C(Jack,policeman)p=4 s/ C(Jack,policeman)2 C(Jack,policeman)2 [[756, 749], [0, 93]]
+OK      e/  Is Jack fast?				 m/  F(Jack,fast)?					 a/ F(Jack,fast)p=4 s/ F(Jack,fast)4 [[759, 742]]
        
        // D-reasoning
        
-OK MORE e/  Who are people?                    m/  D(?,people)               a/ D(person,people)p=4 s/ D(person,people)4 D(person,people)4 D(dog,people)0 [[668, 311], [668, 354], [668, 396]]
-OK      e/  Are people same as persons?        m/  D(people,person)?         a/ D(people,person)p=4 s/ D(people,person)4 [[671, 351]]
-OK      e/  Do persons walk?                   m/  A(person,walk)?           a/ A(person,walk)p=4 s/ A(person,walk)4 [[674, 370]]
-OK      e/  Are persons animals?               m/  C(person,animal)?         a/ C(person,animal)p=0 s/ C(person,animal)0 [[677, 319]]
+OK MORE e/  Who are people?                    m/  D(?,people)               a/ D(person,people)p=4 s/ D(person,people)4 D(dog,people)0 [[763, 325], [763, 410]]
+OK      e/  Are people same as persons?        m/  D(people,person)?         a/ D(people,person)p=4 s/ D(people,person)4 [[767, 365]]
+OK      e/  Do persons walk?                   m/  A(person,walk)?           a/ A(person,walk)p=4 s/ A(person,walk)4 [[770, 384]]
+OK      e/  Are persons animals?               m/  C(person,animal)?         a/ C(person,animal)p=0 s/ C(person,animal)0 [[773, 333]]
        
        // C-reasoning. In the fox example we see an implicit C relation.
        
         e/  Animals move.                      m/ A(animal,move)
-OK MORE e/  What do dogs do?                   m/  A(dog,?)                  a/ A(dog,move)p=4 s/ A(dog,live)4 A(dog,live)2 A(dog,talk)0 A(dog,walk)2 A(dog,move)4 [[684, 56], [684, 69], [684, 393], [684, 400], [684, 684]]
-OK MORE e/  What moves?                        m/  A(?,move)                 a/ A(animal,move)p=4 A(dog,move)p=4 s/ A(animal,move)4 A(animal,move)4 A(animal,move)4 A(F(animal,dead),move)0 A(animal,move)2 A(F(animal,dead),move)2 A(animal,move)4 A(dog,move)4 [[687, 88], [687, 90], [687, 93], [687, 98], [687, 106], [687, 111], [687, 680], [687, 684]]
-OK      e/  Do dogs move?                      m/  A(dog,move)?              a/ A(dog,move)p=4 s/ A(dog,move)4 [[696, 684]]
-OK      e/  Do dogs walk?                      m/  A(dog,walk)?              a/ A(dog,walk)p=2 s/ A(dog,walk)2 [[699, 400]]
+OK MORE e/  What do dogs do?                   m/  A(dog,?)                  a/ A(dog,move)p=4 s/ A(dog,live)4 A(dog,talk)0 A(dog,move)4 [[780, 56], [780, 407], [780, 780]]
+OK MORE e/  What moves?                        m/  A(?,move)                 a/ A(animal,move)p=4 A(dog,move)p=4 s/ A(animal,move)4 A(animal,move)4 A(F(animal,dead),move)0 A(penguin,move)3 A(F(penguin,F(different,R(from,bird))),move)3 A(F(penguin,F(different,R(from,penguin))),move)2 A(animal,move)4 A(dog,move)4 [[783, 90], [783, 93], [783, 98], [783, 210], [783, 212], [783, 214], [783, 776], [783, 780]]
+OK      e/  Do dogs move?                      m/  A(dog,move)?              a/ A(dog,move)p=4 s/ A(dog,move)4 [[792, 780]]
+OK      e/  Do dogs walk?                      m/  A(dog,walk)?              a/ A(dog,walk)p=2 s/ A(dog,walk)2 [[795, 414]]
         e/  Joe is a person.                   m/ C(Joe,person)
         e/  Mary is a girl.                    m/ C(Mary,girl)
-OK      e/  Does Joe walk?                     m/  A(Joe,walk)?              a/ A(Joe,walk)p=4 s/ A(Joe,walk)4 [[713, 709]]
-OK      e/  Does Mary walk?                    m/  A(Mary,walk)?             a/ A(Mary,walk)p=2 s/ A(Mary,walk)2 [[716, 716]]
+OK      e/  Does Joe walk?                     m/  A(Joe,walk)?              a/ A(Joe,walk)p=4 s/ A(Joe,walk)4 [[809, 805]]
+OK      e/  Does Mary walk?                    m/  A(Mary,walk)?             a/ A(Mary,walk)p=2 s/ A(Mary,walk)2 [[812, 812]]
         e/  Girls are people. 		     	 m/ C(girl,people)
         e/  Boys are people.		     		 m/ C(boy,people)
         m/ F(fox,brown)
-OK      e/  Does Mary walk?                    m/  A(Mary,walk)?             a/ A(Mary,walk)p=2 A(Mary,walk)p=4 s/ A(Mary,walk)2 A(Mary,walk)4 [[732, 716], [732, 731]]
+OK      e/  Does Mary walk?                    m/  A(Mary,walk)?             a/ A(Mary,walk)p=4 s/ A(Mary,walk)4 [[828, 827]]
         e/  The fox hunts in the forest.       m/ F(A(fox,hunt),R(in,forest))
-OK      e/  Does the brown fox hunt?           m/  A(F(fox,brown),hunt)?     a/ A(F(fox,brown),hunt)p=2 s/ A(F(fox,brown),hunt)2 [[744, 744]]
+OK      e/  Does the brown fox hunt?           m/  A(F(fox,brown),hunt)?     a/ A(F(fox,brown),hunt)p=2 s/ A(F(fox,brown),hunt)2 [[840, 840]]
        
        // IM-reasoning
         e/  If a person runs, then that person moves.  m/ IM(A(person,run),A(person,move))
-OK      e/  Does a person run?                 m/  A(person,run)?            a/ A(person,run)p=2 s/ A(person,run)2 [[757, 747]]
-OK      e/  Does a person move?                m/  A(person,move)?           a/ A(person,move)p=2 s/ A(person,move)2 [[760, 750]]
-OK MORE e/  Who moves?                         m/  A(?,move)                 a/ A(person,move)p=2 s/ A(animal,move)4 A(animal,move)4 A(animal,move)4 A(F(animal,dead),move)0 A(animal,move)2 A(F(animal,dead),move)2 A(animal,move)4 A(dog,move)4 A(dog,move)2 A(F(dog,dead),move)0 A(person,move)2 A(person,move)2 [[763, 88], [763, 90], [763, 93], [763, 98], [763, 106], [763, 111], [763, 680], [763, 684], [763, 690], [763, 695], [763, 750], [763, 760]]
+OK      e/  Does a person run?                 m/  A(person,run)?            a/ A(person,run)p=2 s/ A(person,run)2 [[853, 843]]
+OK      e/  Does a person move?                m/  A(person,move)?           a/ A(person,move)p=2 s/ A(person,move)2 [[856, 846]]
+***MISS e/  Who moves?                         m/  A(?,move)                 a/ A(person,move)p=2 s/ A(animal,move)4 A(animal,move)4 A(F(animal,dead),move)0 A(penguin,move)3 A(F(penguin,F(different,R(from,bird))),move)3 A(F(penguin,F(different,R(from,penguin))),move)2 A(animal,move)4 A(dog,move)4 A(F(dog,dead),move)0 [[859, 90], [859, 93], [859, 98], [859, 210], [859, 212], [859, 214], [859, 776], [859, 780], [859, 791]]
         e/  People run.                        m/ A(people,run)
-***BADP e/  Who moves?                         m/  A(?,move)                 a/ A(person,move)p=4 s/ A(animal,move)4 A(animal,move)4 A(animal,move)4 A(F(animal,dead),move)0 A(animal,move)2 A(F(animal,dead),move)2 A(animal,move)4 A(dog,move)4 A(dog,move)2 A(F(dog,dead),move)0 A(person,move)2 A(person,move)2 A(people,move)4 [[770, 88], [770, 90], [770, 93], [770, 98], [770, 106], [770, 111], [770, 680], [770, 684], [770, 690], [770, 695], [770, 750], [770, 760], [770, 767]]
-OK      e/  Do animals walk?                   m/  A(animal,walk)?           a/ A(animal,walk)p=2 s/ A(animal,walk)2 [[773, 773]]
+***MISS e/  Who moves?                         m/  A(?,move)                 a/ A(person,move)p=4 s/ A(animal,move)4 A(animal,move)4 A(F(animal,dead),move)0 A(penguin,move)3 A(F(penguin,F(different,R(from,bird))),move)3 A(F(penguin,F(different,R(from,penguin))),move)2 A(animal,move)4 A(dog,move)4 A(F(dog,dead),move)0 A(people,move)4 [[866, 90], [866, 93], [866, 98], [866, 210], [866, 212], [866, 214], [866, 776], [866, 780], [866, 791], [866, 863]]
+OK      e/  Do animals walk?                   m/  A(animal,walk)?           a/ A(animal,walk)p=2 s/ A(animal,walk)2 [[869, 869]]
         e/  If animals are people, then animals walk.   m/ IM(C(animal,people),A(animal,walk))
-OK      e/  Are animals people?                m/  C(animal,people)?         a/ C(animal,people)p=0 s/ C(animal,people)0 C(animal,people)0 [[787, 314], [787, 776]]
-OK      e/  Do animals walk?                   m/  A(animal,walk)?           a/ A(animal,walk)p=2 s/ A(animal,walk)2 A(animal,walk)2 [[790, 773], [790, 779]]
+OK      e/  Are animals people?                m/  C(animal,people)?         a/ C(animal,people)p=0 s/ C(animal,people)0 C(animal,people)0 [[885, 328], [885, 872]]
+OK      e/  Do animals walk?                   m/  A(animal,walk)?           a/ A(animal,walk)p=2 s/ A(animal,walk)2 [[888, 877]]
         e/  Peter is hungry.					  m/ F(Peter, hungry)
         e/  If Peter is hungry, Peter eats.	  m/ IM(F(Peter,hungry),A(Peter,eat))
-OK      e/  Does Peter eat?					  m/  A(Peter,eat)?			 a/ A(Peter,eat)p=4 s/ A(Peter,eat)4 A(Peter,eat)4 [[806, 799], [806, 801]]
+OK      e/  Does Peter eat?					  m/  A(Peter,eat)?			 a/ A(Peter,eat)p=4 s/ A(Peter,eat)4 [[904, 899]]
         e/  If Pete is hungry, Pete eats.	  m/ IM(F(Pete,hungry),A(Pete,eat))
-OK      e/  Does Pete eat?					  m/  A(Pete,eat)?			 a/ A(Pete,eat)p=2 s/ A(Pete,eat)2 [[816, 812]]
+OK      e/  Does Pete eat?					  m/  A(Pete,eat)?			 a/ A(Pete,eat)p=2 s/ A(Pete,eat)2 [[914, 910]]
         e/  Pete is hungry.					  m/  F(Pete.g=0, hungry)		// Pete.g=0 means a specific Pete. Mapping needed to conclude.
-OK      e/  Does Pete eat?					  m/  A(Pete,eat)?			 a/ A(Pete,eat)p=2 s/ A(Pete,eat)2 A(Pete,eat)2 [[822, 812], [822, 816]]
+OK      e/  Does Pete eat?					  m/  A(Pete,eat)?			 a/ A(Pete,eat)p=2 s/ A(Pete,eat)2 [[920, 914]]
         e/  Ike is a person.					  m/ C(Ike,person)
         e/  Ike is hungry.					  m/ F(Ike,hungry)
         e/  If a person is hungry, that person eats.	  m/ IM(F(person,hungry),A(person,eat))
-OK      e/  Does Ike eat?					  m/  A(Ike,eat)?				 a/ A(Ike,eat)p=4 s/ A(Ike,eat)4 [[853, 848]]
+OK      e/  Does Ike eat?					  m/  A(Ike,eat)?				 a/ A(Ike,eat)p=4 s/ A(Ike,eat)4 [[955, 950]]
         e/  Joe sits.                          m/ A(Joe,sit)
         e/  If people sit, then people do not move.   m/ IM(A(people,sit),NOT(A(people,move)))
-OK      e/  Do people sit?                     m/  A(people,sit)?            a/ A(people,sit)p=2 s/ A(people,sit)2 [[879, 859]]
-OK      e/  Does Joe sit?                      m/  A(Joe,sit)?               a/ A(Joe,sit)p=4 s/ A(Joe,sit)4 A(Joe,sit)4 [[916, 856], [916, 891]]
-***BADP e/  Does Joe move?                     m/  A(Joe,move)?              a/ A(Joe,move)p=0 s/ A(Joe,move)4 [[919, 887]]
+OK      e/  Do people sit?                     m/  A(people,sit)?            a/ A(people,sit)p=2 s/ A(people,sit)2 [[981, 961]]
+OK      e/  Does Joe sit?                      m/  A(Joe,sit)?               a/ A(Joe,sit)p=4 s/ A(Joe,sit)4 A(Joe,sit)4 [[1030, 958], [1030, 993]]
+OK      e/  Does Joe move?                     m/  A(Joe,move)?              a/ A(Joe,move)p=4 A(Joe,move)p=2 s/ A(Joe,move)4 A(Joe,move)2 [[1033, 989], [1033, 1026]]
         e/  If a person does not move, then the person stays.    m/ IM(NOT(A(person,move)),A(person,stay))
-***BADP e/  Does Joe stay?                     m/  A(Joe,stay)?              a/ A(Joe,stay)p=4 s/ A(Joe,stay)2 [[942, 934]]
+OK      e/  Does Joe stay?                     m/  A(Joe,stay)?              a/ A(Joe,stay)p=4 s/ A(Joe,stay)4 [[1073, 1057]]
        
        // AND-reasoning
         e/  Jane and Joe walk.                 m/ A(AND(Jane,Joe),walk)
-OK      e/  Does Jane walk?                    m/  A(Jane,walk)?             a/ A(Jane,walk)p=4 s/ A(Jane,walk)4 [[951, 948]]
+OK      e/  Does Jane walk?                    m/  A(Jane,walk)?             a/ A(Jane,walk)p=4 s/ A(Jane,walk)4 [[1083, 1079]]
         e/  Mary plays.                        m/ A(Mary,play)
         e/  Joe plays.                         m/ A(Joe,play)
-***BADP e/  Do Mary and Joe play?              m/  A(AND(Mary,Joe),play)?    a/ A(AND(Mary,Joe),play)p=4 s/ A(AND(Mary,Joe),play)2 [[974, 962]]
-***BADP e/  Does Joe sit and play?             m/  A(Joe,AND(sit,play))?     a/ A(Joe,AND(sit,play))p=4 s/ A(Joe,AND(sit,play))2 [[979, 979]]
-OK      e/  Does Joe dig and sit?              m/  A(Joe,AND(dig,sit))?      a/ A(Joe,AND(dig,sit))p=2 s/ A(Joe,AND(dig,sit))2 [[984, 984]]
+***BADP e/  Do Mary and Joe play?              m/  A(AND(Mary,Joe),play)?    a/ A(AND(Mary,Joe),play)p=4 s/ A(AND(Mary,Joe),play)2 [[1102, 1094]]
+***BADP e/  Does Joe sit and play?             m/  A(Joe,AND(sit,play))?     a/ A(Joe,AND(sit,play))p=4 s/ A(Joe,AND(sit,play))2 [[1107, 1107]]
+OK      e/  Does Joe dig and sit?              m/  A(Joe,AND(dig,sit))?      a/ A(Joe,AND(dig,sit))p=2 s/ A(Joe,AND(dig,sit))2 [[1112, 1112]]
        
        
        // %-reasoning
        
         e/  If %1 consists of %2, then %2 is part of %1.     m/ IM(A(%1,F(consist,R(of,%2))),P(%1,%2))p=pide1
         e/  The text consists of words.		  m/ A(text,F(consist,R(of,word)))
-OK      e/  What is part of text?			  m/  P(text,?)  				  a/ P(text,word)p=4 s/ P(text,word)4 [[995, 992]]
+OK      e/  What is part of text?			  m/  P(text,?)  				  a/ P(text,word)p=4 s/ P(text,word)4 [[1123, 1120]]
         e/  The family consists of father, mother and Joe.   m/  A(family,F(consist,R(of,AND(father,mother))))  //TO DO: LIMITATION: %2 is correctly processed only if it a word!!!!
-OK      e/  Are father and mother part of the family?         m/  P(family,AND(father,mother))?            a/ P(family,AND(father,mother))p=4 s/ P(family,AND(father,mother))4 [[1010, 1005]]
-***BADP e/  Is father part of the family?      m/  P(family,father)?         a/ P(family,father)p=4 s/ P(family,father)2 [[1013, 1013]]
-OK      e/  Is Mary part of the family?        m/  P(family,Mary)?           a/ P(family,Mary)p=2 s/ P(family,Mary)2 [[1016, 1016]]
+OK      e/  Are father and mother part of the family?         m/  P(family,AND(father,mother))?            a/ P(family,AND(father,mother))p=4 s/ P(family,AND(father,mother))4 [[1138, 1133]]
+***BADP e/  Is father part of the family?      m/  P(family,father)?         a/ P(family,father)p=4 s/ P(family,father)2 [[1141, 1141]]
+OK      e/  Is Mary part of the family?        m/  P(family,Mary)?           a/ P(family,Mary)p=2 s/ P(family,Mary)2 [[1144, 1144]]
         m/  IM(A(%1,I(wish,%2))p=p0,A(%1,I(want,%2)))p=pide1			// explain the meaning of "wish"
         e/  Joe wishes food.					 m/ A(Joe,I(wish,food))
         e/  Jim wishes to drink.				 m/ A(Jim,I(wish,R(to,drink)))
-OK      e/  What does Joe want?				 m/  A(Joe,I(want,?))			 a/ A(Joe,I(want,food))p=4 s/ A(Joe,I(want,food))4 [[1047, 1024]]
-OK      e/  What does Jim want?				 m/  A(Jim,I(want,?))			 a/ A(Jim,I(want,R(to,drink)))p=4 s/ A(Jim,I(want,R(to,drink)))4 [[1052, 1034]]
+OK      e/  What does Joe want?				 m/  A(Joe,I(want,?))			 a/ A(Joe,I(want,food))p=4 s/ A(Joe,I(want,food))4 [[1175, 1152]]
+OK      e/  What does Jim want?				 m/  A(Jim,I(want,?))			 a/ A(Jim,I(want,R(to,drink)))p=4 s/ A(Jim,I(want,R(to,drink)))4 [[1180, 1162]]
        
        // Features
         e/  Foxes are animals.                 m/ C(fox,animal)
@@ -232,23 +232,23 @@ OK      e/  What does Jim want?				 m/  A(Jim,I(want,?))			 a/ A(Jim,I(want,R(to
         e/  The fox is smart.                  m/ F(fox,smart)
         e/  The fox hunts in the forest.       m/ F(A(fox,hunt),R(in,forest))
         e/  The fox hunts in the forest at dawn.   m/ F(A(fox,hunt),R(in,forest),R(at,dawn))
-OK MORE e/  What are foxes like?               m/  F(fox,?)                  a/ F(fox,red)p=4 F(fox,white)p=4 F(fox,smart)p=4 s/ F(fox,brown)4 F(fox,brown)2 F(fox,red)4 F(fox,white)4 F(fox,smart)4 [[1084, 726], [1084, 742], [1084, 1058], [1084, 1061], [1084, 1064]]
-***MISS e/  How do foxes hunt?                 m/  F(A(fox,hunt),?)          a/ F(A(fox,hunt),R(in,forest),R(at,dawn))p=4 s/ F(A(fox,hunt),R(in,forest))4 F(A(fox,hunt),R(in,forest))4 [[1089, 739], [1089, 1071]]
-OK      e/  Where do foxes hunt?               m/  F(A(fox,hunt),R(in,?))    a/ F(A(fox,hunt),R(in,forest))p=4 s/ F(A(fox,hunt),R(in,forest))4 F(A(fox,hunt),R(in,forest))4 [[1136, 739], [1136, 1071]]
+OK MORE e/  What are foxes like?               m/  F(fox,?)                  a/ F(fox,red)p=4 F(fox,white)p=4 F(fox,smart)p=4 s/ F(fox,brown)4 F(fox,red)4 F(fox,white)4 F(fox,smart)4 [[1212, 822], [1212, 1186], [1212, 1189], [1212, 1192]]
+***MISS e/  How do foxes hunt?                 m/  F(A(fox,hunt),?)          a/ F(A(fox,hunt),R(in,forest),R(at,dawn))p=4 s/ F(A(fox,hunt),R(in,forest))4 F(A(fox,hunt),R(in,forest))4 [[1217, 835], [1217, 1199]]
+OK      e/  Where do foxes hunt?               m/  F(A(fox,hunt),R(in,?))    a/ F(A(fox,hunt),R(in,forest))p=4 s/ F(A(fox,hunt),R(in,forest))4 F(A(fox,hunt),R(in,forest))4 [[1266, 835], [1266, 1199]]
 OK      e/  When do foxes hunt?                m/  F(A(fox,hunt),T(?))       a/ not found:F(A(fox,hunt),T(?)) s/ 
        
        //C-reasoning for feature
-***BADP e/  Does the Red Fox hunt?             m/  A(F(fox,red),hunt)?       a/ A(F(fox,red),hunt)p=4 s/ A(F(fox,red),hunt)2 [[1147, 1147]]
-***BADP e/  Does the brown fox hunt?           m/  A(F(fox,brown),hunt)?     a/ A(F(fox,brown),hunt)p=4 s/ A(F(fox,brown),hunt)2 [[1152, 744]]
+***BADP e/  Does the Red Fox hunt?             m/  A(F(fox,red),hunt)?       a/ A(F(fox,red),hunt)p=4 s/ A(F(fox,red),hunt)2 [[1277, 1277]]
+***BADP e/  Does the brown fox hunt?           m/  A(F(fox,brown),hunt)?     a/  A(F(fox,brown),hunt)p=4      s/ //although F(fox,brown)p=2A(F(fox,brown),hunt)2 [[1282, 840]]
        
        
        // XOR-reasoning Understanding exclusive features and any kind of exclusive concepts
-***BADP e/  Does Joe run?                      m/  A(Joe,run)?               a/ A(Joe,run)p=2 s/ A(Joe,run)4 [[1155, 886]]
+***BADP e/  Does Joe run?                      m/  A(Joe,run)?               a/ A(Joe,run)p=2 s/ A(Joe,run)4 [[1285, 988]]
         e/  People either sit or run.          m/ A(people,XOR(sit,run))
-***BADP e/  Does Joe run?                      m/  A(Joe,run)?               a/ A(Joe,run)p=0 s/ A(Joe,run)4 A(Joe,run)2 [[1163, 886], [1163, 1155]]
+***BADP e/  Does Joe run?                      m/  A(Joe,run)?               a/ A(Joe,run)p=0 s/ A(Joe,run)4 [[1293, 988]]
         e/  The fox is either red or white.    m/  F(fox,XOR(red,white))    // this is contradiction, not yet understood
-OK MORE e/  Is the fox red?                    m/  F(fox,red)?               a/ F(fox,red)p=4 s/ F(fox,red)4 F(fox,red)2 [[1171, 1058], [1171, 1145]]
-OK      e/  Is the fox white?                  m/  F(fox,white)?             a/ F(fox,white)p=4 s/ F(fox,white)4 [[1174, 1061]]
+OK      e/  Is the fox red?                    m/  F(fox,red)?               a/ F(fox,red)p=4 s/ F(fox,red)4 [[1301, 1186]]
+OK      e/  Is the fox white?                  m/  F(fox,white)?             a/ F(fox,white)p=4 s/ F(fox,white)4 [[1304, 1189]]
        
        
        // understanding dimensions
@@ -257,60 +257,69 @@ OK      e/  Is the fox white?                  m/  F(fox,white)?             a/ 
         e/  The color of a toy can be either red, green, blue, or yellow.       m/ F(P(color,toy),XOR(red,green,blue,yellow))
         e/  The button is an object.           m/ C(button,object)
         e/  The button`s shape is a circle.    m/ C(P(shape,button),circle)
-OK      e/  What shape is the button?          m/  C(P(shape,button),?)           a/ C(P(shape,button),circle)p=4 s/ C(P(shape,button),circle)4 [[1209, 1204]]
-OK      e/  Is the button`s shape a circle?    m/  C(P(shape,button),circle)?     a/ C(P(shape,button),circle)p=4 s/ C(P(shape,button),circle)4 [[1214, 1204]]
-***BADP e/  Is the button`s shape a cube?      m/  C(P(shape,button),cube)?       a/ C(P(shape,button),cube)p=0 s/ C(P(shape,button),cube)2 [[1219, 1219]]
-OK      e/  Is the button a circle?            m/  C(button,circle)?              a/ C(button,circle)p=2 s/ C(button,circle)2 [[1222, 1222]]
+OK      e/  What shape is the button?          m/  C(P(shape,button),?)           a/ C(P(shape,button),circle)p=4 s/ C(P(shape,button),circle)4 [[1339, 1334]]
+OK      e/  Is the button`s shape a circle?    m/  C(P(shape,button),circle)?     a/ C(P(shape,button),circle)p=4 s/ C(P(shape,button),circle)4 [[1344, 1334]]
+***BADP e/  Is the button`s shape a cube?      m/  C(P(shape,button),cube)?       a/ C(P(shape,button),cube)p=0 s/ C(P(shape,button),cube)2 [[1349, 1349]]
+OK      e/  Is the button a circle?            m/  C(button,circle)?              a/ C(button,circle)p=2 s/ C(button,circle)2 [[1352, 1352]]
         e/  Shape is a feature.                m/ C(shape,feature)
         e/  Shape is a dimension.              m/ C(shape,dimension)
         e/  If %1 is a dimension and %2`s %1 is %3, then %2 is %3.  // IM(AND(C(%1,dimension),F(P(%1,%2),%3)),F(%2,%3))
-***BADP e/  Is the button a circle?            m/  C(button,circle)?              a/ C(button,circle)p=4 s/ C(button,circle)2 [[1231, 1222]]
+***BADP e/  Is the button a circle?            m/  C(button,circle)?              a/ C(button,circle)p=4 s/ C(button,circle)2 [[1361, 1352]]
         e/  Color is a feature.                m/ C(color,feature)
         e/  The toy`s color is red.            m/ F(P(color,toy),red)
-***BADP e/  Is the toy`s color green?          m/  F(P(color,toy),green)?         a/ F(P(color,toy),green)p=0 s/ F(P(color,toy),green)2 [[1244, 1244]]
-***BADP e/  Is the toy yellow?                 m/  F(toy,yellow)?                 a/ F(toy,yellow)p=0 s/ F(toy,yellow)2 [[1247, 1247]]
+***BADP e/  Is the toy`s color green?          m/  F(P(color,toy),green)?         a/ F(P(color,toy),green)p=0 s/ F(P(color,toy),green)2 [[1374, 1374]]
+***BADP e/  Is the toy yellow?                 m/  F(toy,yellow)?                 a/ F(toy,yellow)p=0 s/ F(toy,yellow)2 [[1377, 1377]]
        
        
        // Implicit C-reasoning for features
         e/  Bob is a nice person.              m/ C(bob,F(person,nice))
-OK      e/  Does Bob talk?                     m/  A(bob,talk)?                   a/ A(bob,talk)p=4 s/ A(bob,talk)4 [[1257, 1257]]
+OK      e/  Does Bob talk?                     m/  A(bob,talk)?                   a/ A(bob,talk)p=4 s/ A(bob,talk)4 [[1387, 1387]]
         e/  Girls are people.                  m/ C(girl,people)
-***BADP e/  Do little girls talk?              m/  A(F(girl,little),talk)?        a/ A(F(girl,little),talk)p=4 s/ A(F(girl,little),talk)2 [[1266, 1265]]
+***BADP e/  Do little girls talk?              m/  A(F(girl,little),talk)?        a/ A(F(girl,little),talk)p=4 s/ A(F(girl,little),talk)2 [[1396, 1395]]
        
        
        // Split word meaning using XOR reasoning
-OK      e/  Are flies animals?                 m/  C(fly,animal)?                 a/ C(fly,animal)p=2 s/ C(fly,animal)2 [[1269, 1269]]
+OK      e/  Are flies animals?                 m/  C(fly,animal)?                 a/ C(fly,animal)p=2 s/ C(fly,animal)2 [[1399, 1399]]
         e/  Fly means either a kind of move or a kind of animal.     m/ XOR(C(fly,move),C(fly,animal))
        // XOR-reasoning generates two meanings for fl 1:move 2:animal and creates the C-concepts
-***BADP e/  Is fly a kind of move?             m/  C(fly,move)?                   a/ C(fly,move)p=4 s/ C(fly,move)2 [[1279, 1272]]
-***BADP e/  Are flies animals?                 m/  C(fly,animal)?                 a/  C(fly,animal)p=0      s/ // XOR reasoning generates this!!C(fly,animal)2 C(fly,animal)2 [[1282, 1269], [1282, 1275]]
-        e/  Birds fly.                         m/  A(bird,fly)                   // this concept will have the first meaning of fly as parent
-OK      e/  Do birds move?                     m/  A(bird,move)?                  a/  A(bird,move)p=4       s/ // because it takes fly first meaning, moveA(bird,move)4 [[1295, 1289]]
+***BADP e/  Is fly a kind of move?             m/  C(fly,move)?                   a/ C(fly,move)p=4 s/ C(fly,move)2 [[1409, 1402]]
+       // XOR reasoning generates this!!:
+***BADP e/  Are flies animals?                 m/  C(fly,animal)?                 a/ C(fly,animal)p=0 s/ C(fly,animal)2 [[1412, 1405]]
+       // this concept will have the first meaning of fly as parent
+        e/  Birds fly.                         m/ A(bird,fly)
+       // because it takes fly first meaning, move                   
+OK      e/  Do birds move?                     m/  A(bird,move)?                  a/ A(bird,move)p=4 s/ A(bird,move)4 [[1425, 1422]]
        
        
        // C-reasoning to detect disjunct classes - not necessary for this specific example
        // If two classes have no (very few) common members then they are disjunct
-***BADP e/  Are flies animals?                 m/  C(fly,animal)?                 a/  C(fly,animal)p=0     s/ // 'move' and 'animal' classes are disjunctC(fly,animal)2 C(fly,animal)2 C(fly,animal)2 [[1298, 1269], [1298, 1275], [1298, 1282]]
+***BADP e/  Are flies animals?                 m/  C(fly,animal)?                 a/ C(fly,animal)p=0 s/ C(fly,animal)2 [[1428, 1412]]
+       // 'move' and 'animal' classes are disjunct
        // the system could reason that XOR(C(%1,move)p=1,C(%1,animal)p=1)
        
        
        // split the meaning of "the" using XOR reasoning
         e/  The fox is big.                    m/ F(Q(the,fox),big)
-OK      e/  Is the fox big?                    m/  F(Q(the,fox),big)?             a/ F(Q(the,fox),big)p=4 s/ F(Q(the,fox),big)4 [[1308, 1303]]
-OK      e/  Are foxes big?                     m/  F(fox,big)?                    a/  F(fox,big)p=2        s/ //what we know about "the fox" is not known about "fox"F(fox,big)2 [[1311, 1311]]
-        e/  The %1 is either the same as %1, or is a kind of %1.    // XOR(D(Q(the,%1),%1)p=1,C(Q(the,%1),%1)p=1)
+OK      e/  Is the fox big?                    m/  F(Q(the,fox),big)?             a/ F(Q(the,fox),big)p=4 s/ F(Q(the,fox),big)4 [[1438, 1433]]
+       //what we know about "the fox" is not known about "fox"
+OK      e/  Are foxes big?                     m/  F(fox,big)?                    a/ F(fox,big)p=2 s/ F(fox,big)2 [[1441, 1441]]
+        e/ The %1 is either the same as %1, or is a kind of %1.
+       // XOR(D(Q(the,%1),%1)p=1,C(Q(the,%1),%1)p=1)
        // XOR-reasoning generates two meanings of "the" and creates the D and C concepts
-        e/  The fox is big.                    m/  F(Q(the,fox),big)                                      // F(fox,big) is now generated as we take the1
-***BADP e/  Are foxes big?                     m/  F(fox,big)?                    a/  F(fox,big)p=4          s/ // we take meaning 1 and use D(Q(the,%1),%1)p=4F(fox,big)2 [[1319, 1311]]
+        e/  The fox is big.                    m/ F(Q(the,fox),big)
+       // F(fox,big) is now generated as we take the1    
+       // we take meaning 1 and use D(Q(the,%1),%1)p=4                                 
+***BADP e/  Are foxes big?                     m/  F(fox,big)?                    a/ F(fox,big)p=4 s/ F(fox,big)2 [[1449, 1441]]
        
        
        // Word sense disambiguation using assumption branches and likelihood.
         e/  Foxes are either big or small.     m/ F(fox,XOR(big,small))
         e/  The fox is small.                  m/  F(Q(the,fox),small)                                    //the2, "special" is taken as we now F(fox,big)
-***BADP e/  Are foxes small?                   m/  F(fox,small)?                  a/  F(fox,small)p=0        s/ //the2 was taken so the answer is noF(fox,small)2 [[1332, 1332]]
-***BADP e/  Are flies people?                  m/  C(fly,people)?                 a/ C(fly,people)p=0 s/ C(fly,people)2 [[1336, 1335]]
+***BADP e/  Are foxes small?                   m/  F(fox,small)?                  a/  F(fox,small)p=0        s/ //the2 was taken so the answer is noF(fox,small)2 [[1462, 1462]]
+***BADP e/  Are flies people?                  m/  C(fly,people)?                 a/ C(fly,people)p=0 s/ C(fly,people)2 [[1466, 1465]]
        // two assumptions are taken for 'fly' meaning. In 1 we generate C(fly,move), in 2 we generate C(fly,animal)p=4 and C(fly,people)p=0.
-***BADP e/  What are flies?                    m/  C(fly,?)                       a/  C(fly,move)p=4         s/ // for now, meaning 1 will be taken.C(fly,animal)2 C(fly,move)2 C(fly,animal)2 C(fly,move)2 C(fly,animal)2 C(fly,animal)2 C(fly,people)2 [[1339, 1269], [1339, 1272], [1339, 1275], [1339, 1279], [1339, 1282], [1339, 1298], [1339, 1335]]
+***MISS e/  What are flies?                    m/  C(fly,?)                       a/ C(fly,move)p=4 s/ C(fly,people)2 [[1469, 1465]]
+       // for now, meaning 1 will be taken.
        
        
        // Quantifiers, unique instance versus general
@@ -326,22 +335,22 @@ OK      e/  Are foxes big?                     m/  F(fox,big)?                  
         m/  D(Q(all,%1),%1)p=4				// this defines all as general
         m/  D(Q(the,%1),F(Q(a,%1),specific))    // this concept will use the second meaning of 'the'
        // we already should have D(Q(the2,%1),%1)p=0  which means that the second meaning of 'the' is instance, not generalizing.
-OK      e/  Are foxes smart?                   m/  F(fox,smart)?                 a/ F(fox,smart)p=4 s/ F(fox,smart)4 [[1342, 1064]]
-***BADP e/  Is the fox smart?                  m/  F(Q(the,fox),smart)?          a/ F(Q(the,fox),smart)p=4 s/ F(Q(the,fox),smart)2 [[1347, 1347]]
+OK      e/  Are foxes smart?                   m/  F(fox,smart)?                 a/ F(fox,smart)p=4 s/ F(fox,smart)4 [[1472, 1192]]
+***BADP e/  Is the fox smart?                  m/  F(Q(the,fox),smart)?          a/ F(Q(the,fox),smart)p=4 s/ F(Q(the,fox),smart)2 [[1477, 1477]]
         e/  Foxes are fast.                    m/ F(fox,fast)
-OK      e/  Are foxes fast?                    m/  F(fox,fast)?                  a/ F(fox,fast)p=4 s/ F(fox,fast)4 [[1353, 1350]]
-OK      e/  Are foxes slow?                    m/  F(fox,slow)?                  a/ F(fox,slow)p=2 s/ F(fox,slow)2 [[1356, 1356]]
+OK      e/  Are foxes fast?                    m/  F(fox,fast)?                  a/ F(fox,fast)p=4 s/ F(fox,fast)4 [[1483, 1480]]
+OK      e/  Are foxes slow?                    m/  F(fox,slow)?                  a/ F(fox,slow)p=2 s/ F(fox,slow)2 [[1486, 1486]]
         e/  An animal is either fast or slow.   m/ F(animal, XOR(fast,slow))
-OK MORE e/  Are foxes fast?                    m/  F(fox,fast)?                  a/ F(fox,fast)p=4 s/ F(fox,fast)4 F(fox,fast)2 [[1365, 1350], [1365, 1353]]
-***BADP e/  Are foxes slow?                    m/  F(fox,slow)?                  a/ F(fox,slow)p=0 s/ F(fox,slow)2 [[1368, 1356]]
+OK      e/  Are foxes fast?                    m/  F(fox,fast)?                  a/ F(fox,fast)p=4 s/ F(fox,fast)4 [[1495, 1480]]
+***BADP e/  Are foxes slow?                    m/  F(fox,slow)?                  a/ F(fox,slow)p=0 s/ F(fox,slow)2 [[1498, 1486]]
         e/  The fox is slow.                   m/  F(Q(the,fox),slow)           // second meaning of 'the' used
         e/  If the fox is slow then the fox runs slowly.    m/ IM(F(Q(the,fox),slow),F(A(Q(the,fox),run),slowly))
         e/  The fox runs slowly.               m/ F(A(Q(the,fox),run),slowly)
         e/  If the fox runs slowly then the fox is slow.   m/ IM(F(A(Q(the,fox),run),slowly),F(Q(the,fox),slow))
-OK MORE e/  Are foxes fast?                    m/  F(fox,fast)?                  a/ F(fox,fast)p=4 s/ F(fox,fast)4 F(fox,fast)2 F(fox,fast)2 [[1410, 1350], [1410, 1353], [1410, 1364]]
-***BADP e/  Are foxes slow?                    m/  F(fox,slow)?                  a/ F(fox,slow)p=0 s/ F(fox,slow)2 F(fox,slow)2 [[1413, 1356], [1413, 1368]]
-***BADP e/  Is the fox fast?                   m/  F(Q(the,fox),fast)?           a/  F(Q(the,fox),fast)p=4    s/ // first meaning of 'the' usedF(Q(the,fox),fast)2 [[1418, 1418]]
-OK      e/  Is the fox slow?                   m/  F(Q(the,fox),slow)?           a/  F(Q(the,fox),slow)p=4    s/ // second meaning of 'the' usedF(Q(the,fox),slow)4 F(Q(the,fox),slow)4 F(Q(the,fox),slow)4 [[1423, 1373], [1423, 1378], [1423, 1406]]
+OK      e/  Are foxes fast?                    m/  F(fox,fast)?                  a/ F(fox,fast)p=4 s/ F(fox,fast)4 [[1541, 1480]]
+***BADP e/  Are foxes slow?                    m/  F(fox,slow)?                  a/ F(fox,slow)p=0 s/ F(fox,slow)2 [[1544, 1498]]
+***BADP e/  Is the fox fast?                   m/  F(Q(the,fox),fast)?           a/  F(Q(the,fox),fast)p=4    s/ // first meaning of 'the' usedF(Q(the,fox),fast)2 [[1549, 1549]]
+OK      e/  Is the fox slow?                   m/  F(Q(the,fox),slow)?           a/  F(Q(the,fox),slow)p=4    s/ // second meaning of 'the' usedF(Q(the,fox),slow)4 F(Q(the,fox),slow)4 F(Q(the,fox),slow)4 [[1554, 1503], [1554, 1508], [1554, 1538]]
        // because we know the fox runs slowly, so we have 2 sources of the fox being slow, this will add likelihood.
        
        
@@ -354,9 +363,9 @@ OK      e/  Is the fox slow?                   m/  F(Q(the,fox),slow)?          
        
         e/  Mary eats muffins if Mary is hungry.		 m/ N(A(Mary,I(eat,muffin)),F(Mary,hungry))
         e/  Mary is not hungry.				 m/ F(Mary,hungry)p=0
-***BADP e/  Does Mary eat muffins?			 m/  A(Mary,I(eat,muffin))?		 a/ A(Mary,I(eat,muffin))p=0 s/ A(Mary,I(eat,muffin))2 [[1443, 1428]]
+***BADP e/  Does Mary eat muffins?			 m/  A(Mary,I(eat,muffin))?		 a/ A(Mary,I(eat,muffin))p=0 s/ A(Mary,I(eat,muffin))2 [[1581, 1559]]
         e/  Mary is hungry.				 m/ F(Mary,hungry)p=4
-OK      e/  Does Mary eat muffins?			 m/  A(Mary,I(eat,muffin))?		 a/ A(Mary,I(eat,muffin))p=2 s/ A(Mary,I(eat,muffin))2 A(Mary,I(eat,muffin))2 [[1456, 1428], [1456, 1440]]
+OK      e/  Does Mary eat muffins?			 m/  A(Mary,I(eat,muffin))?		 a/ A(Mary,I(eat,muffin))p=2 s/ A(Mary,I(eat,muffin))2 [[1595, 1571]]
        
        
        

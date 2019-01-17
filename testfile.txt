@@ -44,7 +44,7 @@ e/ Birds have wings.						    m/ P(bird,wing)
 e/ Penguins are strange birds.		            m/ C(penguin, F(bird,strange))
 e/ Are penguins birds?				            m/ C(penguin,bird)?		a/ C(penguin,bird)p=3
 e/ They are very different than most birds because they do not fly.     m/ F(penguin,F(different,R(from,bird)))
-                                                m/ A(penguin,fly)p=0
+e/ Penguins do not fly.                         m/ A(penguin,fly)p=0
 e/ Penguins swim.   	                        m/ A(penguin,swim)
 e/ They are birds of the water. 				m/ C(penguin,P(water,bird)) 
 e/ Penguins are great at living in the ocean.	m/ A(penguin,F(live, well, R(in,ocean)))
@@ -108,10 +108,10 @@ e/ People read.						 m/ A(people,read)
 e/ Does Joe read?					 m/ A(Joe,read)?   			a/ A(Joe,read)p=4
 
 // MAPPING. r=4 concept is mapping rule. row without mentalese is paragraph break. Mapping happens within paragraph.
-e/ He may mean a boy. 			m/ D(he,boy)p=2
-e/ She in general may mean a girl.	m/ D(F(she,R(in,general)),girl)p=2
-e/ He does not mean a girl.		m/ D(he,girl)p=0
-e/ She does not mean a boy.		m/ D(she,boy)p=0
+	// D(he,boy)p=2
+// D(F(she,R(in,general)),girl)p=2
+// D(he,girl)p=0
+// D(she,boy)p=0
 e/ He must always be identified with a person.  m/ C(he,person)r=4
 e/ She must always be identified with a person. m/ C(she,person)r=4
 //paragraph start
@@ -166,7 +166,7 @@ e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)
 e/ Girls are people. 		     	m/ C(girl,people)  
 e/ Boys are people.		     		m/ C(boy,people)            
 m/ F(fox,brown)
-e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)p=2 A(Mary,walk)p=4 
+e/ Does Mary walk?                   m/ A(Mary,walk)?            a/ A(Mary,walk)p=4 
 e/ The fox hunts in the forest.      m/ F(A(fox,hunt),R(in,forest))
 e/ Does the brown fox hunt?          m/ A(F(fox,brown),hunt)?    a/ A(F(fox,brown),hunt)p=2
 
@@ -196,7 +196,7 @@ e/ Joe sits.                         m/ A(Joe,sit)
 e/ If people sit, then people do not move.  m/ IM(A(people,sit),NOT(A(people,move)))
 e/ Do people sit?                    m/ A(people,sit)?           a/ A(people,sit)p=2
 e/ Does Joe sit?                     m/ A(Joe,sit)?              a/ A(Joe,sit)p=4
-e/ Does Joe move?                    m/ A(Joe,move)?             a/ A(Joe,move)p=0
+e/ Does Joe move?                    m/ A(Joe,move)?             a/ A(Joe,move)p=4 A(Joe,move)p=2
 e/ If a person does not move, then the person stays.   m/ IM(NOT(A(person,move)),A(person,stay))
 e/ Does Joe stay?                    m/ A(Joe,stay)?             a/ A(Joe,stay)p=4
 
@@ -239,7 +239,7 @@ e/ When do foxes hunt?               m/ F(A(fox,hunt),T(?))      a/ not found:F(
 
 //C-reasoning for feature
 e/ Does the Red Fox hunt?            m/ A(F(fox,red),hunt)?      a/ A(F(fox,red),hunt)p=4
-e/ Does the brown fox hunt?          m/ A(F(fox,brown),hunt)?    a/ A(F(fox,brown),hunt)p=4
+e/ Does the brown fox hunt?          m/ A(F(fox,brown),hunt)?    a/ A(F(fox,brown),hunt)p=4     //although F(fox,brown)p=2
 
 
 // XOR-reasoning Understanding exclusive features and any kind of exclusive concepts
@@ -281,27 +281,35 @@ e/ Do little girls talk?             m/ A(F(girl,little),talk)?       a/ A(F(gir
 // Split word meaning using XOR reasoning
 e/ Are flies animals?                m/ C(fly,animal)?                a/ C(fly,animal)p=2
 e/ Fly means either a kind of move or a kind of animal.    m/ XOR(C(fly,move),C(fly,animal))
-                                     // XOR-reasoning generates two meanings for fl 1:move 2:animal and creates the C-concepts
+// XOR-reasoning generates two meanings for fl 1:move 2:animal and creates the C-concepts
 e/ Is fly a kind of move?            m/ C(fly,move)?                  a/ C(fly,move)p=4
-e/ Are flies animals?                m/ C(fly,animal)?                a/ C(fly,animal)p=0     // XOR reasoning generates this!!
-e/ Birds fly.                        m/ A(bird,fly)                   // this concept will have the first meaning of fly as parent
-e/ Do birds move?                    m/ A(bird,move)?                 a/ A(bird,move)p=4      // because it takes fly first meaning, move
+// XOR reasoning generates this!!:
+e/ Are flies animals?                m/ C(fly,animal)?                a/ C(fly,animal)p=0     
+// this concept will have the first meaning of fly as parent
+e/ Birds fly.                        m/ A(bird,fly)
+// because it takes fly first meaning, move                   
+e/ Do birds move?                    m/ A(bird,move)?                 a/ A(bird,move)p=4      
 
 
 // C-reasoning to detect disjunct classes - not necessary for this specific example
 // If two classes have no (very few) common members then they are disjunct
-e/ Are flies animals?                m/ C(fly,animal)?                a/ C(fly,animal)p=0    // 'move' and 'animal' classes are disjunct
+e/ Are flies animals?                m/ C(fly,animal)?                a/ C(fly,animal)p=0    
+// 'move' and 'animal' classes are disjunct
 // the system could reason that XOR(C(%1,move)p=1,C(%1,animal)p=1)
 
 
 // split the meaning of "the" using XOR reasoning
 e/ The fox is big.                   m/ F(Q(the,fox),big)
 e/ Is the fox big?                   m/ F(Q(the,fox),big)?            a/ F(Q(the,fox),big)p=4
-e/ Are foxes big?                    m/ F(fox,big)?                   a/ F(fox,big)p=2       //what we know about "the fox" is not known about "fox"
-e/ The %1 is either the same as %1, or is a kind of %1.    // XOR(D(Q(the,%1),%1)p=1,C(Q(the,%1),%1)p=1)
-                                     // XOR-reasoning generates two meanings of "the" and creates the D and C concepts
-e/ The fox is big.                   m/ F(Q(the,fox),big)                                      // F(fox,big) is now generated as we take the1
-e/ Are foxes big?                    m/ F(fox,big)?                   a/ F(fox,big)p=4         // we take meaning 1 and use D(Q(the,%1),%1)p=4
+//what we know about "the fox" is not known about "fox"
+e/ Are foxes big?                    m/ F(fox,big)?                   a/ F(fox,big)p=2       
+e/ The %1 is either the same as %1, or is a kind of %1.    
+// XOR(D(Q(the,%1),%1)p=1,C(Q(the,%1),%1)p=1)
+// XOR-reasoning generates two meanings of "the" and creates the D and C concepts
+e/ The fox is big.                   m/ F(Q(the,fox),big) 
+// F(fox,big) is now generated as we take the1    
+// we take meaning 1 and use D(Q(the,%1),%1)p=4                                 
+e/ Are foxes big?                    m/ F(fox,big)?                   a/ F(fox,big)p=4         
 
 
 // Word sense disambiguation using assumption branches and likelihood.
@@ -310,7 +318,8 @@ e/ The fox is small.                 m/ F(Q(the,fox),small)                     
 e/ Are foxes small?                  m/ F(fox,small)?                 a/ F(fox,small)p=0       //the2 was taken so the answer is no
 e/ Are flies people?                 m/ C(fly,people)?                a/ C(fly,people)p=0
 // two assumptions are taken for 'fly' meaning. In 1 we generate C(fly,move), in 2 we generate C(fly,animal)p=4 and C(fly,people)p=0.
-e/ What are flies?                   m/ C(fly,?)                      a/ C(fly,move)p=4        // for now, meaning 1 will be taken.
+e/ What are flies?                   m/ C(fly,?)                      a/ C(fly,move)p=4        
+// for now, meaning 1 will be taken.
 
 
 // Quantifiers, unique instance versus general

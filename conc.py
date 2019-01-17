@@ -57,45 +57,112 @@ class Kbase:
         self.thispara = []              # list of concepts in this paragraph
         self.prevpara = []              # list of concepts in previous paragraph
 
-    def check_Contradiction(self,sindex,rule,pin,conclist):     # process contradiction
+    def get_General(self,forconcepts):                      # return more geenral concepts than the inputs are based on
+        m_general = set()                                   # more general concepts
+        if type(forconcepts) is not list:
+            forconlist = [forconcepts]
+        else: forconlist = forconcepts[:]
+        for forcon in forconlist:
+            if self.cp[forcon].wmuse==[-1]:                 # an input concept
+                m_general = self.cp[forcon].general         # concepts more general than this input may be inhibitors in reasoning
+            else:
+                for con in self.cp[forcon].wmuse:           # base concepts
+                    m_general.update(gl.WM.cp[con].general) # base concepts' generals may become inhibitors
+        return m_general
+
+    def based_General(self,new,old):                        # return whether either conmcept is based on more general ones
+        #TO DO: check rules as well.
+        more_general=0                                      # flag indicating sth more general
+        if self.cp[new].wmuse!=[-1] and self.cp[old].wmuse!=[-1]:   # notinputs
+            usenew = set(self.cp[new].wmuse)
+            useold = set(self.cp[old].wmuse)
+            gen_new = self.get_General(new)                 # concepts that are more general than the ones new is based on
+            gen_old = self.get_General(old)                 # concepts that are more general than the ones old is based on
+            old_isgen = gen_new & useold                    # if not empty, old is based on more general concs than new
+            new_isgen = gen_old & usenew
+            if len(new_isgen)>0:                            # new is based on more general (if both we return 0)
+                if len(old_isgen)==0: more_general=1        # return that new is based on more general
+            else:
+                if len(old_isgen)>0: more_general=2         # return that old is based on more general
+        return more_general
+        
+    def check_Contradiction(self,sindex,rule,pin,conclist):     # process contradiction before adding the new reasoned concept
+        pmatch=0;  new_special=0                            # flag: the concept to be reasoned will be based on more special input
         if self.cp[sindex].p == pin:                        # no contradiction
-            return 1                                        # match found
-        elif pin==gl.args.pmax/2 or self.cp[sindex].p==gl.args.pmax/2:   # one of the concepts is unknown
+            pmatch=1                                        # match found
+        elif pin==gl.args.pmax/2 or self.cp[sindex].p==gl.args.pmax/2:   #BUG !!! one of the concepts is unknown
             return 0                                        # no match
         else:                                               # contradiction found
             try:
                 if rule[0] in gl.KB.cp[self.cp[sindex].reasonuse[0]].general:   # the new concept's rule is more general than used for old
                     gl.log.add_log(("CONTRADICTION: inhibit reasoning in check_Contra: based on more general rule. Specific rule based old  index=",sindex," general rule:",rule[0]))
-                    return 1                                # match found, inhibits reasoning
+                    return 2                                # match found, inhibits reasoning
                 if self.cp[sindex].reasonuse[0] in gl.KB.cp[rule[0]].general:   # the contradicting old concept used a more general rule
                     gl.log.add_log(("CONTRADICTION: PVALUE OVERRIDE in check_Contra because p was based on general rule. index=",sindex," old p=",self.cp[sindex].p," new p=",pin," used by:",self.cp[sindex].usedby))
                     self.cp[sindex].p=pin                   # override p in old
                     for used in self.cp[sindex].usedby:     # concepts that used this sindex
-                        gl.log.add_log(("CONTRADICTION: PVALUE OVERRIDE TO MAX/2 in check_Contra because based on p-overriden concept. index=",used," old p=",self.cp[used].p," overriden concept:",sindex))
-                        self.cp[used].p=gl.args.pmax/2      # set p value to unknown
+                        gl.log.add_log(("CONTRADICTION: OVERRIDE TO KNOWN=0 in check_Contra because based on p-overriden concept. index=",used," old p=",self.cp[used].p," overriden concept:",sindex))
+                        self.cp[used].known=0               # set known value to unknown
+                        
             except: a=0
         if len(conclist)>0:                                 # list of concepts used for the new reasoning
             alluse=set()
             for newuse in conclist:
                 alluse.add(newuse)
                 alluse.update(self.cp[newuse].same)         # add those concepts same as used concept to all used concepts
-            general_newconc = alluse & self.cp[sindex].general  # set of used concepts that are general to the old concept
+            if self.cp[sindex].known>0:
+                old_general = self.get_General(sindex)      # get more general concepts than sindex is based on
+            general_newconc = alluse & old_general          # set of used concepts that are general to the old concept
             if len(general_newconc)>0:                      # new concept would use input that is more general than the old concept
                 gl.log.add_log(("CONTRADICTION: inhibit reasoning in check_Contra: more general input. Specific old index=",sindex," too general input=",general_newconc))
-                return 1                                    # found=1 will inhibit reasoning
-        # TO DO: if new concept is more specific, than input used for the old concept, override p value of old !!!!! MISSING
+                return 2                                    # found=2 will inhibit reasoning
+            new_general = self.get_General(conclist[:])     # concepts more general than the new one is based on
+            if self.cp[sindex].wmuse!=[-1]:                 # old concept is reasoned
+                if len(set(self.cp[sindex].wmuse) & new_general) > 0:  # we used some more general concepts in old
+                    new_special = 1                         # enable such reasoning
+        if pmatch==1 and new_special==0:                    # p is matching and new concept is not based on special
+            return 1                                        # inhibit rerasoning
         return 0
+
+    def track_Concept(self,coni,message,rule=-1):           # track concept or rule usage for debugging
+        ruse = self.cp[coni].reasonuse[:]
+        reasoned_p = self.cp[coni].p
+        if self.name=="WM" and len(ruse)>0 and gl.WM.ci==coni:      # coni has just been reasoned
+            if gl.KB.cp[ruse[0]].track==1:                  # rule tracked
+                print ("TRACK rule. Reasoning with rule and concepts used:",ruse," ",message," potentially reasoned index",coni)
+        if rule!=-1 and gl.KB.cp[rule].track==1:            # tracked rule
+            print ("TRACK rule. Reasoning with rule:",rule," ",message," potentially reasoned index",coni)
+        if self.cp[coni].track==1:                          # this concept is tracked
+            print ("TRACK input concept. ",message," Tracked:",coni," ",gl.WM.cp[coni].mentstr," p=",gl.WM.cp[coni].p," override:",gl.WM.cp[coni].override)
+        for basec in self.cp[coni].wmuse:                   # base concepts used for this reasoning
+            if basec>0 and self.cp[basec].track==1:         # this base concepts is tracked
+                print ("TRACK usage of concept. ",message," Tracked:",basec," ",gl.WM.cp[basec].mentstr," used in concept:",coni," ",gl.WM.cp[coni].mentstr," p=",reasoned_p," wmuse:",gl.WM.cp[coni].wmuse," rule and conc used:",ruse," override:",gl.WM.cp[coni].override)
+
+    def same_Use(self,sindex,conclist):                     # check that the concept to be reasoned is based on something new or not
+        olduse = set(self.cp[sindex].wmuse)                 # the matching old concept's wmuse
+        newuse = set()
+        sameuse = 1                                         # default is that reasoning gets inhibited because nothing new used
+        for con in conclist:
+            if self.cp[con].wmuse == [-1]: con_use=[con]    # if this is input, use the concept itself
+            else: con_use = self.cp[con].wmuse[:]
+            if self.cp[con].wmuse == [-2]: con_use=[]    #parent of a reasoned concept
+            newuse = newuse | set(con_use)                  # add new eleemnts. full set of used concepts.
+        if len(newuse-olduse)>0:                            # something new is used
+            if max(newuse) > sindex:                        # more recent input used than the matching old concept
+                sameuse=0                                   # significant new usage. Reasoning enabled.
+        return sameuse
+            
 
     def search_fullmatch(self,pin,rel,parents,rule,samelist,branch=[],conclist=[]):
         found=0; s=timer()
         not_known=0
         for basec in conclist:                                      # base concepts used for reasoning
             if self.cp[basec].known==0:                             # one of them  not known
-                not_known=1; found=1                                # return found=1, inhibit reasoning for not known base
+                not_known=1; found=1 ; foundsave=basec              # return found=1, inhibit reasoning for not known base
         if not_known==0:                                            # all base wmuse concepts are known
             for sindex in range(0,self.ci+1):                       # search for match in entire WM (on branch)
                 con=self.cp[sindex]
-                if con.relation==rel and (branch==[] or sindex in branch):   #only match to concepts in branch
+                if con.known>0 and con.relation==rel and (branch==[] or sindex in branch):   #only known,  match to concepts in branch
                     if len(con.parent)==len(parents) and (1==1 or con.p==pin):    # p value not checked here but in check_Contra                                        # p value checked currently
                         pari=0; allsame=1                           #allsame will show if all parents are the same
                         while pari<len(con.parent) and allsame==1:  #only check until first different parent found
@@ -112,8 +179,12 @@ class Kbase:
                             pari+=1
                         if allsame==1:
                             samelist.append(sindex)                 #remember that in sindex the concept matches
+                            sameuse = self.same_Use(sindex,conclist[:])   # check whether new concept will use some new base
                             foundnow=self.check_Contradiction(sindex,rule,pin,conclist[:])    # check whether we have contradiction and resolve it
-                            if foundnow == 1: found=1
+                            if foundnow == 2 or (foundnow==1 and sameuse==1):   # p matching and same base used
+                                found=1 ; foundsave=sindex
+        if found==1:
+            for basec in conclist: self.track_Concept(basec,"Attempted use inhibited in search_fullmatch. Inhibitor conc:"+str(foundsave)+" "+self.cp[foundsave].mentstr+" not known?:"+str(not_known)+" ",rule[0])
         gl.args.settimer("concep_902: search_fullmatch",timer()-s)
         return found    # TO DO: feed back allsame in found, to populate .general in reasoned concept in finaladd
 
@@ -143,13 +214,19 @@ class Kbase:
             self.cp[new].p = gl.KB.cp[fromkb].p     # p value updated
             self.cp[new].known = gl.KB.cp[fromkb].known     
             self.cp[new].c = gl.KB.cp[fromkb].c     #  value updated
-            self.cp[new].relevance = gl.KB.cp[fromkb].relevance    
+            self.cp[new].relevance = gl.KB.cp[fromkb].relevance
+            if gl.KB.cp[fromkb].wmuse!=[-1]:
+                self.cp[new].wmuse = gl.KB.cp[fromkb].wmuse[:]
+            else: self.cp[new].wmuse = [fromkb]
         if fromwm>0 and fromkb==0:                              
             gl.log.add_log(("DIMENSION OVERRIDE during add_concept, on concept:",new," ",self.cp[new].mentstr," earlier WM occurence:",fromwm, " old p,known,c:",self.cp[new].p," ",self.cp[new].known," ",self.cp[new].c," new p,known,c:",gl.WM.cp[fromwm].p," ",gl.WM.cp[fromwm].known," ",gl.WM.cp[fromwm].c))  
             self.cp[new].p = gl.WM.cp[fromwm].p     # p value updated
             self.cp[new].known = gl.WM.cp[fromwm].known     
             self.cp[new].c = gl.WM.cp[fromwm].c     #  value updated
             self.cp[new].relevance = gl.WM.cp[fromwm].relevance    
+            if gl.WM.cp[fromwm].wmuse!=[-1]:
+                self.cp[new].wmuse = gl.WM.cp[fromwm].wmuse[:]
+            else: self.cp[new].wmuse = [fromwm]
             
     def update_Samestring(self,oldleaf,newleaf):                #update WM.samestring dictionary key and WM.brelevant set
         if self.name=="WM":
@@ -689,6 +766,9 @@ class Kbase:
         for anw in answerlist[:]:                   # iterate on copy because we remove from list
             ament=gl.WM.cp[anw[1]].mentstr
             if gl.WM.cp[anw[1]].wmuse==[-2] or ",?" in ament or "?," in ament or "(?)" in ament:
+                answerlist.remove(anw)
+        for anw in answerlist[:]:                   # remove known==0 answers
+            if len(answerlist)>1 and gl.WM.cp[anw[1]].known==0:
                 answerlist.remove(anw)
         for kbaw in kbanswer:                       # answers we found in KB
             if "%" not in gl.KB.cp[kbaw].mentstr:   # not a rule

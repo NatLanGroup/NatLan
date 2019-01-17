@@ -30,6 +30,7 @@ class Arguments:
         
         i=1.1                   # to be used instead of 1
         self.im = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 3, 3], [2, 2, 2, 3, 4]]         # IM rule
+        self.kp_im = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 1, 1], [0, 0, 1, 2, 2], [0, 0, 1, 2, 2]]      # known conversion for IM rule, addressed by p1,p2        
         self.can = [[0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 1, 2, 2, 2], [0, 1, 2, 3, 3], [0, 1, 2, 3, 4]]        # can rule
         self.cando = [0,1,2,2,2]                                                                                # cando rule
         self.does = [2,3,4,4,4]                                                                                 # does rule: doing sth means can do it
@@ -40,6 +41,7 @@ class Arguments:
         self.pide2 = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [1, 1, 2, 2, 3], [0, 1, 2, 3, 4]]      # D-rule IM(AND(D(),D()),D())
         self.pand = [[0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 1, 2, 2, 2], [0, 1, 2, 3, 3], [0, 1, 2, 3, 4]]       # AND-rule
         self.pclass = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [1, 1, 2, 2, 3], [0, 1, 2, 3, 4]]     # class relation
+        self.kp_pclass = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [2, 2, 2, 2, 2]]  # known conversion for class rule, addressed by p1,p2        
         self.degrade = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [1, 1, 2, 2, 3], [1, 1, 2, 3, 3]]    # degraded class
         # pclass is the matrix for class reasoning. C(%1,%2)p1 and %X(%2,%3)p2 -> %x(%2,%3)pclas, pclass[p2,p1]
         self.pxor = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 1, 1], [2, 2, 2, 1, 0]]
@@ -49,7 +51,7 @@ class Arguments:
         self.pmap = {
             "im":self.im, "pide1":self.pide1,"pide2":self.pide2,"pclass":self.pclass,"pxor":self.pxor,
             "idedegrade":self.idedegrade, "degrade":self.degrade, "pnot1":self.pnot1, "pand":self.pand,
-            "can":self.can, "cando":self.cando, "does":self.does,"cannot":self.cannot
+            "can":self.can, "cando":self.cando, "does":self.does,"cannot":self.cannot,"kp_im":self.kp_im,"kp_pclass":self.kp_pclass
         }
         self.avg_lookback = 10                                                  # rolling average on this number of occurence. avg=0.9*avg+0.1*current
         self.worst_known = [[0,0,0,0,0],[0,1,1,1,1],[0,1,2,2,2],[0,1,2,3,3],[0,1,2,3,4]]    # known conversion from two known values
@@ -63,10 +65,10 @@ class Arguments:
             [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]
 
         self.pe_final = [                                                               # p or exception conversion, top level: known advantage. next:
-            [[0,1,2,2,2],[1,1,2,2,2],[2,2,2,2,3],[2,2,2,3,3],[2,3,3,3,4]],              # next: better known p/exception last: less known p/exception
-            [[0,0,1,2,2],[1,1,1,2,2],[2,2,2,2,2],[2,2,3,3,3],[2,2,3,3,4]],
-            [[0,0,1,1,1],[1,1,1,1,2],[2,2,2,2,2],[2,2,3,3,3],[2,3,3,4,4]],
-            [[0,0,0,1,1],[1,1,1,1,2],[2,2,2,2,2],[2,3,3,3,3],[3,3,4,4,4]],
+            [[0,1,1,2,2],[1,1,2,2,2],[1,2,2,2,3],[2,2,2,3,3],[2,3,3,3,4]],              # next: better known p/exception last: less known p/exception
+            [[0,0,1,1,2],[1,1,1,2,2],[2,2,2,2,2],[2,2,3,3,3],[3,3,3,3,4]],
+            [[0,0,0,1,1],[1,1,1,1,2],[2,2,2,2,2],[2,2,3,3,3],[3,3,3,4,4]],
+            [[0,0,0,0,1],[1,1,1,1,2],[2,2,2,2,2],[2,3,3,3,3],[3,3,4,4,4]],
             [[0,0,0,0,0],[1,1,1,1,1],[2,2,2,2,2],[3,3,3,3,3],[4,4,4,4,4]]]
 
         self.excep_final = [[0,0,1,1,1],[1,1,1,2,2],[2,2,2,2,3],[3,3,3,3,4],[4,4,4,4,4]]    # final exception value from pe_final and pdiff
