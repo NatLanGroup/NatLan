@@ -30,9 +30,9 @@ def process_testinput (tf):                     # input is the Testinput object
             if gl.args.loglevel>0: gl.log.add_log(("Question answering ended. input row:",ri," ",tf.mentalese[ri]))
         gl.test.write_result(ri)                    # write result file
         nqflag = gl.reasoning.insert_Drel(starti,tf.next_question[ri])   # insert D(x) relation if next row is question
-        gl.WM.set_General(starti)                   # compare new concepts with entire WM to find more general or special concept pairs
         while starti > 0 and starti!=gl.WM.ci:      # reason on new concept and on all reasoned concepts
             startiremember=gl.WM.ci                 # TO DO: limitation: if r=4 relation, reasoning is skipped, nqflag goes lost.
+            gl.WM.set_General(starti)               # compare new concepts with entire WM to find more general or special concept pairs
             gl.reasoning.createConceptRules(starti, gl.WM.cp.__len__())     #add initial kb_rules content
             gl.reasoning.perform_Reason(starti+1, len(gl.WM.cp), nqflag, tf.next_question[ri])  #convert kb_rules, add rule_match, add reasoned concepts
             nqflag=False                            # reset flag in order to insert D(x) only once

@@ -90,8 +90,6 @@ class Kbase:
         pmatch=0;  new_special=0                            # flag: the concept to be reasoned will be based on more special input
         if self.cp[sindex].p == pin:                        # no contradiction
             pmatch=1                                        # match found
-        elif pin==gl.args.pmax/2 or self.cp[sindex].p==gl.args.pmax/2:   #BUG !!! one of the concepts is unknown
-            return 0                                        # no match
         else:                                               # contradiction found
             try:
                 if rule[0] in gl.KB.cp[self.cp[sindex].reasonuse[0]].general:   # the new concept's rule is more general than used for old
@@ -199,6 +197,7 @@ class Kbase:
         return out
 
     def getp_backward(self,swhat):                  # search earlier occurence of swhat and return p
+        s=timer()
         sindex=self.cp[swhat].previous              # proceed on branch
         wmfound=0; kback=0
         while sindex>-1 and kback==0:               # do not stop on unknown concept
@@ -206,6 +205,7 @@ class Kbase:
                 kback=self.cp[sindex].known         # the known value of this earlier occurence
                 if kback>0: wmfound=sindex          # this is the earlier occurence
             sindex=self.cp[sindex].previous
+        gl.args.settimer("concep_906: getp_backward",timer()-s)
         return wmfound                              # return the latest, same concept occurence
 
     def clone_Values(self,new,fromwm,fromkb):       # clone dimensions onto new, from earlier concept in wm (fromwm) or kb (fromkb)
@@ -429,6 +429,22 @@ class Kbase:
             except: is_special=is_special
         return is_special
             
+    def get_Generalword(self,wmind):                # which word is more general
+        w0g = gl.WM.cp[wmind[0]].general
+        w1g = gl.WM.cp[wmind[1]].general
+        w0s = gl.WM.cp[wmind[0]].same
+        w1s = gl.WM.cp[wmind[1]].same
+        w0gen = w0g & w1s                           # cocnepts more general than inwhat and same as what1
+        w1gen = w1g & w0s
+        if len(w0gen)>0:                            # wmind[0] more general than wmind[1]
+            if len(w1gen)==0:
+                gl.WM.cp[wmind[0]].general.add(wmind[1])
+                return 3
+        if len(w1gen)>0:                            # wmind[1] more general than wmind[0
+            if len(w0gen)==0:
+                gl.WM.cp[wmind[1]].general.add(wmind[0])
+                return 2
+        return 0
 
     def rec_match(self, what1, inwhat, wmindex=[], castSecondKbase=0, goodanswer=0):  # two concepts match? handles questions
         # castSecondKbase help to compare WM concept with KB concept
@@ -899,6 +915,7 @@ class Kbase:
             old=newi
             while self.cp[old].previous!=-1:        # entire WM on current branch backward
                 old=self.cp[old].previous           # next item on branch
+                genword = self.get_Generalword([newi,old])  # set general field based on same field
                 match = self.rec_match(con,self.cp[old],[newi,old])
                 if match==1:
                     self.cp[newi].general.update(self.cp[old].general)  # if concept is the same make general list the same
@@ -907,6 +924,12 @@ class Kbase:
                     if self.cp[newi].p!=self.cp[old].p:   # we seem to have contradiction
                         if self.cp[newi].p!=gl.args.pmax/2 and self.cp[old].p!=gl.args.pmax/2:  #contradiction
                             contralist.append([newi,old])   # collect contradictions for override
+                if match==2:
+                    self.cp[old].general.update(self.cp[newi].general)      # newi is more general, generality inherited to old
+                    self.cp[old].general.update(self.cp[newi].same)         # general gets extended with same as old
+                if match==3:
+                    self.cp[newi].general.update(self.cp[old].general)      # old is more general, generality inherited to newi
+                    self.cp[newi].general.update(self.cp[old].same)         # general gets extended with same as mewi
             if con.relation==5:                     # F relation
                 if len(con.parent)>1:
                     con.general.add(con.parent[0])  # x is more general than F(x,y)
@@ -921,7 +944,7 @@ class Kbase:
                         self.cp[con.parent[0]].general.update(self.cp[con.parent[cla]].general)
                         cla+=1
         self.override_Old(contralist)              # override p in contraditions found
-        gl.args.settimer("concep_904: set_General",timer()-s)
+        gl.args.settimer("concep_800: set_General",timer()-s)
                     
             
     def read_concept(self,attrList,isquestion,correct_leaf=-1,isparent=-1,istrack=0):     # recursive function to read concepts from Mentalese input

@@ -36,6 +36,7 @@ class Arguments:
         self.does = [2,3,4,4,4]                                                                                 # does rule: doing sth means can do it
         self.cannot = [2,2,2,1,0]                                                                               # cannot rule
         self.pide1 = [0,1,2,3,4]                                                                                # D-rule single arg
+        self.spec = [2,2,2,3,4]                                                                                 # if special then general: IM(C(%1,F(%2,%3)),C(%1,%3))
         self.pnot1 = [4,3,2,1,0]                                                                                # NOT() rule
         self.idedegrade = [1,1,2,3,3]                                                                           # degrading D rule
         self.pide2 = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [1, 1, 2, 2, 3], [0, 1, 2, 3, 4]]      # D-rule IM(AND(D(),D()),D())
@@ -49,7 +50,7 @@ class Arguments:
         self.branchvalue = [[0,0,0,0,0],[0,1,1,1,1],[0,2,2,2,2],[0,2,3,3,3],[0,3,4,4,4]]   #consistency conversion for entire branch
         self.branch_kill = [0,1,2,3,3]   # index = best branch value. output=limit below which branch is killed.
         self.pmap = {
-            "im":self.im, "pide1":self.pide1,"pide2":self.pide2,"pclass":self.pclass,"pxor":self.pxor,
+            "im":self.im, "pide1":self.pide1,"spec":self.spec,"pide2":self.pide2,"pclass":self.pclass,"pxor":self.pxor,
             "idedegrade":self.idedegrade, "degrade":self.degrade, "pnot1":self.pnot1, "pand":self.pand,
             "can":self.can, "cando":self.cando, "does":self.does,"cannot":self.cannot,"kp_im":self.kp_im,"kp_pclass":self.kp_pclass
         }

@@ -269,7 +269,7 @@ class Reasoning:
                         self.update_Prevnext(addedconcept,leaf,addedword)           # update previous and next values
                         if finalconcept==1:
                             gl.WM.update_Branchinfo(leaf,gl.WM.ci)                  # update branch and branchvalue and samstring
-                            gl.log.add_log(("REASONED concept added! input new,old:",conclist," wmuse:",gl.WM.cp[gl.WM.ci].wmuse," on branch leaf:",leaf," on index:",gl.WM.ci," rule:",rule," reasoned concept:",gl.WM.cp[gl.WM.ci].mentstr, " p=",reasoned_p," parents:",gl.WM.cp[gl.WM.ci].parent))
+                            gl.log.add_log(("REASONED concept added! input new,old:",conclist," wmuse:",gl.WM.cp[gl.WM.ci].wmuse," on branch leaf:",leaf," on index:",gl.WM.ci," rule:",rule," reasoned concept:",gl.WM.cp[gl.WM.ci].mentstr, " p=",reasoned_p," known=",gl.WM.cp[gl.WM.ci].known," parents:",gl.WM.cp[gl.WM.ci].parent))
                             gl.WM.track_Concept(gl.WM.ci,"New REASONED.")            # concept and rule usage tracking
                             if relation==3 and reasoned_p==gl.args.pmax:            # D(x,y) added with p=pmax: kill duplicate branch
                                 if newparent in self.brancho[0].lastbr_list or list(reversed(newparent)) in self.brancho[0].lastbr_list:    #parents match
@@ -399,7 +399,7 @@ class Reasoning:
                     if condi_p!=-1:                         # if we found the condition, we may not add the implication again
                         matching = gl.WM.search_fullmatch(reasoned_p, gl.WM.cp[reasoned_concept].relation, gl.WM.cp[reasoned_concept].parent,rule,[],[],clist[:])  #this is probably ok: we may not reason in case we would have a new p value!!
                     if 0==inhibit and 0==matching :         # in matching, reasoning got inhibited based on unknown concept
-                        self.finaladd_Concept(clist[:],reasoned_p, gl.WM.cp[reasoned_concept].relation, gl.WM.cp[reasoned_concept].parent,rule)
+                        self.finaladd_Concept(clist[:],reasoned_p, gl.WM.cp[reasoned_concept].relation, gl.WM.cp[reasoned_concept].parent,rule,kp_known)
                         if condi_p==-1:                     # IM was the last concept we found
                             gl.WM.cp[gl.WM.cp[new].parent[1]].p = int(reasoned_p)   # set reasoned p value in IM parent occurance too. Consistency.
                             gl.log.add_log(("PVALUE OVERRIDE in generate_IMconcept: implication p=",reasoned_p," in WM concept:",gl.WM.cp[new].parent[1]," ",gl.WM.cp[gl.WM.cp[new].parent[1]].mentstr))
@@ -969,11 +969,11 @@ class Reasoning:
                 if more_general==0:                             # nothing more general
                     self.update_Dimensions(latest,new)          # update p etc based on latest and new occurence
                 if more_general==1:                             # new is based on more general
-                    if self.cp[new].known>0: gl.log.add_log(("KNOWN OVERRIDE (in manage_Consistency) to zero because old occurence was more special. on new conc:",new," ",gl.WM.cp[new].mentstr," based on old conc:",latest," ",gl.WM.cp[latest].mentstr))
-                    self.cp[new].known=0
+                    if gl.WM.cp[new].known>0: gl.log.add_log(("KNOWN OVERRIDE (in manage_Consistency) to zero because old occurence was more special. on new conc:",new," ",gl.WM.cp[new].mentstr," based on old conc:",latest," ",gl.WM.cp[latest].mentstr))
+                    gl.WM.cp[new].known=0
                 if more_general==2:                             # new based on more special
-                    if self.cp[latest].known>0: gl.log.add_log(("KNOWN OVERRIDE (in manage_Consistency) to zero because new occurence is more special. on old conc:",latest," ",gl.WM.cp[latest].mentstr," based on new conc:",new," ",gl.WM.cp[new].mentstr))
-                    self.cp[latest].known=0
+                    if gl.WM.cp[latest].known>0: gl.log.add_log(("KNOWN OVERRIDE (in manage_Consistency) to zero because new occurence is more special. on old conc:",latest," ",gl.WM.cp[latest].mentstr," based on new conc:",new," ",gl.WM.cp[new].mentstr))
+                    gl.WM.cp[latest].known=0
         gl.args.settimer("reason_020: manage_Consistency",timer()-s)
                         
             
