@@ -1,0 +1,43 @@
+[are:VERB,%1] > [be:VERB,%1]
+[is:VERB,%1] > [be:VERB,%1]
+[%1:DET,DT,det] > DET+%1
+([%1:NOUN,NN,%]; DET+%2) > NP+Q(%2,%1)
+[%1:NOUN,NNS,%];DET+%2  > NP+Q(M(%2,s),%1)
+([%1:ADP,IN,%];NP+%2) > R(%1,%2)
+(NP+%1;R(of,%2)) > NP+P(%2,%1)
+[%1:ADJ,JJ,acomp] > ADJ+%1
+[%1:ADJ,JJ,acomp];[%2:ADV,RB,advmod] > ADJ+F(%1,%2)
+ADJ+%1;[%2:ADV,RB,advmod] > ADJ+F(%1,%2)
+([be:VERB,%];NP+%1;ADJ+%2;[.:PUNCT,.,punct]) > F(%1,%2)
+([be:VERB,%];%1;ADJ+%2) > F(%1,%2)
+[most:ADJ,JJS,amod] > DET+most
+(ADJ+%1;R(%2,Q(%3))) > ADJ+F(%1,R(%2,Q(%3)))
+F(F(%1,%2),%3) > F(%1,%2,%3)
+[%1:PRON,PRP,nsubj] > NP+%1   
+[do:VERB,VBP,aux];[not:ADV,RB,neg] > ADV+M(do,not)
+([%1:VERB,VB,advcl];[because:ADP,IN,mark]; NP+%2 ;ADV+%3) > R(because, A(%2, F(%1,%3)))
+(%1; R(because, %2);[.:PUNCT,.,punct]) > IM(%2.p=4, %1.p=4)
+[great:ADJ,JJ,acomp] > ADJH+great
+[%1:VERB,VBG,pcomp> VBG+%1
+([be:VERB,%];NP+%1;(ADJH+%2;([at:ADP,IN,prep];(VBG+%3;%4)))) > F(%1,F(%2,A(%1,F(%3!,ingg,%4)).p=4))
+([be:VERB,%];NP+%1;(ADJH+%2;([at:ADP,IN,prep];(VBG+%3;%4)))) > A(F(%1,F(%2,ly),F(%3!,%4))
+[%1:NOUN,NN,pobj] > NP+%1
+NP+%1;[%2:ADJ,JJ,amod] > NP+F(%1,%2)
+[type:NOUN,NN,attr] > NOUNCLASS+type
+([be:VERB,%];NP+%1;NP+%2;[.:PUNCT,.,punct]) > C(%1,%2)
+([be:VERB,%];NP+%1;NP+P(%2,F(NOUNCLASS+%3,%4));[.:PUNCT,.,punct]) > C(%1,F(%2,%4))
+[%1:DET,DT,nsubj] > NP+%1
+[form:NOUN,NN,attr] > NOUNCLASS+form
+[%1:NOUN,NNS,nsubj] > NP+Q(s,%1)
+[%1:NOUN,NN,nsubj] > NP+%1
+[%1:NOUN,NN,nsubjpass] > NPPASS+%1
+(NP+%1;[%2:NOUN,NN,compound]) > NP+F(%1,%2)
+(NPPASS+%1;[%2:NOUN,NN,compound]) > NPPASS+F(%1,%2)
+[%1:VERB,VBZ,auxpass] > AUXPASS+%1
+[%1:VERB,VBG,oprd] > OPRD+F(%1,ingg)
+([called:VERB,VBN,ROOT];NPPASS+%1;AUXPASS+%2;OPRD+%3;[.:PUNCT,.,punct]) > E(%1,%3)
+[%1:DET,DT,nsubjpass] > NPPASS+%1
+[%1:NOUN,NN,oprd];DET+%2 > OPRD+Q(%2,%1)
+(OPRD+%1;[%2:ADJ,JJ,amod]) > OPRD+F(%1,%2)
+([%1:VERB,%,ROOT];NP+%2;[.:PUNCT,.,punct]) > A(%2,%1)
+(DET+%1,NP+%2) > NP+Q(%2,%1)
