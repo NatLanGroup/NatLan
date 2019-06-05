@@ -1027,6 +1027,7 @@ class Reasoning:
                 self.perform_Reason(actnew,actnew+1,False,None,recent_activ=True)  # perform reasining on newly activated concept
         while gl.WM.ci>ciremember:       # something was added. Reason on those that was added.
             endiremember=gl.WM.ci
+            gl.WM.set_General(ciremember)                   # compare added concepts with entire WM to find more general/special concepts
             self.createConceptRules(ciremember,gl.WM.cp.__len__())   # add initial kb_rules
             self.perform_Reason(ciremember+1,len(gl.WM.cp),False,None)  # perform reasoning on these
             ciremember=endiremember

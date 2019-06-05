@@ -59,7 +59,7 @@ if gl.args.argnum == 2:
     i=0
     print ("WM list:")
     for wmi in gl.WM.cp:
-        print (i,wmi.mentstr,"relation",wmi.relation,"parent",wmi.parent,"child",wmi.child,"p value",wmi.p,"KB link",wmi.kblink)
+        print (i,"wmuse",wmi.wmuse,wmi.mentstr,"reasonuse",wmi.reasonuse,"parent",wmi.parent,"p=",wmi.p,"known",wmi.known,"count",wmi.count,"override",wmi.override,"general",wmi.general)
         i+=1
     i=0
     print ("KB list:")

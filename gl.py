@@ -106,6 +106,8 @@ class Arguments:
         self.noactivate_fromword ={                 # some concepts should not be activated from word if found in the given position
             4:[1]  }                                # relation not to activate : [list of positions of word]
 
+        self.nospread_general = [0]                 # some rules should not spread .general backwards in reasonuse
+
     def settimer(self,fname,timeused):              # measure time spent in a function
         try: self.timecheck[fname] += timeused      # increase time spent in fname
         except: self.timecheck[fname] = timeused      # newly add time spent in fname

@@ -64,7 +64,7 @@ class Kbase:
         else: forconlist = forconcepts[:]
         for forcon in forconlist:
             if self.cp[forcon].wmuse==[-1]:                 # an input concept
-                m_general = self.cp[forcon].general         # concepts more general than this input may be inhibitors in reasoning
+                m_general.update(self.cp[forcon].general)   # concepts more general than this input may be inhibitors in reasoning
             else:
                 for con in self.cp[forcon].wmuse:           # base concepts
                     m_general.update(gl.WM.cp[con].general) # base concepts' generals may become inhibitors
@@ -215,6 +215,7 @@ class Kbase:
             self.cp[new].known = gl.KB.cp[fromkb].known     
             self.cp[new].c = gl.KB.cp[fromkb].c     #  value updated
             self.cp[new].relevance = gl.KB.cp[fromkb].relevance
+            self.cp[new].reasonuse = gl.KB.cp[fromkb].reasonuse[:]
             if gl.KB.cp[fromkb].wmuse!=[-1]:
                 self.cp[new].wmuse = gl.KB.cp[fromkb].wmuse[:]
             else: self.cp[new].wmuse = [fromkb]
@@ -224,6 +225,7 @@ class Kbase:
             self.cp[new].known = gl.WM.cp[fromwm].known     
             self.cp[new].c = gl.WM.cp[fromwm].c     #  value updated
             self.cp[new].relevance = gl.WM.cp[fromwm].relevance    
+            self.cp[new].reasonuse = gl.WM.cp[fromwm].reasonuse[:]
             if gl.WM.cp[fromwm].wmuse!=[-1]:
                 self.cp[new].wmuse = gl.WM.cp[fromwm].wmuse[:]
             else: self.cp[new].wmuse = [fromwm]
@@ -498,10 +500,12 @@ class Kbase:
                 pm = self.rec_match(self.cp[p1], self.cp[p2], [p1,p2],goodanswer=goodanswer)      # compare parent concepts for match
             if pm==0: return 0                          # if parent concept does not match -> no match
             if pm == 2:
-                self.cp[p2].general.add(p1)             # record general relation for parent
+                if self.name=="WM" and not "%" in self.cp[p1].mentstr:     # only in WM, should not be a rule
+                    self.cp[p2].general.add(p1)             # record general relation for parent
                 if match == 3: return 0                 # cross special
             if pm == 3:
-                self.cp[p1].general.add(p2)             # record general relation
+                if self.name=="WM" and not "%" in self.cp[p2].mentstr:     # only in WM, should not be a rule
+                    self.cp[p1].general.add(p2)             # record general relation
                 if match==2: return 0                   # cross special
             if pm>1 and match==1: match=pm              # special 2 or 3
         if match==2 and len(wmindex)==2 : inwhat.general.add(wmindex[0])    # remember that what1 is general of inwhat
@@ -895,10 +899,14 @@ class Kbase:
         for contraitem in contralist:               # contradictions
             newi=contraitem[0]; old=contraitem[1]
             genset=set()
-            for gen in self.cp[newi].general:       # collect general items, including same items to general ones
-                genset.add(gen)
-                genset.update(self.cp[gen].same)
-            gen_used=set(self.cp[old].reasonuse) & genset   # general items that were used to reason old
+            news=[newi]
+            if self.cp[newi].wmuse!=[] and self.cp[newi].wmuse!=[-1]:
+                news=self.cp[newi].wmuse[:]         # take the original inputs
+            for ncon in news:
+                for gen in self.cp[ncon].general:       # collect general items, including same items to general ones
+                    genset.add(gen)
+                    genset.update(self.cp[gen].same)
+            gen_used=(set(self.cp[old].reasonuse) | set(self.cp[old].wmuse)) & genset   # general items that were used to reason old
             if len(gen_used)>0:                     # any used: p needs override
                 gl.log.add_log(("CONTRADICTION: KNOWN=0 OVERRIDE from set_General: old p was based on more general input. index=",old," old p=",self.cp[old].p," new index=",newi," new p=",self.cp[newi].p))
                 self.cp[old].known = 0              # override known
@@ -906,6 +914,19 @@ class Kbase:
                     gl.log.add_log(("CONTRADICTION: PVALUE and KNOWN OVERRID from set_General: make concept unknown. This concept used a too general input. index=",used," old p=",self.cp[used].p," contradicting concept:",old))
                     self.cp[used].p=gl.args.pmax/2  # set this concept to unknown
                     self.cp[used].known=0           # set this concept unknown
+
+    def spread_General(self,thiscon,gener):         # spread .general to anchestor concepts in reasonuse
+        ancestor = self.cp[thiscon].reasonuse
+        if ancestor!=[]:                            # not the original wmuse
+            if ancestor[0] not in gl.args.nospread_general:   # spreading not inhibited
+                for ancesti in range(1,len(ancestor)):
+                    self.spread_General(ancestor[ancesti],gener)    # recursive call one level deeper
+        else:                                       # original wmuse
+            nowuse = self.cp[thiscon].wmuse
+            if nowuse !=[] and nowuse!=[-1] and nowuse!=[-2]:    # parent if if relation with original wmuse filled in
+                self.spread_General(nowuse[0],gener)   # recursive call one level deeper, this can only be 1 element
+            else:
+                self.cp[thiscon].general.update(gener)  # update .general on wmuse concept
 
     def set_General(self,startpos):                 # investigate if latest input concepts involve a generality relation
         s=timer()
@@ -943,6 +964,7 @@ class Kbase:
                         self.cp[con.parent[0]].general.update(self.cp[con.parent[cla]].same)
                         self.cp[con.parent[0]].general.update(self.cp[con.parent[cla]].general)
                         cla+=1
+            self.spread_General(newi,self.cp[newi].general)    # spread the .general property to concepts in reasonuse
         self.override_Old(contralist)              # override p in contraditions found
         gl.args.settimer("concep_800: set_General",timer()-s)
                     
