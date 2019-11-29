@@ -61,10 +61,17 @@ class Translator():
     def __init__(self, parse, rules):
         self.parse = None  # spacy output
         self.rules = dict()
+        self.irreg_verb = {"is":"be", "has":"have"}                 # irregular verbs
+        self.verbs_se = set(["causes","pauses","uses","abuses","browses","aches","releases"])   # verbs ending "se"
+        self.verb_inge = set(["living","countershading","taking"])  # verbs ending e, live -> living  
         self.nowildcard = 200                                   # bonus for a rule that has a [] expression with no wildcards
-        self.priority = {                                       # assign bonuses to various rule fragments
-            "[.:PUNCT,.,punct]":-200, "SENT+":-100, "[and:CCONJ,CC,cc]":200
+        self.punishwildcard = 2                                 # piunishment for % character
+        self.enclosed = 100                                     # bonus if rule is encolsed in brackets like (xxx)
+        self.priority = {                                       # on rule left side: assign bonuses to various rule fragments
+            "[.:PUNCT,.,punct]":-200, "SENT+":-100, "[and:CCONJ,CC,cc]":100, "[by:ADP,IN]":-100
         }
+        self.right_priority = {                                 # on rule right side: assign bonuses
+            "SENT+":-1 }
         try:
             self.rule_file = open(rules, "r")
             self.read_rulefile()
@@ -158,10 +165,17 @@ class Translator():
         rulelen=0                                                   # best rule length
         ruleselect = ""
         for rule in rulefound:
-            rulenow = len(rule)+1000                                # current rule length
-            for pritem in self.priority:                            # look for priortized items
+            wcount = rule.count("%")
+            rulenow = len(rule)+1000-wcount*self.punishwildcard     # current rule length with % punishment
+            if wcount == 0: rulenow = rulenow+self.nowildcard       # add bonus for no wildcard
+            if rule[0]=="(" and rule[-1]==")":                      # rule is enclosed in brackets ()
+                rulenow = rulenow + self.enclosed                   # add bonus for ()
+            for pritem in self.priority:                            # look for priortized items on left side
                 if pritem in rule:                                  # a priority item found
                     rulenow = rulenow + self.priority[pritem]       # distort length of rule
+            for pritem in self.right_priority:                      # look for priortized items on right side
+                if pritem in rule:                                  # a priority item found
+                    rulenow = rulenow + self.right_priority[pritem]       # distort length of rule
             if rulenow > rulelen:                                   # longest rule so far
                 rulelen=rulenow
                 ruleselect = rule[:]                                # best rule selected based on length and bonuses
@@ -178,9 +192,117 @@ class Translator():
         print ("REPLACE in row=",i," rule left:",bestrule," rule right:",new_rule," new row:",self.evaluate[i])
         return
 
+    def change_Capital(self,word,type,i):               # change capital letters in word
+        new_word = word[:]
+        if type !="PROPN":                                      # not proper noun
+            new_word = word.lower()
+            self.evaluate[i] = self.evaluate[i].replace(word+":"+type,new_word+":"+type)    # type added not to change every occurence
+        return new_word[:]
+
+    def change_Plural(self,word,type,i,j):              # convert plural npun to singular form
+        singular = word[:]
+        if type == "NOUN":
+            subtype = ""
+            row=self.evaluate[i]; j=j+1
+            while row[j] != ",":
+                subtype = subtype+row[j]                        # collect the nextz attribute in spacy
+                j+=1
+            if subtype=="NNS" and word[-1]=="s" and len(word)>2:  # NNS means plural noun
+                if word[-2] != "e": singular = word[:-1]            # cut off ending s
+                else:                                               # "e" before s
+                    singular = word[:-1]                            # default: cut off s
+                    if word[-3] in "sox":                           # -ses or -oes or -xes
+                        singular = word[:-2]                        # cut off -es
+                    if word[-3]=="h" and len(word)>3:
+                        if word[-4] in "sc":                        # -shes or -ches
+                            singular = word[:-2]
+                    if word[-3]=="i" and len(word)>3:               # -ies
+                        singular = word[:-3]+"y"                    # babies -> baby
+                self.evaluate[i] = self.evaluate[i].replace(word+":"+type,singular+":"+type)
+        return len(singular)-len(word)                          # how much shorter got the row
+
+    def change_Ing(self,word,type):                 # convert -ing form of verb to normal form
+        normal=word[:]
+        if word[-3:]=="ing":
+            normal=word[:-3]                                        # cut off -ing
+            if word in self.verb_inge:                              # living -> live
+                normal = normal+"e"
+        return normal[:]
+
+    def change_Third(self,word,type):               # convert verb third person to normal form
+        singular = word[:]
+        if word[-2]!="e" or word in self.verbs_se:                  # not an e before the s or normal form ends "se"
+            singular = word[:-1]                                    # cut off s
+        else:
+            singular = word[:-1]                                    # default: cut off s
+            if word[-3] in ["s","x","o"]:                           # ending ses, xes, oes
+                singular = word[:-2]
+            if word[-3]=="h" and len(word)>3:
+                if word[-4] in ["s","c"]:                           # ending shes, ches
+                    singular = word[:-2]
+            if word[-3]=="i" and len(word)>3:                       # ending ies
+                singular = word[:-3]+"y"
+        if len(word)==4 and ord(word[0])==226 and word[3]=="s":     # 's instead of is
+            singular="be"                                           # convert to be
+        return singular[:]
+    
+    def change_Other(self,word,type,i,j):               # other changes
+        singular = word[:]
+        if type == "PART":
+            if len(word)==4 and ord(word[0])==226 and word[3]=="s":   # ['s:PART,POS,case]  birtokos jel
+                singular="ss"                                       # convert to ss
+        if singular!=word:                                          # something changed
+            self.evaluate[i] = self.evaluate[i].replace(word+":"+type,singular+":"+type)
+        return len(singular)-len(word)
+
+    def change_Verb(self,word,type,i,j):                # convert verbs to normal form
+        singular=word[:]
+        if type=="VERB":
+            subtype=""
+            row=self.evaluate[i]; j=j+1
+            while row[j]!=",":                                      # get subtype before the ,
+                subtype=subtype+row[j]                              # the next attribute in spacy
+                j+=1
+            if word in self.irreg_verb:                             # irregular verb
+                singular=self.irreg_verb[word]                      # apply the specified form
+            else:
+                if subtype == "VBG":                                # -ing form of verb
+                    singular=self.change_Ing(word[:],type[:])       # transform -ing
+                if subtype == "VBZ" and word[-1]=="s" and len(word)>2:  # VBZ means third person form
+                    singular=self.change_Third(word[:],type[:])     # transform third person
+            if singular!=word:                                      # something changed, do replace
+                self.evaluate[i] = self.evaluate[i].replace(word+":"+type,singular+":"+type)
+        return len(singular)-len(word)
+
+    def change_SomeLetters(self,i):                     # change some letters in teh i-th row. Capital letter, plurals, third person etc.
+        inword=0; intype=0; j=0                                     # morphology processing can be done if independent from rules.
+        while j < len(self.evaluate[i]):                            # characters of the row
+            row = self.evaluate[i]
+            char=row[j]
+            if char=="[":                                           # word will follow, [xxx:NOUN,...]
+                inword=1; word=""
+            if char == ":":                                         # end of word
+                inword=0; intype=1; type=""                         # type starts
+            if intype==1 and char!=":":                             # we are in the type part
+                if char!=",": type=type+char                        # collect type
+                else:                                               # we are at ",", type is complete, we process this word now
+                    intype=0
+                    word = self.change_Capital(word[:],type[:],i)   # change capital letter
+                    change=self.change_Plural(word[:],type[:],i,j)  # convert plural nouns to singular form
+                    j=j+change                                      # set back j if word became shorter
+                    change = self.change_Verb(word[:],type[:],i,j)  # convert verb to nominal form
+                    j=j+change                                      # set back j if word became shorter
+                    change=self.change_Other(word[:],type[:],i,j)   # other changes (not NOUN or VERB)
+                    j=j+change                                      # set back j if word became shorter                    
+            if inword==1 and char!="[":
+                word=word+char                                      # collect word
+            j=j+1
+
     def translate(self):                                # translate the spacy rows in the input to mentalese
         for i, roworig in enumerate(self.evaluate):                 # all rows in the input.
-            for count in range(0,30):                               # checking every row many times
+            self.change_SomeLetters(i)                              # change some letters in the spacy text before translating
+            nochange=0                                              # nochange means nothing changed in this round
+            while nochange!=1:                                      # checking every row many times until no change occurs
                 bestrule=""                                         # the best of all matching rules
                 rulefound={}                                        # map to hold rules for which we have full match
                 rulevars={}                                         # dictionary to map wildcards %1 %2 to actual values
@@ -196,6 +318,8 @@ class Translator():
                     bestrule = self.get_Bestrule(rulefound)         # after all rules checked, select the best one to apply now
                 if bestrule != "":                                  # a rule to be applied is selected
                     self.replace_Rule(i,row,bestrule[:],rulefound,rulevars)   # replace the left rule part with the right part
+                    nochange=0
+                else: nochange=1
                     
 
     def write_result(self):  # write output file
