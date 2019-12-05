@@ -68,7 +68,7 @@ class Translator():
         self.punishwildcard = 2                                 # piunishment for % character
         self.enclosed = 100                                     # bonus if rule is encolsed in brackets like (xxx)
         self.priority = {                                       # on rule left side: assign bonuses to various rule fragments
-            "[.:PUNCT,.,punct]":-200, "SENT+":-100, "[and:CCONJ,CC,cc]":100, "[by:ADP,IN]":-100
+            "[.:PUNCT,.,punct]":-200, "[and:CCONJ,CC,cc]":100, "[by:ADP,IN]":-100
         }
         self.right_priority = {                                 # on rule right side: assign bonuses
             "SENT+":-1 }
@@ -174,7 +174,7 @@ class Translator():
                 if pritem in rule:                                  # a priority item found
                     rulenow = rulenow + self.priority[pritem]       # distort length of rule
             for pritem in self.right_priority:                      # look for priortized items on right side
-                if pritem in rule:                                  # a priority item found
+                if pritem in self.rules[rule]:                       # a priority item found
                     rulenow = rulenow + self.right_priority[pritem]       # distort length of rule
             if rulenow > rulelen:                                   # longest rule so far
                 rulelen=rulenow
