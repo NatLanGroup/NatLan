@@ -72,7 +72,7 @@ SUBJ+%1;[to:PART,TO,aux] > [to:PART,TO,SUBJ+%1]
 ([in:ADP,IN,prep];(NPN+order;[to:PART,TO,aux];(%2)));[,:PUNCT,,,punct] > [inorderto];%2;[punct]
 VP+%4;[inorderto];VPB+be;ADJ+%1;[to:PART,TO,aux];(VP+%2);[punct];NPS+%3 > SENT+IM(F(%3,%1).p=4,Q(A(%3,%2),to));[inorderto];VP+%4;NPS+%3
 SENT+%1;[inorderto];SENT+%2 > SENT+IM(%2.p=4,Q(%1,to))                    
-#9 > 62  69 NEW %
+#9 > 62  
 (NP%5+%1;ADJ+%2) > NP%5+F(%1,%2)                                        
 #10 > 63
 ([%1:ADP,IN,prep];[%2:ADV,RB,advmod];NP%+%3) > ADV+F(%2,R(%1,%3))
@@ -110,7 +110,7 @@ SENT+F(%1);ADV+%2 > SENT+F(F(%1),%2)
 VP%7+%1;ADV+%2;[,:PUNCT,,,punct] > FORWARD+%2;VP%7+%1
 [%1:VERB,MD,aux] > AUX+%1
 VP+%1;NP%5+%2;AUX+%3 > VP+Q(%1,%3);NP%5+%2
-VP+%1;NP%5+%2;[%3:%,%,prt] > VP+F(%1,%3);NP%5+%2
+VP%7+%1;NP%5+%2;[%3:%,%,prt] > VP%7+F(%1,%3);NP%5+%2
 #18 > 91
 #19 > 91
 #20 > 91
@@ -292,15 +292,15 @@ FWADV+%1;SENT+%2 > SENT+R(%1,%2)
 #61 > 218
 #62 > 218
 ([%1:%,%,amod];[%2:%,%,%];[-:PUNCT,HYPH,punct]) > ADJ+F(%1,%2,-)
-(SENT+%1;[%2:CCONJ,CC,cc];SENT+%3) > SENT+R(%2,%1,%3)
+(SENT+%1;[%2:CCONJ,CC];SENT+%3) > SENT+R(%2,%1,%3)
 #63 > 220
 #64 > 220
 ([%1:%,%,npadvmod];N(%2)) > ADVMOD+F(%1,N(%2))
 ADJ+%1;ADV+%2 > ADJ+F(%1,%2)
 [%1:NUM,%,pobj] > NPO+%1
 #65 > 223
-(ADJ+%1;[to:PART,TO,aux];(VP+%2 > (ROOTMODVP+%2;ADV+F(%1,to);(
-VPB+%1;NPS+%2;(ROOTMODVP+%3 > VP+%3;NPS+%2;(
+(ADJ+%1;[to:PART,TO,aux];(VP+%2; > (ROOTMODVP+%2;ADV+F(%1,to);(
+VPB+%1;NPS+%2;(ROOTMODVP+%3; > VP+%3;NPS+%2;(
 (ADV+%1;NPO+%2) > ADV+%1;NPO+%2
 #66 > 226
 #67 > 226
@@ -343,8 +343,8 @@ VPB+%1;NPS+%2;ADV+%3 > SENT+F(%2,%3)
 (NP%5+%1;[,:PUNCT,,,punct];[and:CCONJ,CC,cc];ING+SENT+%3) > ING+SENT+AND(A(exist,%1),%3)
 NP%5+%1;[,:PUNCT,,,punct];ING+SENT+%3 > ING+SENT+AND(A(exist,%1),%3)
 VP+%1;(ING+SENT+%2) > SENT+%2;[to:PART,TO];VP+%1;[this:DET,DT,nsubj]
-([for:ADP,IN,mark];[%2:VERB,%,advcl];NPS+%2;[to:PART,TO,aux]) > ([to:PART,TO];SENT+A(%2,%1))
-SENT+A(%1,%2);(ADJ+%3;NP%+%4,[to:PART,TO] > (SENT+A(%1,I(%2,F(%4,%3)));[to:PART,TO]
+([for:ADP,IN,mark];[%1:VERB,%,advcl];NPS+%2;[to:PART,TO,aux]) > ([to:PART,TO];SENT+A(%2,%1))
+SENT+A(%1,%2);(ADJ+%3;NP%+%4;[to:PART,TO] > (SENT+A(%1,I(%2,F(%4,%3)));[to:PART,TO]
 [%1:ADJ,%,ccomp] > ADJ+%1
 #80 > 247
 VPB+be;NPS+%1;NPN+%2 > SENT+C(%1,%2)
@@ -391,7 +391,7 @@ SENT+A(F(%1,%2),Q(be,can)) > SENT+F(%1,%2,Q(can))
 #97 > 272
 VPB+be;NPS+%1;(NPN+%2;[,:PUNCT,,,punct]; > SENT+C(%1,%2);(
 SENT+%1;((SENT+A(ADJWDT_%2,%3) > ((SENT+A(%1,%3)
-(SENT+%1;[%2:ADP,IN,mark];SENT+%3) > SENT+R(%2,%3,%1)
+(SENT+%1;[%2:ADP,IN,mark];SENT+%3) > SENT+R(%2,%1,%3)
 #98 > 275
 #99 > 276
 (VP+%1;WDT+ADV+R(%2,%3) > WDT+%3;(VP+%1;ADV+R(%2,%3)
