@@ -1,0 +1,12 @@
+
+m/ IM(IM(%1,%2),%2)p=im
+m/ IM(C(%1,F(%2,%3))p=p0,C(%1,%2))p=pide1
+
+m/ F(dummy)
+m/ C(Joe,person)
+m/ C(garden,place)
+
+m/ C(he,person)r=4
+
+m/ A(Joe,read,R(in,garden))
+m/ F(he.g=0,strong)

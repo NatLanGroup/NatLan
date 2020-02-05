@@ -52,10 +52,15 @@ class Kbase:
         self.branchactiv = {}           # set of activated concepts on branch
         self.new_activ = {}             # sets of recently activated concepts mapped to branch
         self.samestring = {}            # for each branch leaf: a map of mentalese string: all occurence index on branch
+        self.vs_samestring = {}         # for a single WM or KB: a map of mentalese string: all occurence index in this Kbase
         self.paragraph = []             # concepts where the latest paragraph ended on all branches
         self.name = instancename        # the name of the instance can be used in the log file
         self.thispara = []              # list of concepts in this paragraph
         self.prevpara = []              # list of concepts in previous paragraph
+
+        self.pawm = 0                   # id or parent WM
+        self.this = -1                  # id of this WM, root WM is zero
+        self.last = -1                  # last concept id used in this wm
 
     def get_General(self,forconcepts):                      # return more geenral concepts than the inputs are based on
         m_general = set()                                   # more general concepts
@@ -262,6 +267,49 @@ class Kbase:
                 for par2 in self.cp[con].parent:
                     if par1!=par2:
                         self.cp[par1].same.add(par2)     # add par2 in the same list of par1 (the cyvcle also adds par1 to par2.same)
+
+    def manage_parents(self,new_rel):                   # complete addition of a new concept thathas parents
+        self.cp[self.ci].mentstr = gl.args.rcodeBack[new_rel] + "("  # relation in mentalese
+        for par in self.cp[self.ci].parent:
+            self.cp[par].child.append(self.ci)
+            self.cp[self.ci].mentstr = self.cp[self.ci].mentstr + self.cp[par].mentstr + ","    # add parent mentalese           
+        self.cp[self.ci].mentstr = self.cp[self.ci].mentstr[:-1] + ")"
+            
+
+    def copy_Conc(self,oldwmid,newwm,concid):           # copy concept by adding new conc in newwm and copying fields from concid
+        oldwm = gl.VS.wmlist[oldwmid]                   # old wm object
+        rel = oldwm.cp[concid].relation                 # old conc relation
+        newwm.cp.append(Concept(rel))                   # add concept in newwm, concept list
+        newwm.ci = len(newwm.cp)-1
+        newwm.cp[newwm.ci].mentstr = oldwm.cp[concid].mentstr[:]   # copy mentalese
+        newwm.cp[newwm.ci].p = oldwm.cp[concid].p
+        newwm.cp[newwm.ci].c = oldwm.cp[concid].c
+        newwm.cp[newwm.ci].g = oldwm.cp[concid].g
+        newwm.cp[newwm.ci].cons_avg = oldwm.cp[concid].cons_avg
+        newwm.cp[newwm.ci].acts = oldwm.cp[concid].acts
+        newwm.cp[newwm.ci].exception = oldwm.cp[concid].exception
+        newwm.cp[newwm.ci].known = oldwm.cp[concid].known
+        newwm.cp[newwm.ci].relevance = oldwm.cp[concid].relevance
+        newwm.cp[newwm.ci].count = oldwm.cp[concid].count
+        newwm.cp[newwm.ci].parent = oldwm.cp[concid].parent[:]
+        newwm.cp[newwm.ci].kblink = oldwm.cp[concid].kblink[:]
+        newwm.cp[newwm.ci].wordlink = oldwm.cp[concid].wordlink[:]
+        newwm.cp[newwm.ci].mapto = oldwm.cp[concid].mapto
+        newwm.cp[newwm.ci].wmuse = oldwm.cp[concid].wmuse[:]
+        newwm.cp[newwm.ci].override = oldwm.cp[concid].override.copy()
+        newwm.cp[newwm.ci].reasonuse = oldwm.cp[concid].reasonuse[:]
+        newwm.cp[newwm.ci].usedby = oldwm.cp[concid].usedby.copy()
+        newwm.cp[newwm.ci].general = oldwm.cp[concid].general.copy()
+        newwm.cp[newwm.ci].same = oldwm.cp[concid].same.copy()
+        for rs in oldwm.cp[concid].rulestr:
+            newwm.cp[newwm.ci].rulestr.append(rs[:])
+        newwm.cp[newwm.ci].kb_rules = oldwm.cp[concid].kb_rules[:]
+        newwm.cp[newwm.ci].rule_match = oldwm.cp[concid].rule_match[:]
+        newwm.cp[newwm.ci].kbrules_converted = oldwm.cp[concid].kbrules_converted
+        newwm.cp[newwm.ci].track = oldwm.cp[concid].track
+        newwm.cp[newwm.ci].compared_upto = oldwm.cp[concid].compared_upto
+        for childi in oldwm.cp[concid].child:                               # copy only valid children
+            if childi <= oldwm.last: newwm.cp[newwm.ci].child.append(childi)
                 
     def add_concept(self, new_p, new_rel, new_parents,kbl=[],gvalue=None):        #add new concept to WM or KB. parents argument is list
         self.cp.append(Concept(new_rel))                        #concept added
@@ -277,14 +325,7 @@ class Kbase:
         if kbl==[] and self.name=="KB" and new_rel==1:          # word addition in KB
             self.cp[self.ci].kblink.append(self.ci)             # add own index in KB
         if (new_rel != gl.args.rcode["W"]):                     # if this is not a word
-            for par in self.cp[self.ci].parent:                 # register new concept as the child of parents
-                self.cp[par].child.append(self.ci)
-
-            self.cp[self.ci].mentstr = gl.args.rcodeBack[new_rel] + "("     # set mentstr
-            for cind in self.cp[self.ci].parent:
-                self.cp[self.ci].mentstr = self.cp[self.ci].mentstr + self.cp[cind].mentstr + ","
-            self.cp[self.ci].mentstr = self.cp[self.ci].mentstr[:-1] + ")"
-            
+            self.manage_parents(new_rel)                        # add parents, edit mentalese str            
         else:                                                   #this is a word
             if (len(kbl)>0):                                    #set word link if we have KB link
                 self.cp[self.ci].wordlink.append(gl.KB.cp[kbl[0]].wordlink[0])      # we have a single word link
@@ -294,8 +335,8 @@ class Kbase:
             self.update_Samestring(gl.WM.ci-1,gl.WM.ci)         #update the leaf in samestring
         if new_rel == 13 and self.name=="WM" :                  # IM relation
             self.update_Condip()                                # update p value of condition if needed
-        if new_rel==3 and len(self.cp[self.ci].parent)>1:       # D relation with 2+ parents
-            self.update_Same(self.ci)                           # update same field based on D()
+ #       if new_rel==3 and len(self.cp[self.ci].parent)>1:       #COMP TO DO: does not work with VS !! D relation with 2+ parents
+  #          self.update_Same(self.ci)                           # update same field based on D()
         gl.log.add_log((self.name," add_concept index=",self.ci," p=",self.cp[self.ci].p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
         return self.ci
 

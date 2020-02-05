@@ -40,11 +40,13 @@ def process_testinput (tf):                     # input is the Testinput object
         gl.reasoning.reset_Currentmapping(tf.mentalese[ri])     # keep only words in currentmapping that are in current sentence
 
 gl.d=0                      # debugging
+gl.vstest=1                 # testing Versions class funtcionality
 gl.error = 0                # error counter
 gl.args = gl.Arguments()    # initialize
-gl.WM = conc.Kbase("WM")    # WORKING MEMORY
 gl.KB = conc.Kbase("KB")    # KNOWLEDGE BASE
 gl.WL = wrd.Wlist("WL")     # WORD LIST
+gl.VS = branch.Version()    # versions object that keeps track of versions of WM
+gl.WM = gl.VS.add_WM()      # create the root WM
 gl.log = gl.Logging()
 gl.reasoning = reason.Reasoning() #class instance for reasoning
 gl.act = activ.Activate()   # activation class instance
@@ -57,7 +59,11 @@ if gl.args.argnum == 2:
     process_testinput (gl.test)
     end=timer()
     i=0
-    print ("WM list:")
+    print ("WM list: "+str(gl.VS.wmlist)+" WM live: "+str(gl.VS.wmliv.keys()))
+    for id,wmitem in enumerate(gl.VS.wmlist):           # all wms created
+        print ("WM id:"+str(id)+" WM end:"+str(wmitem.ci)+" parent WM:"+str(wmitem.pawm)+" this wm id:"+str(wmitem.this)+" last conc used:"+str(wmitem.last))
+        for i,conc in enumerate(wmitem.cp): print (str(i)+ " "+conc.mentstr+" parents="+str(conc.parent)+" children="+str(conc.child))
+    print ("old WM printout:")
     for wmi in gl.WM.cp:
         print (i,"wmuse",wmi.wmuse,wmi.mentstr,"reasonuse",wmi.reasonuse,"parent",wmi.parent,"p=",wmi.p,"known",wmi.known,"count",wmi.count,"override",wmi.override,"general",wmi.general)
         i+=1
@@ -75,10 +81,6 @@ if gl.args.argnum == 2:
         print (t, int(gl.args.timecheck[t]*10000/(end-s)))
     gl.test.check_result()                  # compare _base to _result file
     print ("TOTAL reasoning attempts=",gl.args.total_reasoncount," REASONed concepts=",gl.args.success_reasoncount,"ERROR in process_CDrel. count =",gl.error)
-
-#gl.KB.walk_db(24)                        # walk through parents of a concept, print them
-#gl.unittest.utest_read_concept()            # run read_concept unit test
-#gl.unittest.test_branch_functions()         # tests branch handling functions
 
 gl.log.logf.close()
 

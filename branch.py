@@ -1,5 +1,26 @@
-import gl
+import gl,conc
 from timeit import default_timer as timer
+
+class Version:                  # inventory of WM versions (formerly branches)
+
+    def __init__(self):
+        self.wmlist = []        # list of all WM versions ever created. WM objects are in this list.
+        self.wmliv = {}         # living wm id mapped to wm object
+        self.killed = []        # list of WMs killed or abandoned
+
+    def add_WM(self,pwmid=-1,copymax=0):        # cfreate a new WM. pwmid=-1 means no parent exists.
+        nwm = conc.Kbase("WM")                  # create new wm instance
+        self.wmlist.append(nwm)
+        nwm.pawm = pwmid
+        id = len(self.wmlist)-1
+        nwm.this = id
+        self.wmliv[id] = nwm
+        if pwmid != -1:                         # not the root wm
+            for concid in range(0,copymax):     # copy contexts stored in parent
+                gl.WM.copy_Conc(pwmid,nwm,concid)    # copy concept
+        if gl.d==3: print ("add_WM wmlist length:"+str(len(self.wmlist))+ " wms living:"+str(self.wmliv))
+        return nwm
+                
 
 class Branch:           #branching in WM
 
@@ -114,6 +135,7 @@ class Branch:           #branching in WM
         relevant = list(gl.WM.brelevant)     #all branches where we have wmpos
         currentwm=self.wmpos
         rulw=-1 ; thispara=1                            # flag to show we did not cross paragraph border yet
+        ruleinwm = -1
         while currentwm>=0:                             #walk back on branch
             if gl.WM.cp[currentwm].previous>=0:         #we have a previous link
                 previwm=gl.WM.cp[currentwm].previous
@@ -137,15 +159,28 @@ class Branch:           #branching in WM
                                 gl.WM.cp[rulw].wmuse=[]
                                 gl.WM.cp[ruleinwm].wmuse=[]
                                 gl.log.add_log(("MAPPING: add rule to WM:",gl.KB.cp[ruleword].mentstr," ",gl.KB.cp[maprule].mentstr))
-                            self.add_Mapbranch(maprule, currentwm, ruleinwm, wmapto)  #add branch now!
+                            if gl.vstest<2: self.add_Mapbranch(maprule, currentwm, ruleinwm, wmapto)  #OLD add branch now!
+                            if gl.vstest>0: self.vs_add_Mapbranch(maprule,ruleinwm,wmapto)  # add a new WM instance, as branch
                             if relevant[0] in gl.WM.branch:                     #we do have some branch already
                                 gl.WM.update_Samestring(relevant[0],gl.WM.ci)   #update the obsolate leaf to the new leaf in WM.samestring
                                                                                 # TO DO: LIMITATION: this updates relevant[0] only!
                                 gl.WM.branch.remove(relevant[0])                #remove obsolate branch leaf
                                                                        #TO DO: try update branchvalue too
                             gl.WM.update_Branchactiv(relevant[0],gl.WM.ci)      # update the obsolate leaf to the new leaf in WM.branchactiv
+        return ruleinwm
 
-
+    def vs_add_Mapbranch(self,maprule,ruleinwm,currentword):        #add one more branch starting from ruleinwm and expressing D(wmpos,curretwm)
+        self.mapped.append(currentword)                             #remember this is mapped
+        gl.reasoning.currentmapping[gl.WM.cp[self.wmpos].mentstr]=self.wmpos    # remember mapping happening in this row
+        gl.WM.last = ruleinwm                                       # last concept used in this wm
+        oldwm = gl.WM
+        gl.WM = gl.VS.add_WM(gl.WM.this,ruleinwm+1)                 # add new WM vwersion. we copy the parent wm up to ruleinwm, inclusive.
+        print ("VS ADD_MAPBRANCH new wm: "+str(gl.WM.this)+" old wm: "+str(oldwm.this)+" oldwm last concept: "+str(oldwm.last))
+        mapconcept = gl.WM.add_concept(gl.KB.cp[maprule].p, 3, [self.wmpos,currentword])        # mapping added to WM D()
+        gl.WM.cp[mapconcept].wmuse=[]                               #wmuse for a mapping is not -1 but empty
+        gl.log.add_log(("MAPPING VS: old wm:",oldwm.this," old wm index ",ruleinwm," old wm concept:",oldwm.cp[ruleinwm].mentstr," new WM:",gl.WM.this," mapped to:",gl.WM.cp[mapconcept].mentstr))
+        gl.WM = oldwm                                               #COMP compatibility, set back original wm
+        
     def add_Mapbranch(self,maprule,currentwm, ruleinwm,currentword):    #add one more branch starting from ruleinwm and expressing D(wmpos,curretwm)
         if currentword not in self.mapped:              #not yet mapped at this ruleinwm
             mapconcept = gl.WM.add_concept(gl.KB.cp[maprule].p, 3, [self.wmpos,currentword])        # mapping added to WM D()
@@ -246,9 +281,12 @@ class Branch:           #branching in WM
         s=timer()
         self.get_Lastmulti(thisbranch)                  #get the latest psition where branching happened
         self.oldbranch = gl.WM.branch[:]                #remember blist of initial branches
-        maplist = gl.WM.get_Maprules(self.wmpos)         #mapping rules list
+        maplist = gl.WM.get_Maprules(self.wmpos)        #mapping rules list
+        lastconc=-1
         for maprule in maplist:
-            self.trymap_Single(maprule)
+            lastconc = self.trymap_Single(maprule)      # perform mapping, lastconc is the last concept used in old wm
+        if lastconc>-1:
+            gl.VS.wmliv.pop(gl.WM.this,None)            #COMP in case of branching, old wm is not live anymore      
         gl.args.settimer("branch_01: perform_branching",timer()-s)
 
                 
