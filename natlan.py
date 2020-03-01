@@ -40,7 +40,7 @@ def process_testinput (tf):                     # input is the Testinput object
         gl.reasoning.reset_Currentmapping(tf.mentalese[ri])     # keep only words in currentmapping that are in current sentence
 
 gl.d=0                      # debugging
-gl.vstest=1                 # testing Versions class funtcionality
+gl.vstest=0                 # testing Versions class funtcionality
 gl.error = 0                # error counter
 gl.args = gl.Arguments()    # initialize
 gl.KB = conc.Kbase("KB")    # KNOWLEDGE BASE
@@ -61,8 +61,8 @@ if gl.args.argnum == 2:
     i=0
     print ("WM list: "+str(gl.VS.wmlist)+" WM live: "+str(gl.VS.wmliv.keys()))
     for id,wmitem in enumerate(gl.VS.wmlist):           # all wms created
-        print ("WM id:"+str(id)+" WM end:"+str(wmitem.ci)+" parent WM:"+str(wmitem.pawm)+" this wm id:"+str(wmitem.this)+" last conc used:"+str(wmitem.last))
-        for i,conc in enumerate(wmitem.cp): print (str(i)+ " "+conc.mentstr+" parents="+str(conc.parent)+" children="+str(conc.child))
+        print ("WM id:"+str(id)+" WM end:"+str(wmitem.ci)+" parent WM:"+str(wmitem.pawm)+" this wm id:"+str(wmitem.this)+" last conc used:"+str(wmitem.last)+" activated:"+str(wmitem.activ))
+        for i,conc in enumerate(wmitem.cp): print (str(i)+ " "+conc.mentstr+" parents="+str(conc.parent)+" children="+str(conc.child)+" same="+str(conc.same)+" known="+str(conc.known)+" g="+str(conc.g))
     print ("old WM printout:")
     for wmi in gl.WM.cp:
         print (i,"wmuse",wmi.wmuse,wmi.mentstr,"reasonuse",wmi.reasonuse,"parent",wmi.parent,"p=",wmi.p,"known",wmi.known,"count",wmi.count,"override",wmi.override,"general",wmi.general)

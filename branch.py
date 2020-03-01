@@ -8,6 +8,11 @@ class Version:                  # inventory of WM versions (formerly branches)
         self.wmliv = {}         # living wm id mapped to wm object
         self.killed = []        # list of WMs killed or abandoned
 
+    def copy_WMfields(self,oldwm,newwm):        # copy the fields from oldwm to newwm
+        for acti in gl.VS.wmlist[oldwm].activ:
+            if acti <= gl.VS.wmlist[oldwm].last:    # copy only relevant concepts
+                gl.VS.wmlist[newwm].activ.add(acti) # copy activated concepts
+
     def add_WM(self,pwmid=-1,copymax=0):        # cfreate a new WM. pwmid=-1 means no parent exists.
         nwm = conc.Kbase("WM")                  # create new wm instance
         self.wmlist.append(nwm)
@@ -16,8 +21,9 @@ class Version:                  # inventory of WM versions (formerly branches)
         nwm.this = id
         self.wmliv[id] = nwm
         if pwmid != -1:                         # not the root wm
-            for concid in range(0,copymax):     # copy contexts stored in parent
+            for concid in range(0,copymax):     # copy concepts stored in parent
                 gl.WM.copy_Conc(pwmid,nwm,concid)    # copy concept
+        if pwmid>-1: self.copy_WMfields(pwmid,id)   # copy fields of old wm into new
         if gl.d==3: print ("add_WM wmlist length:"+str(len(self.wmlist))+ " wms living:"+str(self.wmliv))
         return nwm
                 
@@ -161,12 +167,12 @@ class Branch:           #branching in WM
                                 gl.log.add_log(("MAPPING: add rule to WM:",gl.KB.cp[ruleword].mentstr," ",gl.KB.cp[maprule].mentstr))
                             if gl.vstest<2: self.add_Mapbranch(maprule, currentwm, ruleinwm, wmapto)  #OLD add branch now!
                             if gl.vstest>0: self.vs_add_Mapbranch(maprule,ruleinwm,wmapto)  # add a new WM instance, as branch
-                            if relevant[0] in gl.WM.branch:                     #we do have some branch already
+                            if gl.vstest<2 and relevant[0] in gl.WM.branch:     #COMP we do have some branch already
                                 gl.WM.update_Samestring(relevant[0],gl.WM.ci)   #update the obsolate leaf to the new leaf in WM.samestring
                                                                                 # TO DO: LIMITATION: this updates relevant[0] only!
                                 gl.WM.branch.remove(relevant[0])                #remove obsolate branch leaf
                                                                        #TO DO: try update branchvalue too
-                            gl.WM.update_Branchactiv(relevant[0],gl.WM.ci)      # update the obsolate leaf to the new leaf in WM.branchactiv
+                            if gl.vstest<2: gl.WM.update_Branchactiv(relevant[0],gl.WM.ci)      #COMP update the obsolate leaf to the new leaf in WM.branchactiv
         return ruleinwm
 
     def vs_add_Mapbranch(self,maprule,ruleinwm,currentword):        #add one more branch starting from ruleinwm and expressing D(wmpos,curretwm)

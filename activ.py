@@ -15,6 +15,11 @@ class Activate:
         for leaf in leaflist:
             gl.WM.branchactiv[leaf].add(conc)   # add conc to the set of activated concepts per branch
 
+    def vs_activate_Conc(self,conc,db):         # activate a single concept in db, a wm or the KB
+        db.cp[conc].acts = gl.args.amax         # activation level set to maximum
+        db.activ.add(conc)                      # add conc to the set of activated concepts
+        db.activ_new.add(conc)                  # add conc to the set of newly activated concepts
+
     def get_Thisactiv(self,wmpos):              # collect all activated concepts from relevant branches
         thisact=set()
         for leaf in gl.WM.brelevant:            # brelevant has leafs where wmpos occurs
@@ -26,6 +31,12 @@ class Activate:
             gl.WM.prevpara = gl.WM.thispara[:]  # copy previous paragraph
             gl.WM.thispara[:]=[]                # this para empty
         if self.deactiv_prevpara==1:            # previous paragraph deactivation needed
+            if gl.vstest>0:
+                for con in gl.WM.activ:         # activated concepts
+                    if gl.WM.ci>con: gl.WM.cp[con].acts=0   # deactivate
+                gl.WM.activ = set()             # activated set empty
+                gl.WM.activ_new = set()         # activated set empty
+                
             for leaf in gl.WM.branchactiv:
                 for con in gl.WM.branchactiv[leaf]:
                     if gl.WM.ci>0: gl.WM.cp[con].acts=0  # activation to zero

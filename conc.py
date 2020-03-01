@@ -58,10 +58,14 @@ class Kbase:
         self.thispara = []              # list of concepts in this paragraph
         self.prevpara = []              # list of concepts in previous paragraph
 
-        self.pawm = 0                   # id or parent WM
+        self.pawm = -1                  # id of parent WM
         self.this = -1                  # id of this WM, root WM is zero
         self.last = -1                  # last concept id used in this wm
-
+        self.activ = set()              # set of activated concepts in this WM
+        self.kbactiv = set()            # set of activated concepts in KB given this WM
+        self.activ_new = set()          # set of newly activated concepts in this WM
+        self.kbactiv_new = set()        # set of newly activated concepts in KB given this WM
+        
     def get_General(self,forconcepts):                      # return more geenral concepts than the inputs are based on
         m_general = set()                                   # more general concepts
         if type(forconcepts) is not list:
@@ -331,14 +335,24 @@ class Kbase:
                 self.cp[self.ci].wordlink.append(gl.KB.cp[kbl[0]].wordlink[0])      # we have a single word link
                 self.cp[self.ci].mentstr = gl.KB.cp[kbl[0]].mentstr[:]
             if gvalue!=None: self.cp[self.ci].g=gvalue          #explicit generality provided
-        if self.name=="WM" and self.branch==[]:                 #in WM, no leafs stored
+        if gl.vstest<2 and self.name=="WM" and self.branch==[]:     #COMP in WM, no leafs stored
             self.update_Samestring(gl.WM.ci-1,gl.WM.ci)         #update the leaf in samestring
         if new_rel == 13 and self.name=="WM" :                  # IM relation
             self.update_Condip()                                # update p value of condition if needed
- #       if new_rel==3 and len(self.cp[self.ci].parent)>1:       #COMP TO DO: does not work with VS !! D relation with 2+ parents
-  #          self.update_Same(self.ci)                           # update same field based on D()
+        if new_rel==3 and len(self.cp[self.ci].parent)>1:       # D relation with 2+ parents
+            self.update_Same(self.ci)                           # update same field based on D()
+        if new_rel != 1:                                        # not a word
+            gl.act.vs_activate_Conc(self.ci,self)               # activate this concept just added, either in WM or KB
+        # manage the content of self.vs_samestring here!
         gl.log.add_log((self.name," add_concept index=",self.ci," p=",self.cp[self.ci].p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr))      #content to be logged is tuple (( ))
         return self.ci
+
+    def zero_Known(self,coni):                              # known value set to zero, and deactivate
+        self.cp[coni].known=0                               # set known to zero
+        self.cp[coni].acts=0                                # deactivate concept
+        self.activ.discard(coni)                            # remove coni from activated set
+        self.activ_new.discard(coni)                        # remove coni from activated set
+        
 
     def copy_Samestring(self,oldleaf,newleaf):              # expand the WM.samestring dictionary with newleaf key, copyiing content from oldleaf
         if oldleaf in gl.WM.samestring:                     #this expand is needed when new branch was added
@@ -396,6 +410,9 @@ class Kbase:
             self.ci=self.ci-1
             if self.name=="WM":
                 self.update_Branchinfo(self.ci+1,newleaf)   #update branch related lists and dicts
+                if gl.vstest>0:
+                    self.activ.discard(self.ci+1)           # remove concept from activated list
+                    self.activ_new.discard(self.ci+1)       # remove concept from activated list
         return self.ci
 
     def get_branch_concepts(self, beforei):             #returns the id list of previous concepts on branch (inclusive)
@@ -1099,13 +1116,13 @@ class Kbase:
                     else:
                         if isquestion==1:                                               # for question set pmax/2 p value
                             newindex=self.add_concept(int(gl.args.pmax/2),relType,parents)      # add the concept to WM
-                            self.cp[newindex].known=0                                   # question k value is zero
+                            self.zero_Known(newindex)                                   # question known value is zero
                         else:
                             if isparent==-1:                                                # this is not a parent but the top concept
                                 newindex=self.add_concept(gl.args.pdefault,relType,parents) # add the concept to WM
                             else:
                                 newindex=self.add_concept(gl.args.pmax/2,relType,parents)   # add the concept to WM, parent has p=pmax/2
-                                self.cp[newindex].known=0                                   # parent k value is zero
+                                self.zero_Known(newindex)                                   # parent known value is zero
                         
                     if r_result is not None:
                         self.cp[newindex].relevance=r_result[0]
@@ -1142,6 +1159,15 @@ class Kbase:
                 gl.WM.cp[leaf].next=[startpos+1]                #new input is continuation of branch of leaf
                 gl.WM.cp[startpos+1].previous = leaf            #connectioon backward
             lastleaf=leaf
+
+        if gl.vstest>0:
+            storewm = gl.WM                                     #COMP?
+            for lwmid in gl.VS.wmliv:                           # read input into all living branches
+                if lwmid!=0:                                    #COMP only while compatibiélity run: the WM is not the original root WM
+                    gl.WM = gl.VS.wmliv[lwmid]                  # next living WM into gl.WM
+                    mentalese3 = mentalese[:]
+                    gl.WM.read_concept(mentalese3,isquestion,gl.WM.ci)   # read input into this branch
+            gl.WM = storewm
             
 
 if __name__ == "__main__":
