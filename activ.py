@@ -27,20 +27,23 @@ class Activate:
         return thisact
 
     def update_Para(self):                      # update paragraph information when new paragraph starts
-        if len(gl.WM.thispara)>0:               # nonempty
-            gl.WM.prevpara = gl.WM.thispara[:]  # copy previous paragraph
-            gl.WM.thispara[:]=[]                # this para empty
-        if self.deactiv_prevpara==1:            # previous paragraph deactivation needed
-            if gl.vstest>0:
-                for con in gl.WM.activ:         # activated concepts
-                    if gl.WM.ci>con: gl.WM.cp[con].acts=0   # deactivate
-                gl.WM.activ = set()             # activated set empty
-                gl.WM.activ_new = set()         # activated set empty
-                
-            for leaf in gl.WM.branchactiv:
-                for con in gl.WM.branchactiv[leaf]:
-                    if gl.WM.ci>0: gl.WM.cp[con].acts=0  # activation to zero
-                    gl.WM.branchactiv[leaf]=set([1]) #fully deactivate, just keep the key in the dictionary with concept=1 dummy
+        #VS if len(gl.WM.thispara)>0:               # nonempty
+        #    gl.WM.prevpara = gl.WM.thispara[:]  # copy previous paragraph
+        #    gl.WM.thispara[:]=[]                # this para empty
+        #if gl.vstest>0:
+        for livewmind in gl.VS.wmliv:               # all live WMs
+            livewm = gl.VS.wmliv[livewmind]         # get live WM object
+            if len(livewm.thispara)>0:              # nonempty
+                livewm.prevpara = livewm.thispara[:]  # copy previous paragraph
+                livewm.thispara[:]=[]               # this para empty
+            livewm.mapped_Inpara.clear()            # clear dictionary of mapped words
+            if self.deactiv_prevpara==1:            # previous paragraph deactivation needed
+                for con in livewm.activ:            # activated concepts
+                    if livewm.ci>con: livewm.cp[con].acts=0   # deactivate
+                livewm.activ = set()                # activated set empty
+                livewm.activ_new = set()            # activated set empty
+            if gl.d==6:print ("UPD PARA now wm= "+str(livewm.this)+" now activ="+str(livewm.activ)," prevpara",livewm.prevpara)
+                        
 
     def second_Collect (self,con,second_parents):   # collect concepts for spreading activation
         visitcon=[]
@@ -76,46 +79,24 @@ class Activate:
                         act_ok=1                            # ebable
                 pari+=1
         return act_ok
-            
-    def activate_Fromwords(self,wordlist):                  # activate concepts based on words (used for questions)
-        # only the top level needs activation where p!=2. Parents dont.
+        
+    def vs_activate_Fromwords(self,wordlist):                  # activate concepts based on words (used for questions)
+        # ?? only the top level needs activation where p!=2. Parents dont.
         s=timer()
-        for branch in gl.WM.brelevant:
-            current=branch
-            second_parents=set()
-            while current>1:                                # walk up on branch
-                for actword in wordlist:                    # check eachg word
-                    if gl.WM.cp[current].p!=2 and gl.WM.cp[current].relation!=1:   # makes sense, not a word
-                        if actword[0] in gl.WM.cp[current].mentstr:     # actword present in mentalese
-                            activation_ok = self.enable_Word(current,actword[0])   # check if this is enabled
-                            if activation_ok == 1:                      # this activation is enabled
-                                if branch not in gl.WM.branchactiv:
-                                    gl.WM.branchactiv[branch]=set()         # initialize branchactiv for this branch
-                                if branch not in gl.WM.new_activ:
-                                    gl.WM.new_activ[branch]=set()            # initialize new_activ for this branch
-                                if current not in gl.WM.branchactiv[branch]: # not yet activated
-                                    gl.WM.branchactiv[branch].add(current)   # add to inventory of activated concepts
-                                    gl.WM.new_activ[branch].add(current)     # add to inventory of recently activated concepts
-                                    if self.act_secondround==1:              # spreading activation
-                                        self.second_Collect(current,second_parents)  # collect for activation spreading
-                current = gl.WM.cp[current].previous                     # walk up on branch
-            if self.act_secondround==1:                                  # spreading activation
-                self.activate_Second(branch,second_parents)              # perform spreading activation
-            if gl.d==1: print ("ACTIVATE FROMWORD 3 wordlist",wordlist," branch",branch," now activated",gl.WM.branchactiv[branch])
+        current = gl.WM.ci
+        while current>1:                                            # all concepts in this wm, backwards                          
+            if gl.WM.cp[current].p!=2 and gl.WM.cp[current].known!=0 and gl.WM.cp[current].relation!=1:   # makes sense, not a word
+                for actword in wordlist:                            # check eachg word
+                    if actword[0] in gl.WM.cp[current].mentstr:     # actword present in mentalese
+                        activation_ok = self.enable_Word(current,actword[0])   # check if this is enabled
+                        if activation_ok == 1:                      # this activation is enabled
+                            if current not in gl.WM.activ:          # not activated so far
+                                gl.WM.activ_qu.add(current)         # remember this was activated due question
+                            gl.WM.activ_new.add(current)            # activate concept current
+                            gl.WM.activ.add(current)
+            current=current-1                                       # upwards in this WM
         gl.args.settimer("activ_100: activate_Fromword",timer()-s)
 
-    def clean_Recentact(self):                          # clear recent activation
-        for leaf in gl.WM.new_activ:
-            for con in gl.WM.new_activ[leaf]:
-                brele = gl.WM.select_Relevant(con)      # branches where con is present
-                for br in brele:
-                    try: gl.WM.branchactiv[br].discard(con)   # deactivate
-                    except: a=1
-                gl.WM.cp[con].acts=0                    # deactivate
-        for leaf in list(gl.WM.new_activ.keys())[:] :         # key will be removed this is why we do it with keys()
-            del gl.WM.new_activ[leaf]                   # remove leaf key
-        for con in self.secondround_set:                # pre-actiavted concepts in spreading activation
-            gl.WM.cp[con].acts=0                        # deactivate
-        self.secondround_set.clear()                    # empty the set
+
         
                                 

@@ -1,12 +1,48 @@
-
 m/ IM(IM(%1,%2),%2)p=im
-m/ IM(C(%1,F(%2,%3))p=p0,C(%1,%2))p=pide1
+// IM(C(%1,F(%2,%3))p=p0,C(%1,%2))p=pide1
+// IM(P(%1,%2)p=p0,F(%1,birtokos))p=pide1
+// IM(C(%1,%2)p=p0,P(%1,%2))p=pide1
+// IM(AND(C(%1,person)p=p0,F(%1,%2)p=p1),C(%1,hero))p=pide2
+m/ IM(AND(C(%1,person)p=p0,F(%1,strong)p=p1),C(%1,hero))p=pide2
 
 m/ F(dummy)
-m/ C(Joe,person)
-m/ C(garden,place)
-
 m/ C(he,person)r=4
+m/ F(person,strong)p=4
 
-m/ A(Joe,read,R(in,garden))
-m/ F(he.g=0,strong)
+// C(garden,person)p=0
+// C(Mary,person)
+// F(Mary,big)p=1
+// F(Mary,strong)
+
+// C(garden,place)p=4
+m/ C(Joe,person)
+m/ F(Joe,wide)
+m/ F(he,strong)
+// F(Joe,strong)?			a/ F(Joe,strong).p=4
+
+
+
+// IM(F(Joe,strong),F(Joe,big))
+// F(Joe,strong)
+// F(Joe,big)?			a/ F(Joe,big)
+// C(?,place)			a/ C(street,place)
+
+// D(Joe,he)
+
+// C(street,place)
+
+
+// C(?,place)   a/ C(garden, place) C(street,place)
+
+// C(he,person)r=4
+
+// A(Joe,read,R(in,garden))
+
+// D(he,Joe)?                   		a/ D(he,Joe).p=4
+// C(he,person)?						a/ C(he,person).p=4.k=2
+// C(?,person)							a/ C(he,person).p=4 C(Joe,person).p=4.r=2
+// F(garden,big)
+// A(he,go)
+// D(?,Joe)                     		a/ D(he,Joe).p=4.k=2.r=2
+
+// D(Joe,?)                     		a/ D(he,Joe)

@@ -1,4 +1,4 @@
-import gl, conc, branch
+import gl, conc
 from timeit import default_timer as timer
 
 
@@ -14,10 +14,8 @@ class Reasoning:
     def __init__(self):
         self.actual=0
         self.reason_processed=0         # last indec in gl:WM.cp that was processed for reasoning
-        self.brancho = []               # here we store the current branching object
         self.words_to_map = {}          # wmposition-word pairs to store the index of D(x) added in mapping_Insert
         self.question_specific_words=[] # words in a question that have g=0 and need mapping
-        self.currentmapping = {}        # list of mappings of current input row
         self.recordrel = []             # collect relations of the compound concept to be reasoned
         self.imparents = []             # list to collect parents of a concept to be reasoned
         self.recordparents = []         # list to collect parents of a compound concept to be reasoned
@@ -27,9 +25,7 @@ class Reasoning:
         self.imcount=0                  # number of concepts added
         self.addedconcfor={}            # note original concepts to be replaced
         self.rtabname = ""              # remember reasoning table used now
-        self.thisactiv = []             # concepts activated while a specific concept is being reasoned on
-        self.processed_pairs = {}       # newconcept:set(old) to record which concept pairs has been reasoned on
-    
+        self.thisactiv = []             # concepts activated while a specific concept is being reasoned on    
 
     #This method checks if the 2 indexes from WM and KB matches (in syntax, not in each word).
     def do_they_match_for_rule(self, wm_index, kb_index):
@@ -85,16 +81,28 @@ class Reasoning:
             if self.do_they_match_for_rule(wm_pos, i):
                 matching_rules.append(i)
         return matching_rules
+        
+    def vs_createConceptRules(self, db, wm_pos):                # collect matching rule fragments
+        matching_rules = []
+        for kb_pos in range(0, gl.KB.cp.__len__()):
+            if self.do_they_match_for_rule(wm_pos, kb_pos):
+                matching_rules.append(kb_pos)
+        db.cp[wm_pos].kb_rules = matching_rules[:]
 
-    def createConceptRules(self, starti, endi):
-        # print('starti: ' + str(starti) + '  endi: ' + str(endi) + '  wm size: ' + str(gl.WM.cp.__len__()))
-
-        for wm_pos in range(starti+1, endi):                #starti+1 not to go back. 21.6.2017.
-            matching_rules = []
-            for kb_pos in range(0, gl.KB.cp.__len__()):
-                if self.do_they_match_for_rule(wm_pos, kb_pos):
-                    matching_rules.append(kb_pos)
-            gl.WM.cp[wm_pos].kb_rules = matching_rules
+    def createConceptRules(self):
+        for liv in gl.VS.wmliv:                             # all WMs
+            db = gl.VS.wmlist[liv]
+            for wm_pos in range(1, db.ci+1):                # all concepts
+                if db.cp[wm_pos].kbrules_filled==0:         # not yet processed
+                    matching_rules = []
+                    for kb_pos in range(0, gl.KB.cp.__len__()):
+                        storewm = gl.WM
+                        gl.WM = db                             # in the next functionb gl.WM should be db
+                        if self.do_they_match_for_rule(wm_pos, kb_pos):
+                            matching_rules.append(kb_pos)
+                        gl.WM = storewm
+                    db.cp[wm_pos].kb_rules = matching_rules[:]
+                    db.cp[wm_pos].kbrules_filled=1          # remember this was processed
 
 
     def ruleargs_wordmatch(self,new,ruleindex):         # see if word matches rule in D(%1,elephant)
@@ -130,10 +138,12 @@ class Reasoning:
                                     im=[]                                
         gl.WM.cp[new].kb_rules=[]                               #delete old kb_rules content
         for rulei in range(len(imcombined)):                    #copy imcombined to kb_rules and add resoned concept (single condition)
+            gl.args.total_reasoncount+=1
             gl.WM.cp[new].kb_rules.append(imcombined[rulei])
             if gl.KB.cp[imcombined[rulei][0]].track==1:         # this conceptg needs tracking
                 print ("TRACK rule in convert_KBrules. rule:",imcombined[rulei][0],"concept matching",new,"rule condition",imcombined[rulei][1])
-            if enable==1:                                       #enable7==0 shows this "new" is parent of an IM concept so reasoning must be skipped
+            if enable==1:                                       # enable==0 shows this "new" is parent of an IM concept so reasoning must be skipped
+                if gl.d==9: print ("KBRULES db=",gl.WM.this,"concept=",new,gl.WM.cp[new].mentstr,"rule=",gl.WM.cp[new].kb_rules[rulei])
                 self.add_ReasonedConcept(new,rulei)                 #add reasoned concept to WM based on new - works for single condition
         while len(gl.WM.cp[new].rule_match)<len(gl.WM.cp[new].kb_rules):    #rule_match must have corresponding items to kb_rules
             gl.WM.cp[new].rule_match.append([])                 #each kb_rules item will have corresponding list of matching WM concepts here
@@ -152,6 +162,7 @@ class Reasoning:
                 self.generate_MultiConcept(new,old,rulei,wmpi)
 
     def kill_Duplicatebranch(self,newparent):                   # kill the branch if it has the same assumption as another one
+        if gl.d==4: print ("KILL DUPLICATE BRANCH")
         thisbranch=self.brancho[0].get_previous_concepts(gl.WM.ci)
         ownleaf=-1
         for brd in gl.WM.cp[self.brancho[0].lastbrpos].next:        # run on the D concepts of branching
@@ -225,7 +236,7 @@ class Reasoning:
         kbottom = self.worst_Kvalue(r_known,conclist)       # final known value will be worst of input or of provided r_known
         if rule[0]>0:                                       # not C,D reasoning
             if gl.KB.cp[rule[0]].track==1:                  # rule tracked
-                print ("TRACK rule in finaladd_C 1.  attempted rule:",rule[0],"concepts used",conclist)               
+                print ("TRACK rule in finaladd_C 1.  attempted rule:",rule[0],"concepts used",conclist)   
         center=gl.WM.ci                                      #remember ci at entering finaladd
         new=sorted(conclist,key=int,reverse=True)[0]        # latest concept of reasoning basis - the latest reason used
         reasoned_p=int(reasoned_p)
@@ -247,8 +258,9 @@ class Reasoning:
                 if newparent==nplist[-1]: finalconcept=1    # this is the main concept
                 else: finalconcept=0
                 if finalconcept==1:                         # we are at the main concept
-                    thisbranch = self.brancho[0].get_previous_concepts(leaf)    #next entire branch
-                    found = gl.WM.search_fullmatch(reasoned_p, relation,newparent,rule,samelist,thisbranch,conclist[:])      #see whether the concept is already on the branch
+                #VS    thisbranch = self.brancho[0].get_previous_concepts(leaf)    #next entire branch
+                #VS    found = gl.WM.search_fullmatch(reasoned_p, relation,newparent,rule,samelist,thisbranch,conclist[:])      #see whether the concept is already on the branch
+                    found = gl.WM.search_fullmatch(reasoned_p, relation,newparent,rule,samelist,conclist=conclist[:])      #see whether the concept is already on the branch
                 else: found=0                               # add the concept anyway
                 if found == 0:
                     if finalconcept==1: apply_p=reasoned_p                  # use reasoned_p in the final concept only
@@ -256,7 +268,7 @@ class Reasoning:
                     gl.WM.add_concept(apply_p, relation,newparent)          # add the reasoned concept
                     if finalconcept==0: gl.WM.cp[gl.WM.ci].known=0          # known value set to 0 for parents
                     addedconcept.append(gl.WM.ci)                           # remember where we added a concept
-                    gl.WM.cp[gl.WM.ci].reasonuse=[rule[0]]                  # record IM level rule used for reasoning
+                    gl.WM.cp[gl.WM.ci].rule_use=[rule[0]]                   # record IM level rule used for reasoning
                     self.set_Use(conclist[:],finalconcept)                  # remember used concepts
                     is_inhibited=False                                      # TO DO: move inhibition and same_reasoned to search_fullmatch!!
                     if finalconcept==1:
@@ -266,14 +278,16 @@ class Reasoning:
                     if self.same_Reasoned(gl.WM.ci,samelist)==1 or is_inhibited:    # same concept reasoned as the input used, or inhibited
                         while gl.WM.ci>center: gl.WM.remove_concept()               # remove all concepts added in this round
                     else:
-                        self.update_Prevnext(addedconcept,leaf,addedword)           # update previous and next values
+                        #VS self.update_Prevnext(addedconcept,leaf,addedword)           # update previous and next values
                         if finalconcept==1:
-                            gl.WM.update_Branchinfo(leaf,gl.WM.ci)                  # update branch and branchvalue and samstring
+                            #VS gl.WM.update_Branchinfo(leaf,gl.WM.ci)                  # update branch and branchvalue and samstring
+                            if gl.d==1: print ("FINALADD 8 WM=",gl.WM.this,"concept added here=",gl.WM.ci,gl.WM.cp[gl.WM.ci].mentstr,"p=",gl.WM.cp[gl.WM.ci].p)
+                            gl.args.success_reasoncount += 1                            # how many concepts have been reasoned
                             gl.log.add_log(("REASONED concept added! input new,old:",conclist," wmuse:",gl.WM.cp[gl.WM.ci].wmuse," on branch leaf:",leaf," on index:",gl.WM.ci," rule:",rule," reasoned concept:",gl.WM.cp[gl.WM.ci].mentstr, " p=",reasoned_p," known=",gl.WM.cp[gl.WM.ci].known," parents:",gl.WM.cp[gl.WM.ci].parent))
-                            gl.WM.track_Concept(gl.WM.ci,"New REASONED.")            # concept and rule usage tracking
-                            if relation==3 and reasoned_p==gl.args.pmax:            # D(x,y) added with p=pmax: kill duplicate branch
-                                if newparent in self.brancho[0].lastbr_list or list(reversed(newparent)) in self.brancho[0].lastbr_list:    #parents match
-                                    self.kill_Duplicatebranch(newparent)            # try to kill a potentially duplicate branch
+                            gl.WM.track_Concept(gl.WM.ci,"New REASONED.")               # concept and rule usage tracking
+                    #VS        if relation==3 and reasoned_p==gl.args.pmax:            # D(x,y) added with p=pmax: kill duplicate branch
+                    #VS            if newparent in self.brancho[0].lastbr_list or list(reversed(newparent)) in self.brancho[0].lastbr_list:    #parents match
+                    #VS                self.kill_Duplicatebranch(newparent)            # try to kill a potentially duplicate branch
                 else:                                                   #found==1
                     while gl.WM.ci>center:                              # all added concepts need to be removed
                         gl.WM.remove_concept()
@@ -283,14 +297,20 @@ class Reasoning:
     def lookup_Rtable(self,new,old,rulei,wmpi,implication):             #read p value from reasoning table for multi condition
         rule=gl.WM.cp[old].kb_rules[rulei][:]
         try: rtable = gl.KB.cp[rule[0]].rulestr[0][:]                   # the first string is the table name
-        except: print("ERROR! Rules must have table. ",gl.KB.cp[rule[0]].mentstr)
-        indexrules = gl.KB.cp[rule[0]].rulestr[1:]
+        except: 
+            print("ERROR! Rules must have table. ",gl.KB.cp[rule[0]].mentstr)
+            gl.log.add_log(("ERROR lookup_Rtable: Rules must have a table! p=table missing. Rule: ",gl.KB.cp[rule[0]].mentstr))
+        indexrules = gl.KB.cp[rule[0]].rulestr[1:]  
         reasoned_p=0
         indexlist=[]
         wmpack= gl.WM.cp[old].rule_match[rulei][wmpi]
         condition = gl.KB.cp[rule[0]].parent[0]
         for indexitem in indexrules:                        # take condition portions
             if len(indexitem)>3: indexlist.append(-1)       # placeholder
+        if indexrules==[]:
+            print("ERROR! p=p0 missing in rule. Rule: ",gl.KB.cp[rule[0]].mentstr)
+            gl.log.add_log(("ERROR lookup_Rtable: p=p0, p=p1 missing in rule. Rule: ",gl.KB.cp[rule[0]].mentstr))
+        if gl.d==9: print ("RTABL rtable",rtable,"indexruls",indexrules)
         for indexitem in indexrules:                        # take condition portions
             if len(indexitem)>3:
                 indexnow=-2
@@ -318,6 +338,9 @@ class Reasoning:
             gl.log.add_log(("ERROR in lookup_Rtable: could not read pmap reasoning table. Table name not given or wrong, no =, too many indices, or too big index values. Rule:",gl.KB.cp[rule[0]].mentstr," Table name:",rtable[(rtable.find("=")+1):]," indexc attempted:",indexlist))
         if gl.KB.cp[rule[0]].track==1:                          # rule tracked
             print ("TRACK rule in lookup_Rtable. reasoning with rule:",rule[0]," table used:",rtable[(rtable.find("=")+1):]," index in table:",indexlist," p=",reasoned_p)
+        if type(reasoned_p) is list: 
+            print("ERROR! p=p1 missing in rule, more p= values needed. Rule: ",gl.KB.cp[rule[0]].mentstr)
+            gl.log.add_log(("ERROR lookup_Rtable: p=p1 missing in rule, more p= valéues needed. Rule: ",gl.KB.cp[rule[0]].mentstr))        
         return reasoned_p
 
     def reason_Inhibit (self,reasoned_rel,reasoned_parents):     #check reasoned concept to stop stupid reasoning
@@ -347,6 +370,7 @@ class Reasoning:
         # wmpi is the index of wm pack in rule_match[rulei]
         rule=gl.WM.cp[old].kb_rules[rulei]
         condicount = len(gl.KB.cp[gl.KB.cp[rule[0]].parent[0]].parent)   # how many conditions arte there
+        if gl.d==9: print ("GEN MULT 1 db=",gl.WM.this,"new",new,"old",old)
         if len(gl.WM.cp[old].rule_match[rulei][wmpi])+1 == condicount:   # we have all conditions
             implication=gl.KB.cp[rule[0]].parent[1]                      # implication in KB
             condition = rule[1]                                          # condition portion in KB, corresponds to "old" in WM
@@ -365,10 +389,12 @@ class Reasoning:
             condimap = self.check_condition(visitnew,visitcond)          # check that %1 %1 etc have the proper words in new
             if len(condimap)>0:                                          # all new parents successfully created in condimap
                 reasoned_p = self.lookup_Rtable(new,old,rulei,wmpi,implication)  # read p values form reasoning table
+                if gl.d==9: print ("GEN MULT 8 new",new,gl.WM.cp[new].mentstr,"old=",old,gl.WM.cp[old].mentstr,"rulei",rulei,"wmpi",wmpi,"impl",implication,"reas_p",reasoned_p)
                 clist = [new,old]                                        # initiallist of concepts used for reasoning
                 for olditem in gl.WM.cp[old].rule_match[rulei][wmpi]:    # look at further concepts used
                     if olditem not in clist: clist.append(olditem)
                 self.imparents=[]; self.recordparents=[]; self.recordrel=[]; self.imcount=0
+                if gl.d==9: print ("GEN MULT 9 db=",gl.WM.this,"new=",new,"old=",old,"rule=",rule,"reasoned_P:",reasoned_p)
                 self.build_concept(gl.KB, implication, condimap, clist[:], reasoned_p, rule)  # call finaladd_Concept for several concepts
                 
                 
@@ -445,6 +471,7 @@ class Reasoning:
             if len(self.imparents)>0:                                           # not yet complete
                 self.imparents[-1].append(-1*self.imcount)                      # notify finaladd to use some previous concept as parent
             if len(self.imparents)==0:                                          # detect that last concept was added
+                if gl.d==9: print ("BUILD CONC 8 db=",gl.WM.this,"conclist:",conclist,"p=",reasoned_p,"relation:",self.recordrel,"parents:",self.recordparents,"rule:",rule)
                 self.finaladd_Concept(conclist,reasoned_p,self.recordrel,self.recordparents,rule)
                 
 
@@ -472,6 +499,7 @@ class Reasoning:
             self.imparents=[]; self.recordparents=[]
             self.recordrel=[]; self.imcount=0
             if gl.KB.cp[implication].mentstr!="%2" or gl.KB.cp[rule[1]].relation!=13:   # this is not the IM(IM(%1,%2),%2) rule
+                if gl.d==9: print("UNICONC 8 db=",gl.WM.this,"new",new)
                 self.build_concept(gl.KB, implication, condimap, [new][:], reasoned_p,rule)   # call finaladd_Concept for several concepts
         if gl.KB.cp[implication].mentstr=="%2" and gl.KB.cp[rule[1]].relation == 13:    # rule portion is IM, the implication in rule is just %2
             self.generate_IMconcept(new,rule,implication,condition,0)     # wmcondi not known. this is hard-wired for rule: IM(IM(%1,%2),%2)
@@ -732,53 +760,47 @@ class Reasoning:
     def process_Anyrel(self,new,old):                   #if new is any relation, use earlier C or D in old to reason
         if (gl.WM.cp[old].relation==3 or gl.WM.cp[old].relation==4) and len(gl.WM.cp[old].parent)==2:   #C or D rel with 2 parents
             isfirst=True                                #old is the first occurence of this C or D rel
-            for leaf in gl.WM.brelevant:                #on branches where new is present
-                try: ment_dict=gl.WM.samestring[leaf]   #entire map of mentalese on this branch
-                except: ment_dict={}
-                if gl.WM.cp[old].mentstr in ment_dict:  #old concept found
-                    for samec in ment_dict[gl.WM.cp[old].mentstr]:   #same concepts
-                        if samec<old: isfirst=False     #TO DO check that this is enough just based on mentstr
-                    if isfirst: self.process_CDrel(old,new)  #perform CD reasoning, old is teh CD rel
+            for samec in gl.WM.vs_samestring[gl.WM.cp[old].mentstr]:   #same concepts: check that this occurence of old is the first
+                if samec<old: isfirst=False             #TO DO check that this is enough just based on mentstr
+            #if gl.d==1: print ("ANYREL new old",new,old,"isfirst",isfirst)
+            if isfirst: self.process_CDrel(old,new)     #perform CD reasoning, old is teh CD rel
                                                         #TO DO: search for any applicable CD relation in KB!
-
-    def isnew_CDrel(self,new,same_list):                #check that this C or D relation is its first occurence
+    def isnew_CDrel(self,new):                  #check that this C or D relation is its first occurence
         is_new=True
-        for samec in same_list:                         #same concepts
-            if gl.WM.rec_match(gl.WM.cp[new],gl.WM.cp[samec],[new,samec])==1:   #samec is in fact the same
-                is_new=False
-                                        #TO DO: add check for C/D relation in KB
+        for samec in gl.WM.cp[new].same:                    #same concepts
+            if samec < new:                                 # VS there is some saem concept that occured earlier   
+                if gl.WM.cp[new].p == gl.WM.cp[samec].p:    # p is same
+                    if gl.WM.cp[new].known == gl.WM.cp[samec].known:    # known is same
+                        is_new=False                    # this one ("new") is not new, no need to reason with it
+                        if gl.WM.cp[new].track==1: print ("TRACK concept use:"+str(new)+" "+gl.WM.cp[new].mentstr+" Concept is not used for C,D reasoning because not new. Same conc:"+str(samec))
+                                                #TO DO: add check for C/D relation in KB
         return is_new
-
-    def set_Pairs(self,new,old,same_list):                      # record that new,old pair is processed
-        if new not in self.processed_pairs:
-            self.processed_pairs[new]=set()
-        self.processed_pairs[new].add(old)                      # record new,old pair
-        if old not in self.processed_pairs:
-            self.processed_pairs[old]=set()
-        self.processed_pairs[old].add(new)                      # record old,new pair
                 
-    def enter_RuleMatch(self,new,old,same_list,enable):         # enable: will cause reasoning be skipped if concept is argument of an IM() relation
+    def enter_RuleMatch(self,new,old,enable):         # VS:same_list deleted. enable: will cause reasoning be skipped if concept is argument of an IM() relation
         s=timer(); orulei=0
-        self.set_Pairs(new,old,same_list)                       # record that new,old pair is processed
         #hard wired reasoning follows for C and D relation
         #TO DO: check the override implication based on more general C, D relation! Maybe not running.
         if (gl.WM.cp[new].relation==3 or gl.WM.cp[new].relation==4) and gl.WM.cp[old].relation!=1 and enable==1 and len(gl.WM.cp[new].parent)==2:
-            if self.isnew_CDrel(new,same_list):                 #see if this C or D rel is the first occurence
+            if self.isnew_CDrel(new):                           #see if this C or D rel is the first occurence
+                #if gl.d==1: print ("ENTER 1 CDREL call. new is rel=3 or 4.")
                 self.process_CDrel(new,old)                     #reason on old, using the C or D rel in new
         if gl.WM.cp[new].relation!=1 and enable==1:             #not a word
             self.process_Anyrel(new,old)                        #check that old is C or D and reason on new
         gl.args.settimer("reason_013: enter_Rulematch process_CDrel", timer()-s)
 
         #reasoning follows based on rules
+        if gl.d==9: print ("ENTER 0 db=",gl.WM.this, "new",new,"old",old,"ruleold",gl.WM.cp[old].kb_rules,"rulenew",gl.WM.cp[new].kb_rules)
         self.rtabname=""
         for ruleold in gl.WM.cp[old].kb_rules:              # all rules already added to old concept
+            if gl.d==9: print ("ENTER 1 call IM new old",new,old)
             for rulenew in gl.WM.cp[new].kb_rules:          # all pairs with the latest concept
+                if gl.d==9: print ("ENTER 3. new",new,"old",old)
                 if ruleold[0]==rulenew[0]:                  # IM level rule is th same
                     if rulenew[1] not in ruleold:           # the new condition is not the same what we already had in old concept
                         finalmatch=self.final_RuleMatch(new,old,rulenew,ruleold)    #%1 %2 etc must mean the same thing in new and old
                         if enable==1 and finalmatch==1 and (new not in gl.WM.cp[old].rule_match[orulei]):     #not skipped, and new not in WM pack
                             self.append_Match(new,old,rulenew,ruleold,orulei)                   #add new to the current wm pack
-                                        
+                            if gl.d==9: print ("ENTER 5 APPEND called. new",new,"old",old)            
                 # this might be the condition of an earlier IM concept. This has nothing in kb_rules for this.
             if gl.KB.cp[ruleold[1]].relation==13:           # for old, the matching rule's condition is IM, as in IM(IM(%1,%2),%2)
                 if gl.WM.cp[old].relation==13:              # redundant for WM
@@ -794,242 +816,91 @@ class Reasoning:
             orulei+=1
         gl.args.settimer("reason_010: enter_RuleMatch", timer()-s)     # measure execution time
         
-    def get_Wordinment(self,ment):                          # TO DO: should be moved to conc. return words from any mentalese
-        ment=ment.strip()
-        wordlist=[]; thisword=""
-        termination = [",",")",".g=",".p=",".r=",".c="]     # valid terminations of words
-        beginning=["(",","]                                 # valid beginnings: must be a singe character
-        pos=0
-        while pos<len(ment):
-            if ment[pos] in beginning:                      # word may begin
-                done=0; gword=""
-                while done==0:                              # build current word
-                    pos+=1                                  # next position in word
-                    thisword=thisword+ment[pos]             # add character to current word
-                    for term in termination:
-                        if term in thisword:                # we added a full termination
-                            done=1                          # word ended
-                            if term == ".g=":               # g value must be transferred
-                                pos2=pos
-                                while ment[pos2]!="," and ment[pos2]!=")":  # to the end of word with g value
-                                    pos2+=1
-                                gword = ment[pos-2:pos2]    # add .g=0 part
-                            thisword = thisword[0:len(thisword)-len(term)]  # remove termination
-                    if done==0 and "(" in thisword:         # not a word but compound concept like A( or AND(
-                        done=1; thisword=""                 # no word
-                if len(thisword)>0:
-                    wordlist.append([thisword.strip(),gword])   # store result
-                thisword=""
-            else: pos+=1                                    #not a beginning: move one position
-        return wordlist
-
-
-    def reset_Currentmapping(self,oldment):                 # delete words from currentmapping that are not in the current row
-        owords=self.get_Wordinment(oldment)                 # words of current row
-        curmap = self.currentmapping.copy()
-        owordlist=[]
-        for ow in owords:
-            owordlist.append(ow[0])                         # current words in sentence
-        for mw in curmap:
-            if mw not in owordlist:                         # keep only words of old sentence
-                del self.currentmapping[mw]                 # delete words not in old sentence
-        
-    def create_Branchlist(self):
-        if gl.WM.branch==[]:            #no branching happened so far
-            br=[gl.WM.ci]               #last concept is the only leaf
-        else:
-            br=gl.WM.branch[:]          #stored branches copy
-        return br
-
-    def mapping_Insert(self,qmentalese):                    #insert some D(x) relations before question to force mapping
-        #this is needed for any question if we want to do mapping for some words of the question
-        #otherwise questions are skipped for reasoning and thereby for mapping too
-        toinsert=""
-        gl.reasoning.question_specific_words=[]
-        wordlist=self.get_Wordinment(qmentalese[:])         #get all words of the question
-        for word in wordlist:
-            maprule=gl.WM.get_Maprules(-1,word[0])
-            if maprule!=[]: toinsert="D(" + word[0]+word[1] + ")"      #assemble D(x) using g-value as well
-            if toinsert!="":                                    #D(x) to be inserted
-                gl.WM.branch_read_concept(0,[toinsert],gl.test)       #insert on all living branches
-                gl.log.add_log(("QUESTION WORD added for mapping on index:",gl.WM.ci," concept added:",gl.WM.cp[gl.WM.ci].mentstr))
-                toinsert=""
-                branches = self.create_Branchlist()             #add gl.WM.ci if needed
-                for br in branches:                             #all living bfranches where D(x) has been added
-                    gval=gl.WM.cp[br-1].g                       # g value of word
-                    if gval == gl.args.gmin:                    # gvalue=0, specific
-                        gl.reasoning.question_specific_words.append([word[0],br-1]) # record the index of g=0 word
-            
-    def insert_Drel(self,starti,qmentalese):                # insert a D(x) relation to force mapping, by calling mapping_Insert
-        nqflag=False                                        # no D(x) insertion is default
-        if qmentalese!="":                                  # means that next row is a question
-            nqflag=True
-            if starti==gl.WM.ci:                            # no other reasoning necessary
-                self.mapping_Insert(qmentalese)             # insert D(x)
-                nqflag=False                                # do not insert again
-        return nqflag
+ 
+    #def deleted_reset_Currentmapping(self,oldment):         # delete words from currentmapping that are not in the current row
+    #def deleted_create_Branchlist(self):
+    #def deleted_mapping_Insert(self,qmentalese):                    #insert some D(x) relations before question to force mapping
+    #def deleted_insert_Drel(self,starti,qmentalese):                # insert a D(x) relation to force mapping, by calling mapping_Insert    
+    #def deleted_add_Samestring(self,wm_pos,thisbranch):           # update samestring dict with wm_pos and return same concepts to wm_pos
     
+    def kill_Branch(self,wmi,reason):                             # kill the WM version wmi (given by index)
+        gl.log.add_log(("BAD BRANCH KILLED db=",wmi," WM value was:",gl.VS.wmlist[wmi].branchvalue," ",reason," All living versions:",gl.VS.wmliv.keys()))
+        print ("BAD BRANCH KILLED db=",wmi," WM value was:",gl.VS.wmlist[wmi].branchvalue," All living versions:",gl.VS.wmliv.keys())
+        gl.WM.printlog_WM(gl.VS.wmliv[wmi])
+        del gl.VS.wmliv[wmi]
+
+    def compare_Branches(self):                             # find bad branches to be killed
+        brmax = 0 ; maxvs = 0
+        for liv in gl.VS.wmliv:                             # all living WMs - get best version
+            db = gl.VS.wmlist[liv]
+            if db.branchvalue > brmax:                      # better than all so far
+                brmax = db.branchvalue
+                maxvs = liv                                 # this is the best branch
+        kill_limit = gl.args.branch_kill[brmax]             # limit set in branch_kill parameter table
+        tokill=set()                                           # set to hold versions to kill
+        for liv in gl.VS.wmliv:                             # all living WMs - get best version
+            db = gl.VS.wmlist[liv]
+            if db.branchvalue < kill_limit:                 # version worse than kill limit
+                if gl.d==1: print ("KILL db=",db.this,"value=",db.branchvalue,"limit:",kill_limit)
+                tokill.add(liv)                             # add to list of those to kill
+        if len(tokill)==len(gl.VS.wmliv):                   # all of them would be killed
+            tokill.remove(maxvs)                            # the best is not killed
+        for killwm in tokill:
+            self.kill_Branch(killwm,"Reason: low branch value.")  # kill this version
+        gl.WM = gl.VS.wmliv[maxvs]                          # gl.WM gets reassigned to maxvs, because it might have been killed.
     
-    def add_Samestring(self,wm_pos,thisbranch):           # update samestring dict with wm_pos and return same concepts to wm_pos
-        s=timer()
-        sameset=set()
-        thisbrset=set(thisbranch)
-        for leaf in gl.WM.brelevant:
-            try: ment_dict=gl.WM.samestring[leaf]         #dict of mentalese streings
-            except:
-                gl.WM.samestring[leaf]={}                 # leaf is new, dict is created empty
-                ment_dict={}
-            thisment=gl.WM.cp[wm_pos].mentstr
-            if thisment in ment_dict:                    #this is not the first such concept
-                onthisbr=set(ment_dict[thisment]) & thisbrset    #list of same mentalese on the branch of wm_pos
-                sameset.update(onthisbr)                # sameset has all conceps with same mentalses as wm_pos
-                sameset.discard(wm_pos)                 # remove wm_pos itself from the set of same concepts
-                if wm_pos not in ment_dict[thisment]:
-                    ment_dict[thisment].append(wm_pos)
-            else:
-                gl.WM.samestring[leaf][thisment] = [wm_pos]   #add the thisment key, and wm_pos as first value
-        gl.args.settimer("reason_003: add_Samestring",timer()-s)
-        return sameset
+    def evaluate_Branch(self,db,wmpos):                     # update consistency of gl.WM
+    #    allbr = self.select_Relbr(wmpos)                       #get all branches where we have wmpos
+        consi = db.cp[wmpos].c                                  # consistency of this concept
+        oldvalue = db.branchvalue                               # current consistency of branch
+        db.branchvalue = gl.args.branchvalue[oldvalue][consi]   # new branchvalue = by old value and current consistency
+        if gl.d==2: print ("EVALU db=",db.this,"wmpos=",wmpos,"consi oldvalue",consi,oldvalue,"new value:",db.branchvalue)
+        if oldvalue != db.branchvalue:                          # branch value changed
+            gl.log.add_log(("BRANCH VALUE CHANGE db=",db.this," WM value was:",oldvalue," new value:",db.branchvalue," based on concept:",wmpos," consistency=",db.cp[wmpos].c))
+                                 
+    def vs_perform_Reason(self, qflag):                     # perform reasoning on all wm versions
+        s=timer()                                           # qflag shows this is a question
+        for liv in gl.VS.wmliv:                                     # all living WMs
+            db = gl.VS.wmlist[liv]
+            storewm = gl.WM; gl.WM = db                             # set gl.WM to current db
+            if qflag==1 and gl.act.act_qw==1:                       # this is a qquestion, and activation on question necessary
+                gl.reasoning.vs_recent_Activation()                 # activate on question
+            toprocess = db.activ_new.copy()                         # concepts to process in reasoning: those that have been newly activated
+            processed = set()                                       # from toprocess, these are processed in this round
+            while len(toprocess)>0:                                 # continue reasoning while there is any concept to process
+                for wm_pos in sorted(toprocess):                    # this round, toprocess does not change
+                    if db.cp[wm_pos].kbrules_filled == 0:           # not yet applied
+                        self.vs_createConceptRules(db,wm_pos)       # collect matching rule fragments
+                        self.convert_KBrules(wm_pos,1)              # converts the rule fractions in kb_rules to [imlevel,condition] list
+                                                                    # also calls the addition of reasoned concept to WM if condition is not AND
+                        db.cp[wm_pos].kbrules_filled = 1            # this wmpos is now processed
+                    reason_due = (db.activ-set([wm_pos])) - db.cp[wm_pos].reasoned_with  # reasoning to be done with all activ, except itself, and those already done
+                    for old in reason_due:                          # iterate over concepts active and not yet used with wm_pos
+                        cnew=db.cp[wm_pos]; cold=db.cp[old]
+                        if db.cp[old].kbrules_filled==1:                    # only for concepts that have kb_rules filled
+                            #if gl.d==1: print ("VSPERF 0 wmpos old",wm_pos,old,"old rel:",db.cp[old].relation,"kbrules old",db.cp[old].kb_rules,"wmpos kbrules",db.cp[wm_pos].kb_rules)
+                            if db.cp[old].kb_rules!=[] or cnew.relation in [3,4] or cold.relation in [3,4]:  # old has the rule, or it is C, D relation
+                                self.replaced=[]                            # initialize replacement flag
+                                gl.args.total_reasoncount+=1                # reasoning attempt
+                                self.enter_RuleMatch(wm_pos,old,1)          # 1.completes rule_match list  2. runs reasoning
+                                db.cp[wm_pos].reasoned_with.add(old)        # remember this pair was reasoned about
+                                db.cp[old].reasoned_with.add(wm_pos)        # remember this pair was reasoned about  
+                    self.evaluate_Branch(db,wm_pos)                 # update consistency for db
+                    processed.add(wm_pos)                           # remember this was processed
+                processed = processed | toprocess                   # add concepts that were processed in this round (toprocess) to all processed
+                toprocess = db.activ_new - processed                # concepts that have been activated while reasoning (reasoned concepts)
+            db.activ_new = set()                                # resoning completed in this db, no activation is "new"
+            db.activ = db.activ - db.activ_qu                   # remove from activated concepts those that were activated due to question      
+            db.activ_qu = set()                                 # resoning completed in this db, clear activations based on question
+            gl.WM = storewm                                     # restore gl.WM
+        self.compare_Branches()                                 # after reasoning complete, we try to kill some bad branches
+        gl.args.settimer("reason_000: perform_reason", timer()-s)       # measure execution time
 
-    def get_Usedconc(self,latest):                          # return input, or wmuse of input
-        wmu = [latest]                                      # if this is input
-        if len(gl.WM.cp[latest].wmuse)>0:
-            if gl.WM.cp[latest].wmuse!=[-1] and gl.WM.cp[latest].wmuse!=[-2]:
-                wmu = gl.WM.cp[latest].wmuse[:]
-        return wmu
-
-    def inhibit_Update(self,latest,new):                    # inhibit duplicate dimension update
-        inhibit=0
-        latest_wmu=self.get_Usedconc(latest)                # earlier occurence used these concs
-        new_over = list(gl.WM.cp[new].override)
-        if len(latest_wmu)>0 and len(new_over)>0:
-            if sorted(latest_wmu)[-1] in new_over:          # the most recent used concept of latest is used in overriding new
-                inhibit=1                                   # inhibit dimension override of new, it would be duplicate override
-        return inhibit
-
-    def update_Dimensions(self,latest,new):                 # update p,exception,known,c,cons_avg values for new
-        if gl.WM.cp[new].count>1 and gl.WM.cp[new].count<gl.args.avg_lookback:
-            div = float(gl.WM.cp[new].count)
-        else: div = float(gl.args.avg_lookback)             # how to calculazte average, with maximum lookback
-        gl.WM.cp[new].cons_avg = float(gl.WM.cp[latest].cons_avg*(div-1))/div + float(gl.WM.cp[new].c)/div     # calc average consistency
-        k1 = gl.WM.cp[latest].known; k2 = gl.WM.cp[new].known
-        inhibit_over = self.inhibit_Update(latest,new)      # inhibit duplicate overrides
-        # known update:
-        if k2>=k1:
-            bigk=k2
-            p1 = gl.WM.cp[new].p; p2 = gl.WM.cp[latest].p
-        else:
-            bigk=k1                                             # bigger known value
-            p2 = gl.WM.cp[new].p; p1 = gl.WM.cp[latest].p       # p1 is the better known p
-        if inhibit_over==0:
-            conavg = int(gl.WM.cp[new].cons_avg + 0.5)              # rounded average consistency
-            try:
-                final_k = gl.args.known_final[bigk][conavg]         # calculate updated known value
-                gl.WM.cp[new].known = final_k
-            except: gl.log.add_log(("ERROR in update_Dimensions (reason.py). known_final table read failed, indices:",bigk," ",conavg," at concept",new))
-        # p update:
-        if gl.args.upd_pvalue==1 and inhibit_over==0:
-            try:
-                kadv = gl.args.k_advan[k1][k2]                  # k advantage
-                pfinal = gl.args.pe_final[kadv][p1][p2]         # final p value
-                pold = gl.WM.cp[new].p
-                gl.WM.cp[new].p = pfinal                        # update p value
-                usedc = self.get_Usedconc(latest)               # used concepts of latest
-                gl.WM.cp[new].override = gl.WM.cp[new].override | (set(usedc) - set(gl.WM.cp[new].wmuse))   # remember which base concepts were involved in the override
-                if pfinal != pold : 
-                    gl.log.add_log(("PVALUE OVERRIDE in update_Dimensions, on conc:",new," ",gl.WM.cp[new].mentstr," based on old conc:",latest," ",gl.WM.cp[latest].mentstr," original p:",pold," new p:",pfinal," kadv:",kadv," p1 p2:",p1," ",p2))
-                    gl.WM.track_Concept(new," Dimensions OVERRIDE. old p="+str(pold)+". Based on earlier occurence:"+str(latest)+".")   # track used concepts
-            except: gl.log.add_log(("ERROR in update_Dimensions (reason.py): k_advan table or pe_final table read failed. index k,p:",k1," ",k2," ",p1," ",p2," at concept:",new))
-            
-            
-    def manage_Consistency(self,new,same_list):                 # calculate consistency and occurence
+    def vs_recent_Activation(self):                   # we are at question, We activate additional concepts.
         s=timer()
-        latest=0
-        if gl.WM.cp[new].relation!=1:                           # not a word
-            for old in same_list:                               # all concepts that have same mentalese. TO DO: involve KB.
-                if new!=old and gl.WM.cp[old].known>0 and old>gl.WM.cp[new].compared_upto:   # for known concepts, that were not compared yet
-                    gl.WM.cp[new].compared_upto=old             # remember where we are with comparison
-                    match=0
-                    if old in gl.WM.cp[new].same:  match=1      # if old in same list then they match
-                    else:
-                        match=gl.WM.rec_match(gl.WM.cp[new],gl.WM.cp[old],[new,old])    # concepts compare
-                        if match==1: gl.WM.cp[new].same.add(old)   #record in same list
-                    if match==1:
-                        latest=old                              # latest matching concept
-                        index1 = int(gl.WM.cp[new].p)
-                        index2 = int(gl.WM.cp[old].p)
-                        cons = gl.args.consist[index1][index2]  # read consistency table
-                        if cons<gl.WM.cp[new].c:                # consistency is worse than stored
-                            gl.WM.cp[new].c=cons                # we store the top inconsistency per concept, since compared_upto
-        else: latest = same_list[-1]                            # for words
-        if latest>0:                                            # we had some occurence earlier: update counter
-            gl.WM.cp[new].count = gl.WM.cp[latest].count+1      # count occurence
-            if gl.WM.cp[latest].relation!=1:                    # not a word
-                more_general=gl.WM.based_General(new,latest)    # is one of these based on more general concs?
-                if more_general==0:                             # nothing more general
-                    self.update_Dimensions(latest,new)          # update p etc based on latest and new occurence
-                if more_general==1:                             # new is based on more general
-                    if gl.WM.cp[new].known>0: gl.log.add_log(("KNOWN OVERRIDE (in manage_Consistency) to zero because old occurence was more special. on new conc:",new," ",gl.WM.cp[new].mentstr," based on old conc:",latest," ",gl.WM.cp[latest].mentstr))
-                    gl.WM.cp[new].known=0
-                if more_general==2:                             # new based on more special
-                    if gl.WM.cp[latest].known>0: gl.log.add_log(("KNOWN OVERRIDE (in manage_Consistency) to zero because new occurence is more special. on old conc:",latest," ",gl.WM.cp[latest].mentstr," based on new conc:",new," ",gl.WM.cp[new].mentstr))
-                    gl.WM.cp[latest].known=0
-        gl.args.settimer("reason_020: manage_Consistency",timer()-s)
-                        
-            
-    def perform_Reason(self, starti, lasti, nqflag, next_question, recent_activ=False):
-        s=timer()
-        for wm_pos in range(starti,lasti):
-            if wm_pos>gl.reasoning.reason_processed or recent_activ==True: # not yet processed for reasoning or recent activation
-                gl.reasoning.reason_processed=wm_pos        # set as processed 
-                self.brancho = [branch.Branch(wm_pos)]      # store the branch object
-                thisbranch = gl.WM.get_previous_concepts(wm_pos)   #all concepts in the branch
-                if recent_activ==False:                      # not activation but the next input
-                    gl.WM.thispara.append(wm_pos)           # add concept to this paragraph
-                gl.WM.brelevant = set(gl.WM.select_Relevant(wm_pos))  # collect branches on which wm_pos is present
-                self.thisactiv = list(gl.act.get_Thisactiv(wm_pos))   # list of currently activated concepts
-                self.thisactiv.sort(key=int, reverse=True)  # backward only needed while we have cnum-=1
-                thisreason=self.thisactiv                   # only needed while we want to switch back simply to thisbranch
-                if len(gl.WM.brelevant)!=0:                 # reason only if wm_pos is on a living branch
-                    same_list=self.add_Samestring(wm_pos,thisbranch)   # get the list of same mentalese concepts, and add wm_pos to dict
-                    same_list=sorted(list(same_list))
-                    if gl.WM.cp[wm_pos].known!=0 and len(same_list)>0:
-                        self.manage_Consistency(wm_pos,same_list)   # update consistency values, occurence etc
-                    if recent_activ==False: self.brancho[0].perform_Branching(thisbranch)         # perform mapping
-                    if gl.WM.cp[wm_pos].kbrules_converted==0:  # not yet applied
-                        self.convert_KBrules(wm_pos,1)      # converts the rule fractions in kb_rules to [imlevel,condition] list
-                                                            # also calls the addition of reasoned concept to WM if condition is not AND
-                    cnum = len(thisreason)-1                # counter backwards
-                    while cnum>0:                           # for all old concepts in branch try to get a match for rules with multiple condition
-                        if gl.WM.cp[wm_pos].known!=0 and gl.WM.cp[thisreason[cnum]].known!=0:    # do not reason if concept is not known
-                            if thisreason[cnum] < wm_pos or recent_activ==True:   # reason on earlier concepts, or on activation
-                                if not (wm_pos in self.processed_pairs and thisreason[cnum] in self.processed_pairs[wm_pos]):  # not yet processed
-                                    if gl.WM.cp[wm_pos].relation!=1 and gl.WM.cp[thisreason[cnum]].relation!=1: # not a word
-                                        ciremember = gl.WM.ci
-                                        gl.args.total_reasoncount+=1
-                                        self.replaced=[]    # initialize replacement flag
-                                        self.enter_RuleMatch(wm_pos,thisreason[cnum],same_list,1)   # 1.completes rule_match list  2. runs reasoning
-                                        gl.args.success_reasoncount += gl.WM.ci-ciremember
-                        cnum-=1
-                    self.brancho[0].evaluate_Branches(wm_pos)       # update consistency for branches thathave wm_pos included
-        if nqflag: self.mapping_Insert(next_question)       # insert D(x) before questions on relevant branches
-        self.brancho[0].compare_Branches()                  # after reasoning complete, we try to kill some bad branches
-        gl.args.settimer("reason_000: perform_reason", timer()-s)     # measure execution time
-        
-    def recent_Activation(self,question):                   # we are at question, We activate and perform reasoning.
-        s=timer()
-        wordlist = self.get_Wordinment(gl.WM.cp[question].mentstr)  # get words from question mentalese
-        gl.WM.brelevant = set(gl.WM.select_Relevant(question))      # branches where question is present
-        gl.act.activate_Fromwords(wordlist)                 # activation based on words of question
-        ciremember = gl.WM.ci
-        for leaf in gl.WM.new_activ:                        # leafs where concepts are now activated
-            for actnew in sorted(list(gl.WM.new_activ[leaf])):  # activated concepts
-                self.perform_Reason(actnew,actnew+1,False,None,recent_activ=True)  # perform reasining on newly activated concept
-        while gl.WM.ci>ciremember:       # something was added. Reason on those that was added.
-            endiremember=gl.WM.ci
-            gl.WM.set_General(ciremember)                   # compare added concepts with entire WM to find more general/special concepts
-            self.createConceptRules(ciremember,gl.WM.cp.__len__())   # add initial kb_rules
-            self.perform_Reason(ciremember+1,len(gl.WM.cp),False,None)  # perform reasoning on these
-            ciremember=endiremember
+        question = gl.WM.last_question                              # locate the question
+        wordlist = gl.WM.get_Wordinment(gl.WM.cp[question].mentstr)  # get words from question mentalese
+        gl.act.vs_activate_Fromwords(wordlist)                      # activation based on words of question
         gl.args.settimer("reason_001: recent_Activation",timer()-s)
+       
         

@@ -9,7 +9,8 @@ class Arguments:
         self.pdefault=4         #default value of p
         self.pdef_unknown=2
         self.pgranu = 4         # granularity for p, pgranu+1 discrete values from 0 set pgranu=pmax for p=0,1,2,....pmax
-        self.cmax = 4           # max for consistency
+        self.cmax = 5           # max for consistency
+        self.bmax = 5           # max for branch consistency
         self.pmax = 4           # maximum p value. Like 1 for p=0..1, or 4 for p=0,1,2,3,4.
         self.rmax = 4           # maximum relevance
         self.rmove = 3          # limit from which concept is moved to KB
@@ -22,13 +23,14 @@ class Arguments:
         self.kmax = 4           # concept known max value
         self.eachmax = 4        # concept each property: level of exceptions
         self.timecheck = {}      # time consumption mapped to function name
+        self.total_reasoncount = 0  # debug. all reasoning attempts.
+        self.success_reasoncount=0  # debug. reasoned concepts.
+
         self.debug = 0          # debug mode
         self.loglevel = 1       # level of logging. 0 is least log.
         self.upd_pvalue = 1     # switch on p (etc) value update when contradicting, in update_Dimensions
-        self.total_reasoncount = 0  # debug. all reasoning attempts.
-        self.success_reasoncount=0  # debug. reasoned concepts.
+        self.paragraph_tokb = 1 # which previous paragraph to move to kb. 0 means no move to kb.
         
-        i=1.1                   # to be used instead of 1
         self.im = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 3, 3], [2, 2, 2, 3, 4]]         # IM rule
         self.kp_im = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 1, 1], [0, 0, 1, 2, 2], [0, 0, 1, 2, 2]]      # known conversion for IM rule, addressed by p1,p2        
         self.can = [[0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 1, 2, 2, 2], [0, 1, 2, 3, 3], [0, 1, 2, 3, 4]]        # can rule
@@ -46,9 +48,9 @@ class Arguments:
         self.degrade = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [1, 1, 2, 2, 3], [1, 1, 2, 3, 3]]    # degraded class
         # pclass is the matrix for class reasoning. C(%1,%2)p1 and %X(%2,%3)p2 -> %x(%2,%3)pclas, pclass[p2,p1]
         self.pxor = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 1, 1], [2, 2, 2, 1, 0]]
-        self.consist = [[4,4,4,3,0],[4,4,4,3,3],[4,4,4,4,4],[3,3,4,4,4],[0,3,4,4,4]]        #consistency conversion for pair of concepts
-        self.branchvalue = [[0,0,0,0,0],[0,1,1,1,1],[0,2,2,2,2],[0,2,3,3,3],[0,3,4,4,4]]   #consistency conversion for entire branch
-        self.branch_kill = [0,1,2,3,3]   # index = best branch value. output=limit below which branch is killed.
+        self.consist = [[4,4,3,3,2,0],[3,3,4,3,2,1],[3,3,4,3,3,3],[3,3,3,4,3,3],[1,2,3,3,4,3],[0,2,3,3,3,4]]        #consistency conversion for pair of concepts
+        self.branchvalue = [[0,0,0,0,0,0],[0,1,1,1,1,1],[0,1,2,2,2,3],[0,2,3,3,4,4],[0,1,2,2,3,4],[0,1,2,3,4,5]]   #consistency conversion for entire branch
+        self.branch_kill = [0,1,2,2,3,4]   # index = best branch value. output=limit below which branch is killed.
         self.pmap = {
             "im":self.im, "pide1":self.pide1,"spec":self.spec,"pide2":self.pide2,"pclass":self.pclass,"pxor":self.pxor,
             "idedegrade":self.idedegrade, "degrade":self.degrade, "pnot1":self.pnot1, "pand":self.pand,
@@ -76,7 +78,7 @@ class Arguments:
 
         self.consist_final = [[4,4,3,2,0],[4,4,4,3,0],[4,4,4,4,3],[4,4,4,4,4],[4,4,4,4,4]]  # final consistency. Top: final exception. last: pdiff.                                                                           # TO DO: take input consistency into account !!
 
-        self.known_final = [[0,0,0,0,0],[0,1,1,1,1],[1,1,1,2,2],[1,2,2,2,3],[1,2,2,3,4]]  # final klnown value. top:higher known value. next: avg consistency
+        self.known_final = [[0,0,0,0,0,0],[0,1,1,1,1,1],[1,1,1,2,2,2],[1,2,2,2,3,3],[1,2,2,3,4,4]]  # final klnown value. top:higher known value. next: avg consistency
 
 
         self.rcode = {
