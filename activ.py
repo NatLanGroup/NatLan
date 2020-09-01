@@ -10,15 +10,25 @@ class Activate:
         self.act_secondround=0                  # working but explodes. 1 means second round of activation based on words of 1st round.
         self.secondround_set = set()            # remember concepts in second round activation
 
-    def activate_Conc(self,conc,leaflist):      # activate a single concept on several leafs
+    def delete_activate_Conc(self,conc,leaflist):      # activate a single concept on several leafs
         gl.WM.cp[conc].acts = gl.args.amax      # activation level set to maximum
         for leaf in leaflist:
             gl.WM.branchactiv[leaf].add(conc)   # add conc to the set of activated concepts per branch
 
-    def vs_activate_Conc(self,conc,db):         # activate a single concept in db, a wm or the KB
-        db.cp[conc].acts = gl.args.amax         # activation level set to maximum
-        db.activ.add(conc)                      # add conc to the set of activated concepts
-        db.activ_new.add(conc)                  # add conc to the set of newly activated concepts
+    def vs_activate_Conc(self,conc,db):         # activate a single concept in db (WM)
+        if db.name=="WM":
+            db.cp[conc].acts = gl.args.amax         # activation level set to maximum
+            db.activ.add(conc)                      # add conc to the set of activated concepts
+            db.activ_new.add(conc)                  # add conc to the set of newly activated concepts
+        # for KB, we always need to do activation with regard to a specific WM, not just in general.
+        
+    def activate_inKB(self,db,curr,around):         # activate concepts for curr in KB beyond relevance limit
+        if db.cp[curr].kblink!=[]:
+            kbi = db.cp[curr].kblink[0]
+            wmapto = -1
+            for child in gl.KB.cp[kbi].child:
+                if gl.KB.cp[child].relevance >= gl.args.kbactiv_limit[around] and gl.KB.cp[child].known>0: # relevance limit for the round met
+                    db.kbactiv.add(child)           # add this KB concept to the list of KB-activated concepts with regard to this WM
 
     def get_Thisactiv(self,wmpos):              # collect all activated concepts from relevant branches
         thisact=set()
@@ -42,6 +52,7 @@ class Activate:
                     if livewm.ci>con: livewm.cp[con].acts=0   # deactivate
                 livewm.activ = set()                # activated set empty
                 livewm.activ_new = set()            # activated set empty
+                livewm.kbactiv = set()              # in KB, activated set empty
             if gl.d==6:print ("UPD PARA now wm= "+str(livewm.this)+" now activ="+str(livewm.activ)," prevpara",livewm.prevpara)
                         
 
@@ -68,19 +79,19 @@ class Activate:
                             self.secondround_set.discard(curri)  # remove
             curri=gl.WM.cp[curri].previous                    # up in the branch
 
-    def enable_Word(self,current,word):                     # check that this word position is enabled for activation
+    def enable_Word(self,db,current,word):                     # check that this word position is enabled for activation
         act_ok=1
-        rel=gl.WM.cp[current].relation
+        rel=db.cp[current].relation
         if rel in gl.args.noactivate_fromword:              # some positions for this relation are disabled
             act_ok=0; pari=0                                # default is disbale
-            for par in gl.WM.cp[current].parent:            # check all parents
+            for par in db.cp[current].parent:               # check all parents
                 if pari not in gl.args.noactivate_fromword[rel]:   # this position is not disabled
-                    if word in gl.WM.cp[par].mentstr:       # this enabled parent has the word of activation
+                    if word in db.cp[par].mentstr:       # this enabled parent has the word of activation
                         act_ok=1                            # ebable
                 pari+=1
         return act_ok
         
-    def vs_activate_Fromwords(self,wordlist):                  # activate concepts based on words (used for questions)
+    def vs_activate_Fromwords(self,wordlist,db,pos):                  # activate concepts based on words (used for questions)
         # ?? only the top level needs activation where p!=2. Parents dont.
         s=timer()
         current = gl.WM.ci
@@ -88,13 +99,25 @@ class Activate:
             if gl.WM.cp[current].p!=2 and gl.WM.cp[current].known!=0 and gl.WM.cp[current].relation!=1:   # makes sense, not a word
                 for actword in wordlist:                            # check eachg word
                     if actword[0] in gl.WM.cp[current].mentstr:     # actword present in mentalese
-                        activation_ok = self.enable_Word(current,actword[0])   # check if this is enabled
+                        activation_ok = self.enable_Word(gl.WM,current,actword[0])   # check if this is enabled
                         if activation_ok == 1:                      # this activation is enabled
                             if current not in gl.WM.activ:          # not activated so far
                                 gl.WM.activ_qu.add(current)         # remember this was activated due question
                             gl.WM.activ_new.add(current)            # activate concept current
                             gl.WM.activ.add(current)
             current=current-1                                       # upwards in this WM
+        kblinklist=[]
+        gl.WM.visit_KBlinks(gl.WM,pos,kblinklist)                   # collect the kblinks: these parents are in KB
+        #print ("ACTFROMW kblinklist:",kblinklist,"pos:",pos,gl.WM.cp[pos].mentstr)
+        for kbcon in kblinklist:                                    # concepts in KB that occur in pos as a parent on any level
+            for kbch in gl.KB.cp[kbcon].child:                  # direct children only (limitation)
+                if gl.KB.cp[kbch].known!=0 and gl.KB.cp[kbch].relevance>=gl.args.kbactiv_qlimit[1]:   # relevance above questionb threshold
+                    gl.WM.kbactiv.add(kbch)                     # activate in KB
+                    gl.WM.kbactiv_new.add(kbch)                 # activate in KB
+            if gl.KB.cp[kbcon].relation!=1:                         # not a word: activate itself too
+                if gl.KB.cp[kbcon].known!=0 and gl.KB.cp[kbcon].relevance>=gl.args.kbactiv_qlimit[1]:   # relevance above questionb threshold
+                    gl.WM.kbactiv.add(kbcon)                     # activate in KB
+                    gl.WM.kbactiv_new.add(kbcon)                 # activate in KB
         gl.args.settimer("activ_100: activate_Fromword",timer()-s)
 
 

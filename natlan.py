@@ -1,24 +1,25 @@
 import sys, gl, conc, wrd, testing, reason, branch, activ
 from timeit import default_timer as timer
 
-# VS MIGRACIOS JEGYZETEK
-# 1. KESZ: finaladd_Concept-ben search_fullmatch hívása egyelőre ki van kommentelve. Javitani kell.
-      # KESZ: eloszor .same mezot javiotani
-#     # KESZ: search_fullmatch-ben check_Contradiction ki van kommentelve
-# 2. KESZ: process_testinput-ban reasoning.recent_Activation hívása ki van kommentelve. Javítani, miután C-reasoning ellenőrizve lett.
-# 3. KESZ: C-reasoning nincs letesztelve, átalakítva.
-# 4. KESZ: AND() mint feltétel az új vs_perform_reason-ben kezelve. 
-# 5. KESZ: IM reasoning nincs meg tesztelve
-# 6. KESZ: manage_Consistency: athelyezve add_concept-be
-# 7. KESZ: move_rule , move_relevant in process_testinput: athelyezni
-# 8. KESZ: rossz es duplikalt version megszuntetese
-# 9. KESZ: General rule 
+# VS MIGRACIO, VERSIONS BEVEZETESE
 # 10. KESZ: general feldolgozas - atrakni  rogton add_concept utan ugyanugy mint a same feldolgozast
-# ITT TARTOK: copydata_KB -t egyberakni a transform_kb-val, és még törlés előtt, kezelni ha több bekeztdésből újra copizunk.
-# törlés pedig csak utána. Közben elegendő lesz a remove-ra várókat összeszedni egy listában. Abban a listában lehet majd visszafele menni.
-# az adatmásolást is rendezetten, visszafele kell csinálni !
-# hatra van meg a bekezdes utan a branch-ek mindegyikenek törlése a legjobb kivételével.
-
+# PARAGRAPH mozgatasa KB-be:
+# 12. KESZ: a bekezdes vegenel a branch-ek mindegyikenek törlése a legjobb kivételével.
+# MAPPING:
+# 13. KESZ: utolso conceptre mappeles +1 pontot kapjon
+# 14. KESZ: a C(he,person) rule-lal valo konzisztencia nincs elegge juztalmazva?   wmuse-ba betenni a D(he,ploceman) conceptet !!!!
+# REASONING WITH KB:
+# 16. KESZ: KB-ben levo aktivalt concepttel reasoneljen. 
+# 21. KESZ: new: KB  old: KB  (CDrel feldolgozas). CRRel-ben a parenteket KB-rol WM-re kell alakitani. Meg tzesztelni !
+# 22. KESZ a KB-ben most mar van kerdes alapu aktivalas.
+# 23. KESZ: process_Anyrel esetben meg nem jo.
+# KESZ: probléma: kbrules_filled és reasoned_with érvényét veszti ha jön egy új rule!
+# 24. KESZ: megoldás:  Minden aktivált conceptre,  ujra kell fusson a createconceptrules és a convert_kbrules. 
+# 25. KESZ: kb_rules töltése a vs_perform_reasonben minding megtörténik KB-ben is. A reasoning (UniConcept) KB esetben is megy.
+# IM reasonminggel meg nem foglalkoztam KB esetre. 
+# a rule alapu reasoningggel meg nem foglalkoztam KB esetre.
+# reverse_Drel KB eseten nincs meghivva.
+# lehetne a KB-ben spreading activation, es lehetne több activation round, lsd gl.py: self.kbactiv_limit
 
 
 def process_testinput (tf):                     # run mentalese comprehension, input is the Testinput object
@@ -67,20 +68,21 @@ if gl.args.argnum == 2:
     # OUTPUTS AFTER PROCESSING HAS FINISHED
     
     i=0
-    print ("WM list: "+str(gl.VS.wmlist)+" WM live: "+str(gl.VS.wmliv.keys()))
+    print ("WM list count: "+str(len(gl.VS.wmlist))+" WM live: "+str(gl.VS.wmliv.keys()))
     for id,wmitem in enumerate(gl.VS.wmlist):           # all wms created
-        print ("WM id:"+str(id)+" WM end:"+str(wmitem.ci)+" parent WM:"+str(wmitem.pawm)+" this wm id:"+str(wmitem.this)+" WMvalue="+str(wmitem.branchvalue)+" last conc used:"+str(wmitem.last)+" activated:"+str(wmitem.activ))
-        for i,conc in enumerate(wmitem.cp): print (str(i)+ " "+conc.mentstr+" p="+str(conc.p)+" c="+str(conc.c)+" parents="+str(conc.parent)+" children="+str(conc.child)+" same="+str(conc.same)+" general="+str(conc.general)+" known="+str(conc.known)+" g="+str(conc.g)+" wmuse="+str(conc.wmuse)+" kblink:"+str(conc.kblink)+" kbrules:"+str(conc.kb_rules))
+        if id in gl.VS.wmliv:                   # for living wm only
+            print ("WM id:"+str(id)+" WM end:"+str(wmitem.ci)+" parent WM:"+str(wmitem.pawm)+" this wm id:"+str(wmitem.this)+" WMvalue="+str(wmitem.branchvalue)+" last conc used:"+str(wmitem.last)+" activated:"+str(wmitem.activ))
+            for i,conc in enumerate(wmitem.cp): print (str(i)+ " "+conc.mentstr+" p="+str(conc.p)+" c="+str(conc.c)+" parents="+str(conc.parent)+" children="+str(conc.child)+" same="+str(conc.same)+" general="+str(conc.general)+" known="+str(conc.known)+" g="+str(conc.g)+" wmuse="+str(conc.wmuse)+" kblink:"+str(conc.kblink)+" kbrules:"+str(conc.kb_rules)+" rule_match:"+str(conc.rule_match))
 
     i=0
     print ("KB list:")
     for wmi in gl.KB.cp:
-        print (i,wmi.mentstr,"relation",wmi.relation,"parent",wmi.parent,"child",wmi.child,"p value",wmi.p,"known",wmi.known,"same",wmi.same,"general",wmi.general,"wmuse:",wmi.wmuse,"kb_rules:",wmi.kb_rules)
+        print (i,wmi.mentstr,"parent",wmi.parent,"p=",wmi.p,"r=",wmi.relevance,"known",wmi.known,"same",wmi.same,"general",wmi.general,"wmuse:",wmi.wmuse,"kb_use:",wmi.kb_use,"kb_rules:",wmi.kb_rules," rule_match:",wmi.rule_match,"kbrules_upto:",wmi.kbrules_upto)
         i+=1
 
     gl.test.testf.close()
     gl.test.resultf.close()
-    print ("branches:",gl.WM.branch," branchvalue:",gl.WM.branchvalue)
+    print ("branches:",gl.VS.wmliv.keys(),"this WM:",gl.WM.this," branchvalue:",gl.WM.branchvalue)
     
     print ("TIME USAGE REPORT IN BPS FOLLOWS.",end-s, " s total run time.")
     for t in sorted(gl.args.timecheck,reverse=False):
@@ -89,7 +91,7 @@ if gl.args.argnum == 2:
     gl.test.check_result()                  # compare _base to _result file
     print ("TOTAL reasoning attempts=",gl.args.total_reasoncount," REASONed concepts=",gl.args.success_reasoncount,"ERROR in process_CDrel. count =",gl.error)
     
-else: print ("ERROR: too few arguments. An input file with mentalese text must be provided as argument!")
+else: print ("ERROR: too few or too many arguments. An input file with mentalese text must be provided as argument!")
 
 gl.log.logf.close()
 

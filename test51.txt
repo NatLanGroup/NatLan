@@ -1,13 +1,37 @@
 m/ IM(IM(%1,%2),%2)p=im
 // IM(C(%1,F(%2,%3))p=p0,C(%1,%2))p=pide1
 // IM(P(%1,%2)p=p0,F(%1,birtokos))p=pide1
-// IM(C(%1,%2)p=p0,P(%1,%2))p=pide1
 // IM(AND(C(%1,person)p=p0,F(%1,%2)p=p1),C(%1,hero))p=pide2
+m/ IM(C(%1,%2)p=p0,T(%1))p=pide1
 m/ IM(AND(C(%1,person)p=p0,F(%1,strong)p=p1),C(%1,hero))p=pide2
+m/ IM(AND(C(%1,person)p=p0,F(%1,wide)p=p1),C(%1,bighead))p=pide2
+
+// C(he,person)r=4
 
 m/ F(dummy)
-m/ C(he,person)r=4
-m/ F(person,strong)p=4
+m/ C(Joe,policeman)
+m/ F(Joe,nice)
+
+m/ IM(C(%1,%2)p=p0,P(%1,%2))p=pide1
+m/ A(Joe,?)          a/ A(Joe,run).p=4
+
+
+// F(policeman,?)	   // F(policeman,none)
+
+ 
+// F(policeman)       // A(policeman,run).p=4
+
+
+
+
+// F(person,strong)p=4
+// C(Joe,policeman)
+// A(Mary,arrive)
+// A(he,go)
+
+// F(Joe,strong)
+// F(Joe,wide)
+// C(Joe,bigman)
 
 // C(garden,person)p=0
 // C(Mary,person)
@@ -15,9 +39,9 @@ m/ F(person,strong)p=4
 // F(Mary,strong)
 
 // C(garden,place)p=4
-m/ C(Joe,person)
-m/ F(Joe,wide)
-m/ F(he,strong)
+// C(Joe,person)
+// F(Joe,wide)
+// F(he,strong)
 // F(Joe,strong)?			a/ F(Joe,strong).p=4
 
 

@@ -12,6 +12,7 @@ class Testinput:
         self.eng = []           # english text
         self.mentalese = []     # mentalese version of english
         self.goodanswer = []    # expected answer (if english is a question)
+        self.good_values = []   # for each good answer, acceptable values of p, r, etc
         self.question = []      # flag to indicate questions
         self.next_question = [] # store mentalese of question in the row before the question
         self.systemanswer = []  # output of the system
@@ -30,9 +31,60 @@ class Testinput:
             print ("MESSAGE: Base file found: ",basefname)
         except: a=0
 
+    def get_Value(self,gstring,pos):                            # parse the .p=4 value postions
+        pos=pos+1                       # on pos we have a . character. gstring is the portion of the row of teh test file with the good answer mentalese.
+        stop=0
+        namevals=[]
+        while pos<len(gstring) and stop==0:
+            name=""; number=0; numberst=""
+            while pos<len(gstring) and gstring[pos] != "=":
+                name=name+gstring[pos]                      # collect the name .p=4 : p
+                pos+=1
+            if gstring[pos] == "=":                         # after = we have the value
+                pos+=1
+                while pos<len(gstring) and gstring[pos].isnumeric() and gstring[pos]!=".":
+                    numberst=numberst+gstring[pos]
+                    pos+=1
+                if len(numberst) > 0:
+                    number = int(numberst)
+            if pos >= len(gstring) or gstring[pos]!=".": 
+                stop=1                                      # only continue if we have one more .
+            else:                                           # continue
+                pos+=1
+            namevals.append([name,number])
+        return namevals
+
+    def goodanswer_Populate(self,gooda,goodval,gstring):        # fill the goodanswer and good_values list
+        item=""; openc=0; closec=0; pos=0
+        wait=0; valu=[]                                         # wait for .p=4 etc to finish
+        for ch in gstring:
+            if ch == "(": openc+=1
+            if ch == ")": closec+=1
+            if ch != ".":                                       # detect X(a,b).p=4 syntax
+                if ch != " ":          
+                    if wait == 0: item = item + ch              # if not waiting, add to goodanswer item
+                else:                                      
+                    if openc==closec:                           # a space means end of concept, if () are all closed
+                        gooda.append(item)
+                        if wait==0: goodval.append([])
+                        if gl.d==3: print ("POPUL 0 gooda",gooda," goodval",goodval,"wait:",wait)
+                        item=""; openc=0; closec=0; wait=0
+            else:
+                if openc==closec and wait==0:
+                    valu = self.get_Value(gstring,pos)          # get the .p= values
+                    goodval.append(valu)                     # start collecting these values
+                    if gl.d==3: print ("POPUL 1 point at end item=",item,"valu",valu,"goodval",goodval)
+                    wait=1 ; valu=[]                                     # after a . char, wait with adding to goodanswer until next mentalese starts
+            pos+=1    
+        if len(item)>0:
+            gooda.append(item)                                  # add this answer item to the goodanswer list
+            if len(goodval)<len(gooda): goodval.append([])
+        if gl.d==3: print ("POPUL 2 gooda",gooda,"goodval",goodval)
+
     def readtest(self):
         gl.log.add_log(("Test file started:", self.name))
-        try:
+    #    try:
+        if 1==1:
             for line in self.testf:
                 i = 0;
                 epos = -1;
@@ -41,7 +93,8 @@ class Testinput:
                 comment = -1
                 self.eng.append("");
                 self.mentalese.append("")  # each list must have a new item
-                self.goodanswer.append("");
+                self.goodanswer.append([])
+                self.good_values.append([])
                 self.question.append(0)
                 self.next_question.append("")
                 self.systemanswer.append([]);
@@ -69,7 +122,7 @@ class Testinput:
                         self.comment[rowi]=line[comment:]
                         if epos > -1 and mpos == -1: self.eng[rowi] = line[epos + 2:comment]
                         if mpos > -1 and apos == -1: self.mentalese[rowi] = line[mpos + 2:comment]
-                        if apos > -1: self.goodanswer[rowi] = line[apos + 2:comment]
+                        if apos > -1: self.goodanswer_Populate(self.goodanswer[rowi],self.good_values[rowi],line[apos + 2:comment])   # fill the goodanswer list
                     i += 1
                 if epos > -1 and mpos == -1 and apos == -1 and comment == -1:
                     self.eng[rowi] = line[epos + 2:i].strip()
@@ -77,14 +130,15 @@ class Testinput:
                     self.mentalese[rowi] = line[mpos + 2:i].strip()
                 if apos > -1 and comment == -1:
                     self.question[rowi] = 1
-                    self.goodanswer[rowi] = line[apos + 2:i].strip()
-        except: print("INPUT FILE ERROR. File name parameter missing, or could not be opened. ")
+                    self.goodanswer_Populate(self.goodanswer[rowi],self.good_values[rowi],line[apos + 2:i].strip())
+                if gl.d==3: print ("READTEST rowindex",rowi," goodanswer:",self.goodanswer[rowi]," good_values:",self.good_values[rowi])
+    #    except: print("INPUT FILE ERROR. Input file may have wrong format. Or file name parameter missing, or could not be opened. ")
 
-    def goodanswer_list(self,starti,endi):              # get indices of good answers
+    def goodanswer_list(self,db,starti,endi):              # get indices of good answers
         subanswerlist=[]
         finalanswerlist=[]
         for i in range(endi-starti):
-            for pari in gl.WM.cp[starti+i+1].parent:
+            for pari in db.cp[starti+i+1].parent:
                 if (pari>starti and pari<=endi):
                     subanswerlist.append(pari)          # collect non-final answers
         for i in range(endi-starti):
@@ -106,8 +160,8 @@ class Testinput:
                 gl.WM.read_concept(tfment,0)              # store good answer in WM temporarliy
                 counter=counter+1
             endi=gl.WM.ci                               # final index in WM
-            finalanswers[:]=self.goodanswer_list(starti,endi)[:]    # get indices of good answers
-            sysamatch=[0]*len(self.systemanswer[rowindex])          # all system answer has 1 element, initially 0
+            finalanswers[:]=self.goodanswer_list(gl.WM,starti,endi)[:]  # get indices of good answers
+            sysamatch=[0]*len(self.systemanswer[rowindex])              # all system answer has 1 element, initially 0
             goodamatch=[0]*len(finalanswers)            # all good answers have 1 element, which is initially 0
             goodindex=0
             for gooda in finalanswers:                  # take all good answers
@@ -115,7 +169,7 @@ class Testinput:
                 for sysalist in self.systemanswer[rowindex]:        # and take all system answers
                     if type(sysalist) is list: sysa=sysalist[1]     #backward compatibility
                     else: sysa=sysalist
-                    if sysalist[0]==0:  db=gl.KB                    # 0 means KB. process answers from KB too.
+                    if sysalist[0]==-1:  db=gl.KB                    # -1 means KB. process answers from KB too.
                     else: db=gl.WM
                     if db.name=="KB":  castKB=1                      # rec_match called for compare with KB
                     else: castKB=0
@@ -141,30 +195,86 @@ class Testinput:
                 gl.WM.remove_concept()                  # remove them from WM
         return eval
 
+    def vs_eval_test(self,rowindex):                       # evaluation string of a row of the input file
+        finalanswers=[]
+        eval="       "
+        if (self.question[rowindex]==1):                # *** QUESTION ***
+            eval="OK     "
+            sysamatch=[0]*len(self.systemanswer[rowindex])              # all system answer has 1 element, initially 0
+            goodamatch=[0]*len(self.goodanswer[rowindex])               # all good answers have 1 element, which is initially 0
+            goodindex=0
+            for gooda in self.goodanswer[rowindex]:                  # take all good answers
+                sysindex=0; goodmatch=0
+                for sysalist in self.systemanswer[rowindex]:        # and take all system answers
+                    if sysalist[0]==-1:  db=gl.KB                   # -1 means KB. process answers from KB too.
+                    else: db=gl.VS.wmlist[sysalist[0]]              # this is the WM we are in
+                    sysa = sysalist[1]
+                    if db.name=="KB":  castKB=1                     # rec_match called for compare with KB
+                    else: castKB=0
+                    goodment = gooda                                # TO DO GET P VALUE OFF mentalese of good answer
+                    if db.cp[sysalist[1]].mentstr == goodment:      # mentalese format match
+                        if gl.d==3: print ("VS EVAL 4 good mentalese match","goodment:",goodment,"goodansw",self.goodanswer[rowindex],"good_val",self.good_values[rowindex],"sysindex",sysindex)
+                        goodmatch=1
+                        sysamatch[sysindex]=1                       # let us suppose matching p
+                        goodamatch[goodindex]=1
+                        goodvals=self.good_values[rowindex][goodindex][:]
+                        if goodvals==[]: goodvals.append(["p",gl.args.pmax])   # at least p value must be checked
+                        if gl.d==3: print ("VS EVAL 5 attribute test goodment",goodment,"goodval=",goodvals,"wm=",sysalist[0],"sysa=",sysa,"sysa p",db.cp[sysa].p, "try p:",db.map_Attrib(sysa,"p"))
+                        for goodval_item in goodvals:               # cycle through p=, g=, r= etc
+                            if (goodval_item[1] != db.map_Attrib(sysa,goodval_item[0])):   # p etc value is not the same
+                                goodamatch[goodindex]=0
+                                sysamatch[sysindex]=2
+                    sysindex=sysindex+1
+                if (goodmatch==0): eval="***MISS"                   # good answer missing, override p mismatch
+                goodindex+=1
+            if (eval=="OK     " and (0 in goodamatch)):             # concept match OK but some p values do not match
+                eval="***BADP"
+            if (eval=="OK     " and (2 in sysamatch)):              # concept match multiple cases, some p mismatching
+                eval="***BADP"
+            if (eval=="OK     " and (0 in sysamatch)):              # too many system answers
+                eval="OK MORE"
+        return eval
+
  
-    def write_result(self,rowindex):                    # write outpit file
-        evals=self.eval_test(rowindex)
+    def write_result(self,rowindex):                    # write output file
+        if gl.vstest>0:
+            evals = self.vs_eval_test(rowindex)
+        else:
+            evals=self.eval_test(rowindex)
         self.resultf.write(evals)                       # write OK, BAD
         if len(self.eng[rowindex])>0:                   
             self.resultf.write(" e/ ")
             self.resultf.write(self.eng[rowindex])
-            addspaces(self.eng[rowindex],22)                # fill spaces up to 22 characters
+            self.resultf.write(addspaces(self.eng[rowindex],35))  # fill spaces up to 22 characters
         if len(self.mentalese[rowindex])>0:
             self.resultf.write(" m/ ")
             self.resultf.write(self.mentalese[rowindex])
-            addspaces(self.mentalese[rowindex],22)
+            self.resultf.write(addspaces(self.mentalese[rowindex],35))
         if len(self.goodanswer[rowindex])>0:
             self.resultf.write(" a/ ")
-            self.resultf.write(self.goodanswer[rowindex])
+            ai=0
+            for answ in self.goodanswer[rowindex]:
+                self.resultf.write(answ)
+                if self.good_values[rowindex][ai]!=[]:      # .p=4 values are stored here and now written in the output
+                    for gooditem in self.good_values[rowindex][ai]:    # several good answers possible
+                        if gooditem!=[]:
+                            self.resultf.write(".")
+                            self.resultf.write(gooditem[0])
+                            self.resultf.write("=")
+                            self.resultf.write(str(gooditem[1]))
+                self.resultf.write(" ")
+                ai+=1
             self.resultf.write(" s/ ")
+        self.resultf.write(" ")
         self.resultf.write(self.comment[rowindex][:-1])
         for sysalist in self.systemanswer[rowindex]:
             if type(sysalist) is list: sysa=sysalist[1]
             else: sysa=sysalist
-            if sysalist[0]==0:  db=gl.KB                    # handle answer in KB
-            else: db=gl.WM
+            if sysalist[0]==-1:  db=gl.KB                    # handle answer in KB
+            else: db=gl.VS.wmlist[sysalist[0]]               # sysalist[0]ha sthe index of the WM version
             self.resultf.write(db.cp[sysa].mentstr + str(db.cp[sysa].p)+" ")   # write answer string
-        if self.systemanswer[rowindex]!=[]: self.resultf.write(str(self.systemanswer[rowindex]))
+        if self.systemanswer[rowindex]!=[]:
+            self.resultf.write(str(self.systemanswer[rowindex]))
         self.resultf.write("\n")
         
     def mentalese_fromrow(self,line):           # get mentalese string

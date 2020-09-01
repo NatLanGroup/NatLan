@@ -21,6 +21,7 @@ class Version:                  # inventory of WM versions (formerly branches)
     def copy_WMfields(self,oldwm,newwm):                # copy the fields from oldwm to newwm
         gl.VS.wmlist[newwm].last_question = gl.VS.wmlist[oldwm].last_question                   # copy last question index
         self.copy_Set(oldwm,newwm,gl.VS.wmlist[oldwm].activ,gl.VS.wmlist[newwm].activ)          # copy activ concept set
+        gl.VS.wmlist[newwm].kbactiv = gl.VS.wmlist[oldwm].kbactiv.copy()     # copy kbactiv concept set - these are KB indices!
         self.copy_Set(oldwm,newwm,gl.VS.wmlist[oldwm].activ_new,gl.VS.wmlist[newwm].activ_new)  # copy newly activ concept set
         self.copy_Set(oldwm,newwm,gl.VS.wmlist[oldwm].activ_qu,gl.VS.wmlist[newwm].activ_qu)    # copy  activated based on question concept set
     #    self.copy_Set(oldwm,newwm,gl.VS.wmlist[oldwm].reasoned,gl.VS.wmlist[newwm].reasoned)    # copy resoning complete concept set
@@ -50,7 +51,12 @@ class Version:                  # inventory of WM versions (formerly branches)
                 gl.WM.copy_Conc(gl.VS.wmlist[pwmid],nwm,concid)    # copy concept
         if pwmid>-1: self.copy_WMfields(pwmid,id)   # copy fields of old wm into new
         return nwm
-                
+     
+    def kill_Branch(self,wmi,reason):                             # kill the WM version wmi (given by index)
+        gl.log.add_log(("BRANCH KILLED db=",wmi," WM value was:",gl.VS.wmlist[wmi].branchvalue," ",reason," All living versions:",gl.VS.wmliv.keys()))
+        print ("BRANCH KILLED db=",wmi," WM value was:",gl.VS.wmlist[wmi].branchvalue,reason," All living versions:",gl.VS.wmliv.keys())
+         #gl.WM.printlog_WM(gl.VS.wmliv[wmi])
+        del gl.VS.wmliv[wmi]     
 
 class Branch:           #branching in WM
 
@@ -100,34 +106,40 @@ class Branch:           #branching in WM
         return thispara
 
     def trymap_Single(self,maprule):        #mapping for a single rule
-        currentwm=self.wmpos
+        currentwm=self.wmpos-1
         rulw=-1 ; thispara=1                            # flag to show we did not cross paragraph border yet
         ruleinwm = -1
-        while currentwm>=0:                             #walk back on branch
-            previwm=currentwm-1
-            if previwm<0: break
-            currentwm = previwm                         # we will try to map to currentwm
+        bonus = 1
+        while currentwm>0:                             
             thispara = self.collect_Potential(thispara,currentwm)       # add currentwm to potential words to map, if so.   
             #TO DO: if currentwm is a word, search for C relation  in KB  (done in earlier WM) !!
-            if gl.d==6: print ("TRYMAP currentwm",currentwm,"thisopara",thispara,"potential map to=",self.map_potential," this wm=",gl.WM.this," ci=",gl.WM.ci)
-            if gl.WM.cp[currentwm].relation==4:                             #C relation needed to try mapping
-                wmapto=self.word_Tomapto(thispara,currentwm)                # find out if this C relation has a word to map to
-                if gl.d==5: print ("TRYMAP maprule",maprule,"WM=",gl.WM.this,"wmapto:",wmapto,"samehere:",gl.WM.cp[wmapto].same,"self.wmpos:",self.wmpos,"samehere:",gl.WM.cp[self.wmpos].same)
-                if wmapto!=-1:      
-                    ruleword=gl.KB.cp[maprule].parent[1]                    # in the rule in KB, second parent is a new word to be added
-                    if gl.KB.cp[ruleword].relation==1:                      #TO DO not only word but concept
-                        if gl.KB.cp[ruleword].mentstr != gl.WM.cp[self.wmpos].mentstr:   #TO DO: avoid D(x,x)?
-                            if rulw==-1:                                    #add rule only once
-                                rulw = gl.WM.add_concept(gl.args.pmax,1,[],[ruleword])      #add the word from the rule to WM
-                                ruleinwm = gl.WM.add_concept(gl.KB.cp[maprule].p,gl.KB.cp[maprule].relation,[self.wmpos,rulw],[maprule]) #add rule D(x,y) relation to WM
-                                gl.act.vs_activate_Conc(ruleinwm,gl.WM)      # VS activate rule
-                                gl.WM.cp[rulw].wmuse=[]
-                                gl.WM.cp[ruleinwm].wmuse=[]
-                                gl.log.add_log(("MAPPING: add rule to WM:",gl.KB.cp[ruleword].mentstr," ",gl.KB.cp[maprule].mentstr))
-                            self.add_Mapbranch(maprule,ruleinwm,wmapto)  # add a new WM instance, as branch
+            if gl.d==1: print ("TRYMAP thispara=",thispara,"currwm",currentwm,gl.WM.cp[currentwm].mentstr,"wmpos",self.wmpos)
+            wmapto=-1                                                   # this will be the word we can try to map to
+            if gl.WM.cp[currentwm].relation==4 and gl.WM.cp[currentwm].wmuse==[-1]:   #C relation needed to try mapping. only input is valid, no reasoning.
+                wmapto=self.word_Tomapto(thispara,currentwm)            # find out if this C relation has a word to map to
+            if gl.WM.cp[currentwm].relation==1 and thispara==1 :        # this is a word in this paragraph not yet mapped to
+                if (self.wmpos not in gl.WM.mapped_Already) or (currentwm not in gl.WM.mapped_Already[self.wmpos]):
+                    if gl.d==1: print ("TRYMAP: a word",currentwm)
+                    wmapto=gl.WM.check_Crel(currentwm)                   # check if there is a C-relation for currentwm in KB or in this WM
+            if wmapto!=-1:  
+                if gl.d==1: print ("TRYMAP 2 wmapto=",wmapto,gl.WM.cp[wmapto].mentstr)
+                ruleword=gl.KB.cp[maprule].parent[1]                    # in the rule in KB, second parent is a new word to be added
+                if gl.KB.cp[ruleword].relation==1:                      #TO DO not only word but concept
+                    if gl.KB.cp[ruleword].mentstr != gl.WM.cp[self.wmpos].mentstr:   #TO DO: avoid D(x,x)?
+                        if rulw==-1:                                    #add rule only once
+                            rulw = gl.WM.add_concept(gl.args.pmax,1,[],[ruleword])      #add the word from the rule to WM
+                            ruleinwm = gl.WM.add_concept(gl.KB.cp[maprule].p,gl.KB.cp[maprule].relation,[self.wmpos,rulw],[maprule]) #add rule D(x,y) relation to WM
+                            gl.act.vs_activate_Conc(ruleinwm,gl.WM)      # VS activate rule
+                            gl.WM.cp[rulw].wmuse=[]
+                            gl.WM.cp[ruleinwm].wmuse=[]
+                            gl.WM.cp[ruleinwm].relevance = gl.KB.cp[maprule].relevance   # set relevance in rule
+                            gl.log.add_log(("MAPPING: add rule to WM:",gl.KB.cp[ruleword].mentstr," ",gl.KB.cp[maprule].mentstr))
+                        self.add_Mapbranch(maprule,ruleinwm,wmapto,bonus)  # add a new WM instance, as branch
+                        bonus = 0                                       # the first mapping was closest to wmpos, it gets a bonus, others dont get it
+            currentwm=currentwm-1                       #walk back on branch
         return ruleinwm
 
-    def add_Mapbranch(self,maprule,ruleinwm,currentword):        #add one more branch starting from ruleinwm and expressing D(wmpos,curretwm)
+    def add_Mapbranch(self,maprule,ruleinwm,currentword,bonus):        #add one more branch starting from ruleinwm and expressing D(wmpos,curretwm)
         mapped_earlier=set()
         if self.wmpos in gl.WM.mapped_Already:                      # this wmpos was already mapped
             mapped_earlier.update(gl.WM.mapped_Already[self.wmpos]) # collect
@@ -143,11 +155,16 @@ class Branch:           #branching in WM
             if self.wmpos not in oldwm.mapped_Already:                  # the first mapping of wmpos
                 oldwm.mapped_Already[self.wmpos] = set()                # initialize
             oldwm.mapped_Already[self.wmpos].add(currentword)           # note that wmpos is mapped to currentword
-            print ("ADD_MAPBRANCH new wm: "+str(gl.WM.this)+" old wm: "+str(oldwm.this)+" oldwm last concept: "+str(oldwm.last)+" mapped concept="+str(self.wmpos)+" mapped to:"+str(currentword)+" mapped to list="+str(oldwm.mapped_Already[self.wmpos]))
+            gl.WM.branchvalue += bonus                                  # increased the value of this branch if bonus was provided
+            if gl.WM.branchvalue > gl.args.bmax:                        # max branchvalue exceeded
+                gl.WM.branchvalue -= 1
+            print ("ADD_BRANCH MAPPING: new wm: "+str(gl.WM.this)+" WM value:"+str(gl.WM.branchvalue)+" old wm: "+str(oldwm.this)+" oldwm last concept: "+str(oldwm.last)+" mapped concept="+str(self.wmpos)+" mapped to:"+str(currentword)+" "+str(oldwm.cp[currentword].mentstr)+" bonus="+str(bonus)+" mapped to list="+str(oldwm.mapped_Already[self.wmpos]))
             mapconcept = gl.WM.add_concept(gl.KB.cp[maprule].p, 3, [self.wmpos,currentword])        # mapping added to WM D()
             gl.WM.mapped_Inpara[gl.WM.cp[self.wmpos].mentstr]=currentword   # note that the concept on wmpos was mapped to currentword within paragraph
-            gl.WM.cp[mapconcept].wmuse=[]                               #wmuse for a mapping is not -1 but empty
-            gl.log.add_log(("MAPPING: old wm:",oldwm.this," old wm concept:",ruleinwm," mentalese:",oldwm.cp[ruleinwm].mentstr," new WM:",gl.WM.this," mapped concept:",self.wmpos," ",gl.WM.cp[self.wmpos].mentstr," mapped to:",gl.WM.cp[mapconcept].mentstr))
+            gl.WM.cp[mapconcept].wmuse=[-1]                             #wmuse for a mapping is  -1 like for concepts that were in the input
+            gl.act.activate_inKB(gl.WM,currentword,1)                   # activate KB based on the word mapped to. activation round=1.
+            if gl.d==1: print ("ADD MAPPING currentw:",currentword,gl.WM.cp[currentword].mentstr,"KB activ:",gl.WM.kbactiv)
+            gl.log.add_log(("ADD BRANCH: MAPPING: old wm:",oldwm.this," old wm concept:",ruleinwm," mentalese:",oldwm.cp[ruleinwm].mentstr," new WM:",gl.WM.this," WM value=",gl.WM.branchvalue," mapped concept:",self.wmpos," ",gl.WM.cp[self.wmpos].mentstr," bonus=",bonus," mapped to:",gl.WM.cp[mapconcept].mentstr))
             gl.WM = oldwm                                               #COMP compatibility, set back original wm
                                              
     def vs_perform_Branching(self,db):                  #creation of new branches according to the VS object

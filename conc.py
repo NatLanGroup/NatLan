@@ -4,13 +4,13 @@ from timeit import default_timer as timer
 class Concept:
     def __init__(self,rel=0):
         self.p = int(gl.args.pmax/2)        # p value of concept
-        self.c = int(gl.args.cmax)          # consistency of this concept and previous concepts
+        self.c = int(1+gl.args.cmax/2)          # consistency of this concept and previous concepts
         self.g = int(gl.args.gmax)          # generality: how specific (0) or general (1) is the concept
-        self.cons_avg = int(gl.args.cmax)   # rolling average of consistency of this concept 
+        self.cons_avg = int(1+gl.args.cmax/2)   # rolling average of consistency of this concept 
         self.acts = 0                       # activation level of concept
         self.exception = gl.args.exdef      # are exceptions possible? 4=yes. Also for rules. Concepts inherit from rule.        
         self.known = int(gl.args.kmax/2)    # how solid is the knowledge of p, exception for this concept
-        self.relevance = int(gl.args.rmax/2)  # relevance of the concept
+        self.relevance = int(gl.args.rmax/2) # relevance of the concept
         self.count = 1      # count the occurance of this concept
         self.relation = rel # relation code
         self.parent = []    # parents list
@@ -20,9 +20,10 @@ class Concept:
         self.wordlink = []  # link to WL, if this is a word
         self.kblink = []    # link to KB, if this is in WM
         self.mapto = -1     # another concept in WM where this one is mapped to
-        self.wmuse = [-1]   # what concepts were used to get this one by reasoning. Or -1 if original input.
+        self.wmuse = [-1]   # what concepts (from WM) were used to get this one by reasoning. [-1]: original input [-2]: parent [-3]: reasoned, based on KB only
+        self.kb_use = []    # what concepts in KB were used for reasoning
         self.override = set()   # what were the wmuse concepts, based on which this concept was overridden
-        self.reasonuse = [] # rule and concepts directly used for reasoning
+        self.reasonuse = [] # rule and concepts directly used for reasoning (from WM)
         self.rule_use = []  # rule directly used for reasoning
         self.usedby = set() # new concepts that use this old concept for reasoning
         self.general = set([])  # set of lists of concepts more general than this one
@@ -30,7 +31,9 @@ class Concept:
         self.mentstr = ""   # string format of mentalese
         self.rulestr = []   # strings for rule-information like p=p1 or p=pclas
         self.kb_rules = []  # list of rules in KB which match this concept
-        self.kbrules_filled = 0     # flag: kb_rules filling first step done
+        self.kb_rulenew = []  # list of new rules in KB which match this concept, just added in this round
+        self.kbrules_upto = 0   # up to which rule are kb_rules filled. We need a new function that fills kb_rules in a single step. TO DO.
+        self.kbrules_filled = 0 # flag: kb_rules filling first step done
     #    self.kbrules_converted = 0  # COMP NOT USED IN VSTEST flag to show if convert_KBrules was called for this concept
         self.rule_match = []  # list of WM concepts that match the respective rule of kb_rules. max 3 dimension list, can be 2 or 1 dimension.
         self.track = 0      # track the usage of this concept for debugging
@@ -167,28 +170,33 @@ class Kbase:
             else: con_use = self.cp[con].wmuse[:]
             if self.cp[con].wmuse == [-2]: con_use=[]    #parent of a reasoned concept
             newuse = newuse | set(con_use)                  # add new eleemnts. full set of used concepts.
+    #    if gl.d==1: print ("SAMEUSE newuse",newuse,"olduse",olduse)
         if len(newuse-olduse)>0:                            # something new is used
             if max(newuse) > sindex:                        # more recent input used than the matching old concept
                 sameuse=0                                   # significant new usage. Reasoning enabled.
+        #if gl.d==1: print ("SAMEUSE sindex",sindex,"olduse",olduse,"newuse",newuse,"SAMEUSE:",sameuse)
         return sameuse
             
 
-    def search_fullmatch(self,pin,rel,parents,rule,samelist,branch=[],conclist=[]):
+    def search_fullmatch(self,pin,rel,parents,rule,samelist,conclist=[]):
         found=0; s=timer()
         not_known=0
-        for basec in conclist:                                      # base concepts used for reasoning
-            if self.cp[basec].known==0:                             # one of them  not known
-                not_known=1; found=1 ; foundsave=basec              # return found=1, inhibit reasoning for not known base
+        if conclist[0]>0:                                           # conclist is meaningful, in WM
+            for basec in conclist:                                      # base concepts used for reasoning
+                if self.cp[basec].known==0:                             # one of them  not known
+                    not_known=1; found=1 ; foundsave=basec              # return found=1, inhibit reasoning for not known base
         if not_known==0:                                            # all base wmuse concepts are known
-            for sindex in range(0,self.ci+1):                       # search for match in entire WM (on branch)
+            for sindex in range(0,self.ci+1):                       # search for match in entire WM 
                 con=self.cp[sindex]
-                if con.known>0 and con.relation==rel and (branch==[] or sindex in branch):   #only known,  match to concepts in branch
+                if con.known>0 and con.relation==rel:   #only known,  match to concepts in this wm
                     if len(con.parent)==len(parents) and (1==1 or con.p==pin):    # p value not checked here but in check_Contra                                        # p value checked currently
                         pari=0; allsame=1                           #allsame will show if all parents are the same
                         while pari<len(con.parent) and allsame==1:  #only check until first different parent found
                             parent1wm=con.parent[pari]
                             if len(parents)>pari:
                                 p1=parent1wm; p2=parents[pari]
+                                if self.cp[p1].mentstr!=self.cp[p2].mentstr:    # mentalese different
+                                    allsame=0
                                 if (p2 not in self.cp[p1].same and p1!=p2) :    # for different indices, not recorded as same
                                     allsame=0                       # different parents
                                 else:                               # different indices recorded as same
@@ -205,6 +213,7 @@ class Kbase:
                             samelist.append(sindex)                 #remember that in sindex the concept matches
                             sameuse = self.same_Use(sindex,conclist[:])   # check whether new concept will use some new base
                             foundnow=self.check_Contradiction(sindex,rule,pin,conclist[:])    # check whether we have contradiction and resolve it
+                            if gl.d==2: print ("SEARCH FULL allsame=1","conclist",conclist,"sindex",sindex,"SAMEUSE:",sameuse,"ci",gl.WM.ci,"foundnow",foundnow)
                             if foundnow == 2 or (foundnow==1 and sameuse==1):   # p matching and same base used
                                 found=1 ; foundsave=sindex
         if found==1:
@@ -317,16 +326,17 @@ class Kbase:
             if type(rm1) is list:
                 ind2=0
                 newcon.rule_match.append([])
+                nind1=len(newcon.rule_match)-1  # index that is valid in newcon: earlier content must be preserved
                 for rm2 in rm1:                 # second level
                     if type(rm2) is list:
-                        newcon.rule_match[ind1].append([])
+                        newcon.rule_match[nind1].append([])
                         for rm3 in rm2:         # third level
                             if type(rm3) is list:   # should never happen
                                 gl.log.add_log(("ERROR in copy_Rulematch: more than 3 level deep list. concept=",oldcon.mentstr," rule_match:",oldcon.rule_match))
                             else:
-                                newcon.rule_match[ind1][ind2].append(rm3)
+                                newcon.rule_match[nind1][ind2].append(rm3)
                     else:
-                        newcon.rule_match[ind1].append(rm2)
+                        newcon.rule_match[nind1].append(rm2)
                     ind2+=1
             else:
                 newcon.rule_match.append(rm1)
@@ -353,6 +363,7 @@ class Kbase:
         newwm.cp[newwm.ci].wordlink = oldwm.cp[concid].wordlink[:]
         newwm.cp[newwm.ci].mapto = oldwm.cp[concid].mapto
         newwm.cp[newwm.ci].wmuse = oldwm.cp[concid].wmuse[:]
+        newwm.cp[newwm.ci].kb_use = oldwm.cp[concid].kb_use[:]
         newwm.cp[newwm.ci].override = oldwm.cp[concid].override.copy()
         newwm.cp[newwm.ci].reasonuse = oldwm.cp[concid].reasonuse[:]
         newwm.cp[newwm.ci].rule_use = oldwm.cp[concid].rule_use[:]
@@ -362,6 +373,7 @@ class Kbase:
         for rs in oldwm.cp[concid].rulestr:
             newwm.cp[newwm.ci].rulestr.append(rs[:])
         newwm.cp[newwm.ci].kb_rules = oldwm.cp[concid].kb_rules[:]
+        newwm.cp[newwm.ci].kbrules_upto = oldwm.cp[concid].kbrules_upto
         newwm.cp[newwm.ci].kbrules_filled = oldwm.cp[concid].kbrules_filled
    #VS     newwm.cp[newwm.ci].kbrules_converted = oldwm.cp[concid].kbrules_converted   # may not be used
         newwm.cp[newwm.ci].track = oldwm.cp[concid].track
@@ -424,7 +436,6 @@ class Kbase:
     def manage_Consistency(self,new):                           # calculate consistency and occurence
         s=timer()
         same_list=sorted(gl.WM.cp[new].same)                    # same concepts
-        if gl.d==2: print ("MANAGE CONS db=",gl.WM.this,"new",new,gl.WM.cp[new].mentstr,"same_list",same_list)
         latest=0
         if gl.WM.cp[new].relation!=1 and gl.WM.cp[new].known>0: # not a word, known
             for old in same_list:                               # all concepts that have same mentalese. TO DO: involve KB.
@@ -442,6 +453,9 @@ class Kbase:
                         cons = gl.args.consist[index1][index2]  # read consistency table
                         if cons<gl.WM.cp[new].c:                # consistency is worse than stored
                             gl.WM.cp[new].c=cons                # we store the top inconsistency per concept, since compared_upto
+                        if cons>gl.WM.cp[new].c: 
+                            if gl.WM.cp[old].relevance == gl.args.rmax and cons==gl.args.cmax-1:     # top relevant and top consistent
+                                gl.WM.cp[new].c=gl.args.cmax        # set new top consistent
         else: 
             if len(same_list)>0: latest = same_list[-1]         # for words
             else: latest=0
@@ -470,13 +484,31 @@ class Kbase:
         s=timer()
         contralist=[]
         con=self.cp[newi]                       # current concept
-        old=newi
+        old=newi; special=0
+        if con.relation==5:                     # F relation
+            if len(con.parent)>1:
+                con.general.add(con.parent[0])                      # x is more general than F(x,y)
+                con.general.update(self.cp[con.parent[0]].same)     # concepts same to x are also general to F(x,y)
+                con.general.update(self.cp[con.parent[0]].general)  # concepts general to x are also general to F(x,y)
+                self.set_Samegen(newi,con.parent[0])                # in concepts same as newi set general as well
+        if con.relation==4 and con.p==gl.args.pmax and con.known>=gl.args.kmax/2:  # C relation, p=pmax, known
+            if len(con.parent)>1:
+                cla=1
+                special = con.parent[0]             # remember: C(x,y) and x is special    
+                while cla<len(con.parent):          # C(x,y,z) y and z are more general than x
+                    self.cp[con.parent[0]].general.add(con.parent[cla])
+                    self.cp[con.parent[0]].general.update(self.cp[con.parent[cla]].same)
+                    self.cp[con.parent[0]].general.update(self.cp[con.parent[cla]].general)
+                    self.set_Samegen(con.parent[0],con.parent[cla])     # in concepts same as con.pernt[0] set general as well
+                    cla+=1
         while self.cp[old].previous!=-1:        # entire WM on current branch backward
             old=old-1                           # next item on branch
             genword = self.get_Generalword([newi,old])  # set general field based on same field
+            if special>0 and special in self.cp[old].general:           # we had a special recorded, and now this "old" has special as general
+                self.cp[old].general.update(self.cp[special].general)   # all that are general to special are general to old
             match = self.rec_match(con,self.cp[old],[newi,old])
             if match==1:
-                self.cp[newi].general.update(self.cp[old].general)  # if concept is the same make general list the same
+                self.cp[newi].general.update(self.cp[old].general)      # if concept is the same make general list the same
                 self.cp[newi].same.add(old)     # same gets extended
                 self.cp[old].same.add(newi)     # same gets extended
                 if self.cp[newi].p!=self.cp[old].p:   # we seem to have contradiction
@@ -489,21 +521,6 @@ class Kbase:
                 self.cp[newi].general.update(self.cp[old].general)      # old is more general, generality inherited to newi
                 self.cp[newi].general.update(self.cp[old].same)         # general gets extended with same as mewi
             #if gl.d==1 and newi<10: print ("SETGEN 2 db=",self.this,"con=",newi,"old=",old,"general=",self.cp[newi].general)
-        if con.relation==5:                     # F relation
-            if len(con.parent)>1:
-                con.general.add(con.parent[0])                      # x is more general than F(x,y)
-                con.general.update(self.cp[con.parent[0]].same)     # concepts same to x are also general to F(x,y)
-                con.general.update(self.cp[con.parent[0]].general)  # concepts general to x are also general to F(x,y)
-                self.set_Samegen(newi,con.parent[0])                # in concepts same as newi set general as well
-        if con.relation==4 and con.p==gl.args.pmax and con.known>=gl.args.kmax/2:  # C relation, p=pmax, known
-            if len(con.parent)>1:
-                cla=1
-                while cla<len(con.parent):     # C(x,y,z) y and z are more general than x
-                    self.cp[con.parent[0]].general.add(con.parent[cla])
-                    self.cp[con.parent[0]].general.update(self.cp[con.parent[cla]].same)
-                    self.cp[con.parent[0]].general.update(self.cp[con.parent[cla]].general)
-                    self.set_Samegen(con.parent[0],con.parent[cla])     # in concepts same as con.pernt[0] set general as well
-                    cla+=1
         #if gl.d==1 and newi<10: print ("SETGEN 4 db=",self.this,"con=",newi,"general=",self.cp[newi].general)
         self.spread_General(newi,self.cp[newi].general)    # spread the .general property to concepts in reasonuse
         self.override_Old(contralist)              # override p in contraditions found
@@ -538,15 +555,19 @@ class Kbase:
             self.update_Samecon(self.ci)                        # update same field based on parents, and vs_samestring
             self.manage_Consistency(self.ci)                    # update consistency field, override known value.
             self.vs_set_General(self.ci)                        # set .general field
+        #if gl.d==1 and self.name!="KB":print ("ADD CON ci",self.ci,self.cp[self.ci].mentstr,self.cp[self.ci].same)
         if new_rel == 13 and self.name=="WM" :                  # IM relation
             self.update_Condip()                                # update p value of condition if needed
         if new_rel != 1:                                        # not a word
-            gl.act.vs_activate_Conc(self.ci,self)               # activate this concept just added, either in WM or KB
+            gl.act.vs_activate_Conc(self.ci,self)               # activate this concept just added (WM)
+        if self.name=="WM" and "%" not in self.cp[self.ci].mentstr:  # rules should not be activated based on %1
+            kbpos = self.search_KB(self.ci)                     # search this WM concept in KB and set kblink
+            gl.act.activate_inKB(self,self.ci,1)                # activate KB concepts based on occurence in WM (word etc) beyond relevance limit, in round=1
         dbstr=" db="+str(self.this)
         gl.log.add_log((self.name,dbstr," add_concept index=",self.ci," p=",self.cp[self.ci].p," rel=",new_rel," parents=",new_parents," wordlink=",self.cp[self.ci].wordlink," mentstr=",self.cp[self.ci].mentstr," general=",self.cp[self.ci].general))      #content to be logged is tuple (( ))
         gl.args.settimer("concep_800: add_concept",timer()-s)
         return self.ci
-
+ 
     def zero_Known(self,coni):                              # known value set to zero, and deactivate
         self.cp[coni].known=0                               # set known to zero
         self.cp[coni].acts=0                                # deactivate concept
@@ -587,10 +608,11 @@ class Kbase:
         remcon = self.cp[self.ci]                           # to be removed
         if (self.ci>-1):
             ment = self.cp[self.ci].mentstr[:]
+            #if gl.d==1: print ("REMOVE ci",self.ci,ment,self.cp[self.ci].same,"allwm",allwm)
             self.cp.pop()
             self.thispara.pop()                             # remove from list of this paragraph
             if allwm==0:                                    # just one concept remopved, not teh entire WM
-                for old in range (1,self.ci-1):
+                for old in range (1,self.ci):
                     if self.ci in self.cp[old].reasonuse:
                         self.cp[old].reasonuse.remove(self.ci)    # remove the concept to be deleted from the general concepts
                     self.cp[old].general.discard(self.ci)    # remove the concept to be deleted from the general concepts
@@ -600,7 +622,8 @@ class Kbase:
             if self.name=="WM":
                 self.activ.discard(self.ci)                 # remove concept from activated list
                 self.activ_new.discard(self.ci)             # remove concept from activated list
-                self.vs_samestring[ment].discard(self.ci)   # remove from vs_samestring
+                if ment in self.vs_samestring:              # questions are not loaded here so we need this if
+                    self.vs_samestring[ment].discard(self.ci)   # remove from vs_samestring
             self.ci=self.ci-1
         return self.ci
 
@@ -706,7 +729,6 @@ class Kbase:
             if what1.relation==1 and what1.mentstr[0]=="%": return 2        # indicates special case concept of inwhat
             if inwhat.relation==1 and inwhat.mentstr[0]=="%": return 3        # indicates special case concept of what1
     # check that the compound concept is rfeally a special case of word: C(compond,word) or compound=F(word,feature)
-            if gl.d==2: print ("NO MATCH 1")
             return 0     # relation is neither same nor -1 -> not match
 
         if what1.relation == 1:     # comparing two word concepts. Handle specific words differently as general ones.
@@ -770,23 +792,22 @@ class Kbase:
                     found=child
         return found
 
-    def walk_db(self,curri,lasti=-2):                   # recursive walk over WM or KB from curri towards all parents. Call without lasti.
-        # jumps over identical items !!!!!!
-        while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
-            try: nextp=self.cp[curri].parent.index(lasti)+1
-            except:
-                lasti=-2        # enter lower level
-                nextp=0
-            lasti=self.walk_db(self.cp[curri].parent[nextp],lasti)
-        print ("walk",self.name,"current concept",curri,"parents",self.cp[curri].parent,"mentalese",self.cp[curri].mentstr,"rule:"[:5*len(self.cp[curri].rulestr)],self.cp[curri].rulestr)
-        return curri
-
     def visit_db(self,db,curri,visitmap,nextp=0):       #demo a recursive walk that is not jumping over identical items
         while (len(db.cp[curri].parent)>0 and nextp<len(db.cp[curri].parent)):  # walk over parents of same level
             self.visit_db(db,db.cp[curri].parent[nextp],visitmap,0)             # one level down
             nextp=nextp+1
         visitmap.append([curri,db.cp[curri].mentstr])       # actual data manipulation
         return
+        
+    def visit_KBlinks(self,db,curri,kblinklist,nextp=0):       #demo a recursive walk that is not jumping over identical items
+        while (len(db.cp[curri].parent)>0 and nextp<len(db.cp[curri].parent)):  # walk over parents of same level
+            self.visit_KBlinks(db,db.cp[curri].parent[nextp],kblinklist,0)           # one level down
+            nextp=nextp+1
+        if db.cp[curri].kblink!=[]:
+            if db.cp[curri].kblink[0] not in kblinklist:
+                kblinklist.append(db.cp[curri].kblink[0])       # collect kblinks
+        return
+
 
     def copyto_kb(self,curri,lasti=-2):         # copy concept in WM on curri to KB with all parents
         while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
@@ -807,9 +828,41 @@ class Kbase:
                     gl.KB.cp[kbl].relevance = self.cp[curri].relevance  #copy relevance
                     gl.KB.cp[kbl].g = self.cp[curri].g  # copy generality
                     gl.KB.cp[kbl].track = self.cp[curri].track  # copy track property
-                    #if gl.d==1: print ("COPYTO_KB db=",gl.WM.this,"copied:",gl.KB.ci,gl.KB.cp[gl.KB.ci].mentstr,"parents:",gl.KB.cp[gl.KB.ci].parent)
                 self.cp[curri].kblink.append(kbl)   # set KB link in WM
         return curri
+
+    def check_Crel(self,curr):                      # check if there is a C-relation for curr in KB or in this WM
+        kbi = self.cp[curr].kblink[0]
+        wmapto = -1
+        print ("CHECK:",kbi,"children:",gl.KB.cp[kbi].child)
+        for child in gl.KB.cp[kbi].child:
+            if gl.KB.cp[child].relation == 4 and gl.KB.cp[child].known>0: # a C relation
+                if len(gl.KB.cp[child].parent) == 2:        # C(x,y)
+                    if gl.KB.cp[child].parent[0] == kbi:    # C(kbi , y)
+                        wmapto = curr
+        for wmcon in self.thispara:                         # now search C() in WM, this paragraph.
+            if self.cp[wmcon].relation==4 and self.cp[wmcon].known>0:   # a C relation
+                if len(self.cp[wmcon].parent) == 2:         # C(x,y)
+                    if self.cp[wmcon].parent[0] in self.cp[curr].same:    # C(curr , y)
+                        wmapto = curr                       
+        return wmapto
+
+    def populate_KBlink(self,coni):             # populate the KBlink of coni if parents are in KB (and kblink is filled)
+        orig = self.cp[coni]
+        if orig.kblink!=[]: return                              # kblink was already populated
+        if orig.parent==[]: return
+        if self.cp[orig.parent[0]].kblink == []: return         # parent should have kblink
+        parentinkb = self.cp[orig.parent[0]].kblink[0]
+        for childkb in gl.KB.cp[parentinkb].child:              # all children of this parent
+            if gl.KB.cp[childkb].relation == orig.relation:     # relation match
+                allmatch=1
+                for pix in range(0,len(gl.KB.cp[childkb].parent)):
+                    if self.cp[orig.parent[pix]].kblink == []: allmatch=0    # no match
+                    else:
+                        if self.cp[orig.parent[pix]].kblink[0] != gl.KB.cp[childkb].parent[pix]: allmatch = 0   # no match
+                if allmatch==1:                                 # coni found in KB
+                    orig.kblink.append(childkb)                 # kblink filled in
+                    # no return after first match
 
     def search_KB(self,curri,lasti=-2,found=[]):         # search concept in KB. Concept is in WM on curri. Returns KB index.
         while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
@@ -823,9 +876,10 @@ class Kbase:
             if len(self.cp[curri].kblink)==0 or self.cp[curri].kblink[0]==-1:   # not yet linked to KB (but might be there)
                 plist=[]                                                # holds parent indices valid in KB
                 for pari in self.cp[curri].parent:                      # parents valid in WM
-                    plist.append(self.cp[pari].kblink[0])               # append parent index valid in KB
+                    if len(self.cp[pari].kblink)==0: plist.append(-1)
+                    else: plist.append(self.cp[pari].kblink[0])               # append parent index valid in KB
                 kbl=gl.KB.get_child(self.cp[curri].relation,plist)      # search concept in KB as child of parent
-                self.cp[curri].kblink=[kbl]                             # set KB link in WM, thi smay be -1
+                if kbl!=-1: self.cp[curri].kblink=[kbl]                 # set KB link in WM, this SHOULD NOT  be -1
             else: kbl = self.cp[curri].kblink[0]                        # kblink already had the link to KB
             if kbl not in found: found=[kbl]                        # kbl is -1 if not found among children. 
         return [curri,found]
@@ -983,10 +1037,10 @@ class Kbase:
     def answer_question(self,starti):          #answer a question now stored in WM
         s=timer()
         answerlist=[]                           
-        qcount=[0]                                   #counter for ? parents
-        answers = gl.WM.vs_search_Versions(qcount)  #VS search for answers in all versions  
+        qcount=[0]                                  #counter for ? parents
+        answers = gl.WM.vs_search_Versions(qcount)  # search for answers in all versions  
         visitq=[]                                   # this will hold temporary results in KB search
-        for wmi in gl.VS.wmliv:                      # living wms
+        for wmi in gl.VS.wmliv:                     # living wms
             db1 = gl.VS.wmlist[wmi]                 # latest living wm in db1
         kbanswer = db1.pattern_KB(db1,db1.last_question,db1.last_question,visitq)   # get answer list from kb
         gl.args.settimer("concep_101: pattern_KB",timer()-s)
@@ -996,12 +1050,12 @@ class Kbase:
             awbrlist.append(aw[0])
         answeryes=0
         for anw in answerlist:
-            db=gl.VS.wmlist[anw[0]]             # wm version of the answer
+            db=gl.VS.wmlist[anw[0]]                 # wm version of the answer
             if anw[0]>-1 and db.cp[anw[1]].wmuse!=[-2]:   # an answer not parent of reasoned
-                ament=db.cp[anw[1]].mentstr     # answer mentalese
+                ament=db.cp[anw[1]].mentstr         # answer mentalese
                 if ",?" not in ament and "?," not in ament and "(?)" not in ament:  # not a A(Joe,?) type of question
-                    answeryes+=1                #remember we have answer, count them
-        if qcount[0]==0:                        #question like Z(a,b)?
+                    answeryes+=1                    #remember we have answer, count them
+        if qcount[0]==0:                            #question like Z(a,b)?
             if answeryes==0: answerlist.append([self.this,self.last_question]) # self.this=wm id !!  question added as answer
         if answeryes>1 :
             try: answerlist.remove([self.this,self.last_question])  # remove the question
@@ -1149,86 +1203,117 @@ class Kbase:
         oldwm = self
         newcon = newwm.cp[newconid]                         # concept in KB
         newcon.c = oldwm.cp[concid].c
-        newcon.cons_avg = oldwm.cp[concid].cons_avg
         newcon.exception = oldwm.cp[concid].exception
-        newcon.known = oldwm.cp[concid].known
-        newcon.count += oldwm.cp[concid].count
+        #copies:
         newcon.wordlink = oldwm.cp[concid].wordlink[:]
         for rs in oldwm.cp[concid].rulestr:
             newcon.rulestr.append(rs[:])
         newcon.kb_rules = oldwm.cp[concid].kb_rules[:]
+        newcon.kbrules_upto = oldwm.cp[concid].kbrules_upto
         newcon.kbrules_filled = oldwm.cp[concid].kbrules_filled  
-        newcon.rule_use = oldwm.cp[concid].rule_use[:]        
+        newcon.rule_use = oldwm.cp[concid].rule_use[:]          # info from previous paragraph goes lost  
+        newcon.kb_use = oldwm.cp[concid].kb_use[:]          
         # the fields below hold WM indices, these need be transformed in transform_kb:
-        self.copy_Rulematch(oldwm.cp[concid],newcon)            # WARNING: rule_match info from previous paragraph is forgotten!
-        newcon.reasoned_with = oldwm.cp[concid].reasoned_with.copy()
-        newcon.wmuse = oldwm.cp[concid].wmuse[:]
-        newcon.reasonuse = oldwm.cp[concid].reasonuse[:]
-        newcon.usedby = oldwm.cp[concid].usedby.copy()
-        newcon.general = oldwm.cp[concid].general.copy()
-        newcon.same = oldwm.cp[concid].same.copy()
+        self.copy_Rulematch(oldwm.cp[concid],newcon)            # rule_match info from previous paragraph is not forgotten
+        newcon.wmuse = oldwm.cp[concid].wmuse[:]                # wmuse from previous paragraph goes lost
+        newcon.reasonuse = oldwm.cp[concid].reasonuse[:]        # reasonuse from previous paragraph goes lost
         return
 
     def transform_Rulematch(self,wm_tokb):          # copy the field rule_match from old to new concept
         trans_done = set()
         for wmoldi in wm_tokb:                      # all old wm indices that were moved to KB
-            if wm_tokb[wmoldi] not in trans_done:
+            if wm_tokb[wmoldi] not in trans_done and len(self.cp[wmoldi].rule_match)>0:
                 kbcon = gl.KB.cp[wm_tokb[wmoldi]]       # the concept in KB
-                ind1=0
-                for rm1 in kbcon.rule_match:            # top level kbcon
-                    if type(rm1) is list:
-                        ind2=0
-                        for rm2 in rm1:                 # second level
-                            if type(rm2) is list:
-                                ind3=0
-                                for rm3 in rm2:         # third level                                
-                                    if type(rm3) is list:   # should never happen
-                                        gl.log.add_log(("ERROR in copy_Rulematch: more than 3 level deep list. concept=",kbcon.mentstr," rule_match:",kbcon.rule_match))
-                                    else:
-                                        kbcon.rule_match[ind1][ind2][ind3]=wm_tokb[rm3]   # transform the value to theat valid in KB
-                                    ind3+=1
-                            else:
-                                newcon.rule_match[ind1][ind]=wm_tokb[rm2]
+                wmcon = self.cp[wmoldi]                 # the concept in WM, before removing
+                ind1=0; oind1=0
+                while ind1<len(kbcon.rule_match):            # top level  (- we look in wmcon because that is new)
+                    rm1=kbcon.rule_match[ind1]
+                    if len(wmcon.rule_match)>oind1 and rm1==wmcon.rule_match[oind1]:
+                        if type(rm1) is list:  # old rile_match content in KB is over, this is teh first new one
+                            ind2=0
+                            for rm2 in rm1:                 # second level
+                                if type(rm2) is list:
+                                    ind3=0
+                                    for rm3 in rm2:         # third level                                
+                                        if type(rm3) is list:   # should never happen
+                                            gl.log.add_log(("ERROR in copy_Rulematch: more than 3 level deep list. concept=",kbcon.mentstr," rule_match:",kbcon.rule_match))
+                                        else:
+                                            kbcon.rule_match[ind1][ind2][ind3]=wm_tokb[rm3]   # transform the value to that valid in KB
+                                            if kbcon.rule_match[ind1] in kbcon.rule_match[:ind1]: 
+                                                del kbcon.rule_match[ind1]   # remove duplicate
+                                                ind1-=1
+                                        ind3+=1
+                                else:
+                                    kbcon.rule_match[ind1][ind]=wm_tokb[rm2]
+                            if rm1==[]: 
+                                del kbcon.rule_match[ind1]
+                                ind1-=1
                             ind2+=1
-                    else:
-                        newcon.rule_match[ind1]=wm_tokb[rm1]
+                        else:
+                            kbcon.rule_match[ind1]=wm_tokb[rm1]
+                        oind1+=1
                     ind1+=1
                 trans_done.add(wm_tokb[wmoldi])     # remember transformation is done for this KB item
+                
+    def transform_List(self,trlist,wm_tokb):        # transform list in kbcon to values valid in KB
+        nexti = 0
+        while nexti < len(trlist):              # over list
+            oldvalue=trlist[nexti]              # this was valid in WM
+            if oldvalue>0:                      # 0 and -1 and -2 have special meanings
+                newvalue = wm_tokb[oldvalue]    # set the new concept index, that is valid in KB, based on the transformation mapping
+            else: newvalue=oldvalue
+            if newvalue in trlist[:nexti]:      # this concept is already in list
+                del trlist[nexti]               # remove duplicate element, list gets shorter, keep nexti value
+            else: 
+                trlist[nexti] = newvalue        # replace old value with new value that is valid in KB 
+                nexti+=1                        # next in list
 
-    def transform_Set(self,trset,wm_tokb):      # transform a set in KB to valid KB concepts
-        collect = set()
-        for oldvalue in trset.copy():           # next field, it is a set
-            trset.remove(oldvalue)              # delete old value from set
-            if oldvalue>1: collect.add(wm_tokb[oldvalue])  # collect new value that is valid in KB. dummy concept on 1 needs be avoided
-        for newvalue in collect:
-            trset.add(newvalue)                 # replace old value with new value that is valid in KB  
+    def copy_Set(self,kbi,trset,oldset,wm_tokb,kbsign=0):      # transform a set in KB to valid KB concepts
+        for oldvalue in oldset:                 # all values
+            if oldvalue>1 and wm_tokb[oldvalue] != kbi:  # the new value will not be the KB concept itself
+                trset.add(wm_tokb[oldvalue])    # add new value that is valid in KB. dummy concept on 1 needs be avoided 
+            if oldvalue<0 and kbsign==1:        # kbsign shows that a negatiove value means an index in KB !!!! (due to reasoning with KB)
+                trset.add(-oldvalue)            # add the positive signed oldvalue itself
         
-    def transform_kb(self,wm_tokb):             # transform fields in the concepts that have just been copied to KB as part of paragraph 
-        #self.transform_Rulematch(wm_tokb)       # transform the field rule_match
+    def transform_KB(self,wm_tokb):             # transform fields in the concepts that have just been copied to KB as part of paragraph 
+                                                # this function transforms indices that were valid in WM to indices in KB
+        self.transform_Rulematch(wm_tokb)       # transform the field rule_match
         trans_done=set()
         for wmoldi in wm_tokb:                  # all old wm indices that were moved to KB
-            if wm_tokb[wmoldi] not in trans_done:       # transformation not yet done
-                kbcon = gl.KB.cp[wm_tokb[wmoldi]]           # the concept in KB
-                for nexti in range(len(kbcon.wmuse)):       # field wmuse
-                    oldvalue=kbcon.wmuse[nexti]             # this was valid in WM
-                    if oldvalue>0:                          # 0 and -1 and -2 have special meanings
-                        newvalue = wm_tokb[oldvalue]        # set the new concept index, that is valid in KB, based on the transformation mapping
-                    else: newvalue=oldvalue
-                    kbcon.wmuse[nexti] = newvalue           # replace old value with new value that is valid in KB
-                for nexti in range(len(kbcon.reasonuse)):   # field reasonuse
-                    oldvalue=kbcon.reasonuse[nexti]         # this was valid in WM
-                    if oldvalue>0:                          # 0 and -1 and -2 have special meanings
-                        newvalue = wm_tokb[oldvalue]        # set the new concept index, that is valid in KB, based on the transformation mapping
-                    else: newvalue=oldvalue
-                    kbcon.reasonuse[nexti] = newvalue               # replace old value with new value that is valid in KB
-                self.transform_Set(kbcon.reasoned_with,wm_tokb)     # transform field
-                self.transform_Set(kbcon.usedby,wm_tokb)            # transform field
-                self.transform_Set(kbcon.same,wm_tokb)              # transform field
-                self.transform_Set(kbcon.general,wm_tokb)           # transform the .general field
+            wmcon = self.cp[wmoldi]
+            if wm_tokb[wmoldi] not in trans_done:               # transformation not yet done
+                kbcon = gl.KB.cp[wm_tokb[wmoldi]]               # the concept in KB
+                self.transform_List(kbcon.wmuse,wm_tokb)        # transform the wmuse list
+                self.transform_List(kbcon.reasonuse,wm_tokb)    # transform the reasonuse list
+                self.copy_Set(wm_tokb[wmoldi],kbcon.reasoned_with,wmcon.reasoned_with,wm_tokb,kbsign=1) # copy field
+                self.copy_Set(wm_tokb[wmoldi],kbcon.usedby,wmcon.usedby,wm_tokb)    # copy field
+                self.copy_Set(wm_tokb[wmoldi],kbcon.same,wmcon.same,wm_tokb)        # copy field
+                self.copy_Set(wm_tokb[wmoldi],kbcon.general,wmcon.general,wm_tokb)  # copy the .general field
                 trans_done.add(wm_tokb[wmoldi])             # remember that transformation is done for this kb content
+
+    def consolidate_KB(self,wm_tokb):       # consolidate various attributes of concepts just copied to KB
+        trans_done=set()
+        for wmoldi in wm_tokb:                      # all old wm indices that were moved to KB
+            wmcon = self.cp[wmoldi]    
+            if wmcon.known>0 and wm_tokb[wmoldi] not in trans_done:   # wm concept known, transformation not yet done
+                kbi = wm_tokb[wmoldi]
+                kbcon = gl.KB.cp[kbi]               # the concept in KB 
+                kbcon.cons_avg = (kbcon.cons_avg * kbcon.count + wmcon.cons_avg * wmcon.count)/(kbcon.count + wmcon.count)
+                if kbcon.known > wmcon.known:       # KB is better known
+                    a=1                             # we keep values in KB
+                if kbcon.known == wmcon.known:      # same level known 
+                    newp = gl.args.pmerge[kbcon.p][wmcon.p]      # read consolidation table
+                    #if gl.d==1: print ("CONSOLID wmold",wmoldi,wmcon.mentstr,wmcon.p,"kb conc",kbi,kbcon.mentstr,kbcon.p,"newp",newp)
+                    if newp != kbcon.p: gl.log.add_log(("PVALUE OVERRIDE IN KB when paragraph was copied. KB conc:",kbi," ",kbcon.mentstr," old p:",kbcon.p, " new p:",newp))
+                    kbcon.p = newp                  # override p in KB
+                if kbcon.known < wmcon.known:       # we know better now!
+                    kbcon.known = wmcon.known
+                    kbcon.p = wmcon.p
+                kbcon.count = kbcon.count + wmcon.count # just increase already existing count
                 
     def move_Paratokb(self):                # move paragraph to KB on all branches (usually 1 branch should be alive at paragraph end)
         wm_tokb = {}                            # a mapping of the old wm indices to the new KB locations
+        remove_list=[]
         for liv in gl.VS.wmliv:                 # process all living branches 
             db = gl.VS.wmlist[liv]              # next WM
             lastmoved=len(db.cp)-1
@@ -1237,24 +1322,44 @@ class Kbase:
                 if db.cp[coni].relation!=1 and db.cp[coni].known>0:   # not a word, not a parent, not a question
                     nowmoved=coni
                     for toremove in range(lastmoved,nowmoved,-1):   # remove concepts from WM, which were copied in the previous iteration.
-                        if len(db.cp[db.ci].kblink)>0:
-                            wm_tokb[db.ci]=db.cp[db.ci].kblink[0]  # where was the last concept copied in KB
-                        db.copydata_KB(db.ci,db.cp[db.ci].kblink[0])  # copy fields of last concept to the KB concept 
-                        db.remove_concept(allwm=1)   # remove last concept
+                        if len(db.cp[toremove].kblink)>0:
+                            wm_tokb[toremove]=db.cp[toremove].kblink[0]  # where was the last concept copied in KB
+                        if db.cp[toremove].kblink!=[]:                  # this is copied to KB
+                            db.copydata_KB(toremove,db.cp[toremove].kblink[0])    # copy fields of last concept to the KB concept 
+                        remove_list.append(toremove)                    # remember to remove last concept
                     if coni>1:                  # do not move the dummy concept on index==1
+                        oldlen=gl.KB.ci
                         db.copyto_kb(coni)      # copy concept on coni to kb. Will be deleted from WM in the next iteration.
+                        if gl.KB.ci>oldlen: gl.KB.cp[gl.KB.ci].count=0  # if something added, count number will be copied
                     lastmoved=nowmoved
-        db.transform_kb(wm_tokb)                # copy data that need transformation - these are concept indices that were valid in WM
+        if gl.d==1: print ("MOVEPARATOKB wm_tokb",wm_tokb)
+        db.transform_KB(wm_tokb)                # transform concept that need transformation - these are concept indices that were valid in WM
+        db.consolidate_KB(wm_tokb)              # consolidate p value, known value and other values between WM and KB
+        for removthis in remove_list:           # remove paragraph from WM after transformation
+            if db.ci == removthis:              # should always be true.
+                db.remove_concept(allwm=1)      # remove last concept. 
+            else: gl.log.add_log(("ERROR in move_Paratokb: WM=",db.this," This WM could not be removed because remove_list does not match last concept in WM."))
 
     def printlog_WM(self,wmitem):               # print and log branch concepts for debugging
-        wminfo = "WM id:"+str(wmitem.this)+" parent WM:"+str(wmitem.pawm)+" WM length:"+str(wmitem.ci+1)+" WMvalue="+str(wmitem.branchvalue)+" last conc used:"+str(wmitem.last)+" activated:"+str(wmitem.activ)
+        wminfo = "WM id:"+str(wmitem.this)+" parent WM:"+str(wmitem.pawm)+" WM length:"+str(wmitem.ci+1)+" WMvalue="+str(wmitem.branchvalue)+" last conc used:"+str(wmitem.last)+" activated:"+str(wmitem.activ)+" KB activ:"+str(wmitem.kbactiv)
         print (wminfo)
         gl.log.add_log((wminfo))
         for i,conc in enumerate(wmitem.cp): 
-            concinfo = str(i)+ " "+conc.mentstr+" p="+str(conc.p)+" c="+str(conc.c)+" parents="+str(conc.parent)+" children="+str(conc.child)+" same="+str(conc.same)+" general="+str(conc.general)+" known="+str(conc.known)+" g="+str(conc.g)+" wmuse="+str(conc.wmuse)+" kblink:"+str(conc.kblink)+" kbrules:"+str(conc.kb_rules)+" reasonuse:"+str(conc.reasonuse)
+            concinfo = str(i)+ " "+conc.mentstr+" p="+str(conc.p)+" c="+str(conc.c)+" parents="+str(conc.parent)+" same="+str(conc.same)+" general="+str(conc.general)+" known="+str(conc.known)+" g="+str(conc.g)+" wmuse="+str(conc.wmuse)+" kb_use="+str(conc.kb_use)+" kblink:"+str(conc.kblink)+" kbrules:"+str(conc.kb_rules)+" count:"+str(conc.count)+" reasonuse:"+str(conc.reasonuse)
             print (concinfo)
             gl.log.add_log((concinfo))
-    
+ 
+    def keep_OneBranch(self):               # force kill all WMs except a single one, at paragraph end
+        bestv = -100
+        bestvs = 0
+        for liv in gl.VS.wmliv:             # get best branch (first of bests)
+            if bestv < gl.VS.wmlist[liv].branchvalue:
+                bestv = gl.VS.wmlist[liv].branchvalue
+                bestvs=liv
+        for liv in gl.VS.wmliv.copy():      # kill branches except one
+            if liv != bestvs:               # this is not the best
+                gl.VS.kill_Branch(liv,"Not the best branch at paragraph end. Force kill.")
+ 
     def process_Para(self,rowment):             # process paragraph at paragraph border
         if gl.args.paragraph_tokb >= 1:         # if moving paragraph to KB is enabled
             for id in gl.VS.wmliv:              # print and log all wms living
@@ -1262,8 +1367,7 @@ class Kbase:
                 print ("PARAGRAPH ENDED.   "+rowment)
                 gl.log.add_log(("PARAGRAPH ENDED. WM moved to KB: last row=",rowment))
                 self.printlog_WM(wmitem)        # print and log branch concepts for debugging
-                if gl.d==1 and 1 in gl.VS.wmliv: print ("PROC mennyi az 5 same?",gl.VS.wmlist[1].cp[5].same)
-           #kill all WMs except the best           #HERE TO DO ITT TARTOK force kill all WMs except a single one
+            self.keep_OneBranch()               # force kill all WMs except a single one
             self.move_Paratokb()                # move a paragraph (can be the last one) to KB
         gl.act.update_Para()                    # update list of activated concepts in this and previous paragraph
                        
