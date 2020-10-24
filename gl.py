@@ -27,10 +27,13 @@ class Arguments:
         self.success_reasoncount=0  # debug. reasoned concepts.
 
         self.upd_pvalue = 1     # switch on p (etc) value update when contradicting, in update_Dimensions
-        self.paragraph_tokb = 1 # which previous paragraph to move to kb. 0 means no move to kb.
-        self.kbactiv_limit = [0,3,2,1,0] # limit of relevance, for KB concept activation, based on input occurence. Dimension is activation round.
+        self.paragraph_tokb = 1 # switch for previous paragraph to move to kb. 0 means no move to kb.
+        self.kbactiv_limit = [0,2,2,1,0] # limit of relevance, for KB concept activation, based on input occurence. Dimension is activation round.
+                                # [0,2,2,1,0] means ordinary concepts in the input (round=1, r=2, threshold=2) activate all children in KB
+                                # [0,3,2,1,0] means ordinary concepts in the input (round=1, r=2, threshold=3) do not activate their children in KB
         self.kbactiv_qlimit = [0,2,2,1,0] # limit of relevance, for KB concept activation, for question
-        self.kbactiv_spreadlimit = [0,4,2,1,0] # TO DO IMPLEMENT: limit of relevance, for KB concept spreading activation. Dimension is activation round.
+                                # [0,2,2,1,0] means ordinary concepts in the input (round=1, r=2, threshold=2) activate all children in KB        
+#        self.kbactiv_spreadlimit = [0,4,2,1,0] # TO DO IMPLEMENT: limit of relevance, for KB concept spreading activation. Dimension is activation round.
 
         
 
@@ -104,10 +107,10 @@ class Arguments:
             16: "AND", 17: "NOT", 18: "OR", 19: "XOR"
         }
 
-        self.noxx = [2,3,4,13,15,16,18,19]   #these relations make no sense in form of D(x,x)
+        self.noxx = [2,3,4,13,15,16,18,19]   #these relations make no sense in form of D(x,x) 
 
         self.noreplace = {                                              # for these relations (index of dict) no C reasoning possible on given arguments (value)
-            1:[99],2:[99],3:[0,1,2],4:[1,2],5:[1,2],6:[1,2],7:[1,2],8:[0],9:[99],10:[99],       #all relations must have a dummy value 99 at least
+            1:[99],2:[99],3:[0,1,2],4:[1,2],5:[1,2],6:[99],7:[1,2],8:[0],9:[99],10:[99],       #all relations must have a dummy value 99 at least
             11:[1,2],12:[99],13:[99],14:[99],15:[99],16:[99],17:[99],18:[99],19:[99]
         }
 

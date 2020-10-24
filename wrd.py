@@ -3,7 +3,7 @@ from timeit import default_timer as timer
 
 class Word:
     def __init__(self, wordstring):
-        self.word = str(wordstring)  # a Word object has the word string itself
+        self.word = str(wordstring)  # a Word object has the word string itself 
         self.wchild = []  # a Word object has the meanings, indices in KB
 
 
@@ -17,7 +17,7 @@ class Wlist:
         if g_value==-1: g_value=gl.args.gmax
         self.wcp.append(Word(new_word))                 # add the object
         self.wci = len(self.wcp) - 1                    # current index in WL
-        kbi=gl.KB.add_concept(gl.args.pmax, 1, [], [], g_value)    # create the concept for the word meaning. Parent is empty.
+        kbi=gl.KB.add_concept(gl.args.pmax, 1, [], [], g_value, reason="WORD KB ment= "+new_word[:])    #FIX5 create the concept for the word meaning. Parent is empty.
         gl.KB.cp[kbi].wordlink.append(self.wci)         # set word link in KB
         gl.KB.cp[kbi].mentstr = new_word[:]
         self.wcp[self.wci].wchild.append(gl.KB.ci)      # add the meaning concept as child in the word object.

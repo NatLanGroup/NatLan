@@ -1,0 +1,75 @@
+// Regression tests 2 of KB reasoning fixes.
+m/ IM(IM(%1,%2),%2)p=im
+
+m/ F(dummy)
+m/ F(boy,nice)
+m/ P(boy,bike)
+m/ C(boy,person)
+
+m/ F(girl,nice)
+m/ P(girl,bike)
+m/ C(Joe,girl)
+
+m/ F(you,nice)
+m/ P(you,bike)
+
+m/ C(Jim,you)
+
+m/ C(Bill,boy)
+
+m/ C(roller,bike)
+m/ P(?,bike)		a/ P(boy,bike) P(girl,bike) P(Jim,bike) P(Joe,bike) P(you,bike) P(Bill,bike)
+
+m/ F(girl,long,very)
+m/ P(animal,head)
+
+m/ C(pike,animal)
+m/ P(pike,head)?				a/ P(pike,head)
+
+m/ P(Q(all,bird),head)
+m/ C(duck,bird)
+m/ P(Q(all,duck),head)?			a/ P(Q(all,duck),head)
+
+m/ C(sparrow,bird) 
+m/ P(Q(all,sparrow),head)?		a/ P(Q(all,sparrow),head)
+
+m/ P(Q(all,F(snake,long)),head)
+m/ C(eel,snake)
+m/ P(Q(all,F(eel,long)),head)? 		a/ P(Q(all,F(eel,long)),head)
+
+m/ C(viper,snake)
+m/ P(Q(all,F(viper,long)),head)? 	a/ P(Q(all,F(viper,long)),head)
+
+m/ C(boa,F(snake,long))
+m/ P(Q(all,boa),head)?				a/ P(Q(all,boa),head)
+
+m/ F(snake,fast)
+m/ F(?,fast)						a/ F(snake,fast) F(eel,fast) F(viper,fast)
+
+m/ F(Q(some,bird),yellow)
+m/ F(Q(some,sparrow),yellow)?		a/ F(Q(some,sparrow),yellow)
+
+m/ F(F(snake,long),dangerous)
+m/ F(boa,dangerous)?               a/ F(boa,dangerous)
+
+// IM reasoning
+
+
+m/ F(girl,nice, big, smart)
+m/ F(boy,big)
+m/ IM(F(boy,big),F(boy,huge))
+m/ F(boy,huge)?					a/ F(boy,huge)
+
+m/ IM(F(boy,big),F(boy,strong))
+m/ F(boy,strong)?				a/ F(boy,strong)
+m/ IM(A(boy,run),F(boy,fast))
+m/ A(boy,run)
+m/ F(boy,fast)?					a/ F(boy,fast).p=4
+m/ IM(A(boy,eat),F(boy,hungry))
+
+m/ A(boy,eat)
+m/ F(boy,hungry)?				a/ F(boy,hungry).p=4
+// F(Bill,big)
+
+// 4023 attempted, 57 concepts reasoned
+

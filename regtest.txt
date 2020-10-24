@@ -1,0 +1,42 @@
+
+// Regression tests of KB reasoning fixes. 
+
+m/ IM(C(%1,%2)p=p0,P(%1,%2))p=pide1
+
+// KB reasoning for C,D relation
+// KB reasoning for uniconcept. first case: self.kbactiv_limit = [0,2,2,1,0]
+// second case: needs to have self.kbactiv_limit = [0,3,2,1,0] -  F(?,strong) A(?,run) T(?)	are not fully working now.
+// F(Joe,?) works only because of question activation.
+
+m/ F(dummy)
+
+m/ C(Joe,policeman)
+m/ F(policeman,nice)
+m/ F(Joe,?)			a/ F(Joe,nice)
+
+m/ A(policeman, run)
+
+m/ A(?,run)			a/ A(policeman, run) A(Joe,run)
+
+m/ F(policeman,strong)
+m/ F(?,strong)		a/ F(policeman,strong) F(Joe,strong)
+m/ F(Joe,?)			a/ F(Joe,nice) F(Joe,strong)
+m/ A(?,run)			a/ A(policeman, run) A(Joe,run)
+
+// rule added after the concepts are already in KB and in WM. Rule must be leading the paragraph otherwise the paragraph is not fully re-evaluated.
+m/ IM(C(%1,%2)p=p0,T(%1))p=pide1
+
+m/ C(Mary,girl)
+m/ P(policeman,hat)
+m/ T(?)				a/ T(Joe) T(Mary)
+
+// a few cases with branching
+m/ C(he,person)r=4
+m/ C(girl,person)
+
+m/ A(Joe,read)
+m/ F(Mary,nice)
+m/ A(he,eat)
+m/ A(?,eat)			a/ A(he,eat) A(Mary,eat)
+// 2105 attempted. 50 concepts reasoned
+

@@ -19,10 +19,16 @@ class Testinput:
         self.evaluation = []    # evaluation of system output includinmg mentalese translation
         self.comment = []       # comment
         self.debug = []         # show that this row needs debugging
+        self.logrow = []        # list to hold logfile rows
+        self.baselogrow = []    # list to hold the previous logfile rows
+        self.lognewkb = []      # HOLDS the evaluation of KB based on log file
+        self.logoldkb = []      # HOLDS the evaluation of KB base version based on log file    
+        self.logcomp = []       # holds teh comparison of new and old KB
         try:
             self.testf = open(testfilename, "r")
             pos=testfilename.find(".")
             self.resultf = open(testfilename[:pos]+"_result"+testfilename[pos:],"w")    #output file
+            self.log_result = open("log_result.txt","w")                                # logfile evaluation file
         except:
             gl.log.add_log(("ERROR: Testinput: input or output file could not be opened:", self.name))
         try:
@@ -67,7 +73,6 @@ class Testinput:
                     if openc==closec:                           # a space means end of concept, if () are all closed
                         gooda.append(item)
                         if wait==0: goodval.append([])
-                        if gl.d==3: print ("POPUL 0 gooda",gooda," goodval",goodval,"wait:",wait)
                         item=""; openc=0; closec=0; wait=0
             else:
                 if openc==closec and wait==0:
@@ -131,7 +136,6 @@ class Testinput:
                 if apos > -1 and comment == -1:
                     self.question[rowi] = 1
                     self.goodanswer_Populate(self.goodanswer[rowi],self.good_values[rowi],line[apos + 2:i].strip())
-                if gl.d==3: print ("READTEST rowindex",rowi," goodanswer:",self.goodanswer[rowi]," good_values:",self.good_values[rowi])
     #    except: print("INPUT FILE ERROR. Input file may have wrong format. Or file name parameter missing, or could not be opened. ")
 
     def goodanswer_list(self,db,starti,endi):              # get indices of good answers
@@ -205,6 +209,7 @@ class Testinput:
             goodindex=0
             for gooda in self.goodanswer[rowindex]:                  # take all good answers
                 sysindex=0; goodmatch=0
+                goodamatch[goodindex]=-1                            # FIX4 -1 instead of 1
                 for sysalist in self.systemanswer[rowindex]:        # and take all system answers
                     if sysalist[0]==-1:  db=gl.KB                   # -1 means KB. process answers from KB too.
                     else: db=gl.VS.wmlist[sysalist[0]]              # this is the WM we are in
@@ -213,34 +218,41 @@ class Testinput:
                     else: castKB=0
                     goodment = gooda                                # TO DO GET P VALUE OFF mentalese of good answer
                     if db.cp[sysalist[1]].mentstr == goodment:      # mentalese format match
-                        if gl.d==3: print ("VS EVAL 4 good mentalese match","goodment:",goodment,"goodansw",self.goodanswer[rowindex],"good_val",self.good_values[rowindex],"sysindex",sysindex)
                         goodmatch=1
                         sysamatch[sysindex]=1                       # let us suppose matching p
-                        goodamatch[goodindex]=1
                         goodvals=self.good_values[rowindex][goodindex][:]
                         if goodvals==[]: goodvals.append(["p",gl.args.pmax])   # at least p value must be checked
-                        if gl.d==3: print ("VS EVAL 5 attribute test goodment",goodment,"goodval=",goodvals,"wm=",sysalist[0],"sysa=",sysa,"sysa p",db.cp[sysa].p, "try p:",db.map_Attrib(sysa,"p"))
                         for goodval_item in goodvals:               # cycle through p=, g=, r= etc
+                #            if gl.d==4: print ("TESTING 1 gooda",gooda,"goodamatch",goodamatch,"sysamatch",sysamatch,"goodindex",goodindex)
                             if (goodval_item[1] != db.map_Attrib(sysa,goodval_item[0])):   # p etc value is not the same
-                                goodamatch[goodindex]=0
-                                sysamatch[sysindex]=2
+                                if goodamatch[goodindex] in [1,3]:        # earlier we had a match
+                                    goodamatch[goodindex]=3         # some p matching, some not
+                                    sysamatch[sysindex]=3
+                                else: 
+                                    goodamatch[goodindex]=0         # p mismatch
+                                    sysamatch[sysindex]=2
+                            if (goodval_item[1] == db.map_Attrib(sysa,goodval_item[0])):   # p etc value are  the same
+                                if goodamatch[goodindex] in [0]:        # earlier we had a mismatch
+                                    goodamatch[goodindex]=3         # some p m,atching, some not
+                                    sysamatch[sysindex]=2
+                                if goodamatch[goodindex] in [1,-1]:        # no earlier result or earlier matching
+                                    goodamatch[goodindex]=1         # match
+                                    sysamatch[sysindex]=1
+                #            if gl.d==4: print ("TESTING 3 gooda",gooda,"goodamatch",goodamatch,"sysamatch",sysamatch)
                     sysindex=sysindex+1
                 if (goodmatch==0): eval="***MISS"                   # good answer missing, override p mismatch
                 goodindex+=1
             if (eval=="OK     " and (0 in goodamatch)):             # concept match OK but some p values do not match
                 eval="***BADP"
-            if (eval=="OK     " and (2 in sysamatch)):              # concept match multiple cases, some p mismatching
-                eval="***BADP"
+ #           if (eval=="OK     " and (2 in sysamatch)):              # FIX4 remove concept match multiple cases, some p mismatching
+  #              eval="***BADP"
             if (eval=="OK     " and (0 in sysamatch)):              # too many system answers
                 eval="OK MORE"
         return eval
 
  
     def write_result(self,rowindex):                    # write output file
-        if gl.vstest>0:
-            evals = self.vs_eval_test(rowindex)
-        else:
-            evals=self.eval_test(rowindex)
+        evals = self.vs_eval_test(rowindex)
         self.resultf.write(evals)                       # write OK, BAD
         if len(self.eng[rowindex])>0:                   
             self.resultf.write(" e/ ")
@@ -346,7 +358,187 @@ class Testinput:
         else: alleval=""
         if "ERROR" in message: print (message)
         else: print ("RESULT CHECK.",alleval,"match:",match,"difference:",diff,"not found:",notf, "new rows skipped:",skip[0],message)
+
+    def  read_logfile(self,filename,loglist):
+        ok=1
+        try:
+            logdone = open(filename, "r")
+        except: 
+            ok=0                            # no such file
+        if ok==1:                           # file could be opened
+            i=0
+            for line in logdone:
+                loglist.append(line)        # the lofgile is stored in the loglist row by row
+                i+=1
+        return ok
+
+    def get_Section(self,row,ident,back,flag,thislog):   # search ident in thislog and if found return values after back
+        ind=len(thislog)-1
+        result=[]
+        while ind>0:
+            this = thislog[ind]         # current row
+            found=ind; resi=""
+            for identify in ident:
+                if not(identify in this):
+                    found=-1
+            if found > -1 and not("known=0" in this):                  # thsi is a matching row
+                resi=flag+" "
+                for baci in back:           # values to be searched for
+                    if baci in this: 
+                        pos=this.find(baci)
+                        end=this.find(" ",pos+1)
+                        resi=resi+" "+this[pos:end]
+                result.append(resi)
+            ind = ind-1                     # search backward
+        return result
+    
+    def get_Used(self,row,kbi,logfkb):                 # from row, get the used_ever field: which concepts were used to reason this.
+        trig="frozenset({"
+        useds=""
+        logfkb[kbi]["used"]=[]                          # initialize the used list of lists in self.lognewkb or self.logoldkb
+    #    for usecase in gl.KB.cp[kbi].use_ever:
+     #       if list(usecase)!=[-1]:
+      #          useds+=str(list(usecase))
+       #         logfkb[kbi]["used"].append(list(usecase))
+        for rowi in range(0,len(row)-len(trig)):            # collect the used_ever concepts
+            if row[rowi:rowi+len(trig)] == trig:            # trig introduces used_ever items in the log file
+                sta=rowi+len(trig)                          # current position
+                num=row[sta:sta+1]; sta+=1; useds="["       # num will hold the number
+                thiscase=[]                                 # a single list of used concepts
+                while row[sta:sta+1] not in ["}"]:          # while not end of frozenset
+                    while row[sta:sta+1] not in ["}",","]:
+                        num+=row[sta:sta+1];sta+=1
+                    if row[sta:sta+1] not in ["}"]: sta+=1
+                    if num!="-1": 
+                        useds+=num
+                        thiscase.append(int(num))           # convert to number
+                        #print ("GETUSED", kbi,thiscase)
+                    num=""
+                if thiscase!=[]: logfkb[kbi]["used"].append(thiscase)   # "used" holds the lists of used concepts
+        useds+="]"
+        if useds=="[]" or useds=="]": useds=""
+        return useds
+
+    def add_detail(self,logfkb,rowi,found,ment):     # rows showing INPUT and REASON origin of concepts
+        if "(" in ment:                         # only compound concepts
+            logfkb[rowi]["detail"]=[]           # rows showing INPUT and REASON origin of concepts
+            for fitem in found: 
+                if fitem!=[]:
+                    logfkb[rowi]["detail"].append("   "+str(fitem))
+        else:                                   # for words
+            logfkb[rowi]["detail"]=[]
+     
+    def log_KB(self,logfkb,thislog):             # process the KB content of the log file. logfkb is either self.lognewkb or self.logoldkb.
+        ind=len(thislog)-1                              # last index
+        row=thislog[ind][:]
+        while ind>0 and not "KB"==row[0:2]:             # get the first row of KB list at the end of the log file
+            ind=ind-1
+            row=thislog[ind][:] 
+        logkb=[]
+        while ind<len(thislog)-1:                       # all rows starting from the KB list first row
+            ind+=1
+            row=thislog[ind][:]
+            spac=row.find(" ")                          # the space after the row number
+            numb= row[0:spac]                           # row number
+            ment= row[spac+1:row.find(" ",spac+1)]      # mentalese
+            pval = row[row.find("p=")+2:row.find(" ",row.find("p=")+1)]   # p= value
+            know = row[row.find("known=")+6:row.find(" ",row.find("known=")+1)]   # known= value
+            logfkb.append([]); rowi=len(logfkb)-1       # logfkb has items corresponding to the current KB
+            logfkb[rowi]={"prval":(str(rowi)+" p="+pval+" k="+know+" "+ment)}  # logfkb items are lists of dicts. prval is the printable value for the KB row.
+            logfkb[rowi]["ment"]=ment                   # mentalese
+            logfkb[rowi]["pval"]=int(pval)              # store the p value in the data structure
+            logfkb[rowi]["know"]=int(know)              # store the known value in the data structure
+            found=[]
+            if "frozenset({-1})" in row: 
+                found=self.get_Section(row,["INPUT","ment= "+ment],["p=","known="],"INPUT ",thislog)    # search for rows with "INPUT"
+            found2=self.get_Section(row,["reasoned concept:"+ment],["p="],"REASON",thislog)             # search for rows with "reasoned concept:"
+            for ite in found2: found.append(ite)
+            found3 = self.get_Used(row,rowi,logfkb)     # returns the string and also populates logfkb with the used concept indices
+            logfkb[rowi]["prval"]+=" "+found3
+            self.add_detail(logfkb,rowi,found,ment)     # add rows showing INPUT and REASON origin of concepts
+
+    def manage_Diff(self,oldi,found):                   # investigae differences between old and new KB content for a single concept
+        pold = self.logoldkb[oldi]["pval"]
+        pnew = self.lognewkb[found]["pval"]
+        kold = self.logoldkb[oldi]["know"]
+        knew = self.lognewkb[found]["know"]
+        if pold!=pnew or kold!=knew:                    # any difference
+            if found not in self.logcomp["diff"]: self.logcomp["diff"][found]=""
+            if pold != pnew: self.logcomp["diff"][found]+=" DIFF_P old p="+str(self.logoldkb[oldi]["pval"])
+            if kold != knew: self.logcomp["diff"][found]+=" DIFF_K old k="+str(self.logoldkb[oldi]["know"])
+
+
+    def log_Compare(self):                      # compare new KB and old KB based on logfile reports, evaluate differences.    
+        self.logcomp = {"missing":[]}
+        self.logcomp["diff"]=dict()
+        for oldi in range(0,len(self.logoldkb)):            # old KB rows
+            print (oldi,self.logoldkb[oldi])
+            found=-1
+            oment=self.logoldkb[oldi]["ment"]               # old mentalese
+            for newi in range(0,len(self.lognewkb)):        # new KB rows
+                nment=self.lognewkb[newi]["ment"]           # new mentalese
+                if oment==nment: found=newi                 # remember where this was found in new KB
+            if found==-1:                                   # an old KB mentalese is missing from new KB
+                msg="MISSING as parent: "+oment
+                for det in self.logoldkb[oldi]["detail"]:
+                    if "INPUT" in det:
+                        msg="MISSING input: "+oment          # record missing input
+                    if "REASON" in det:
+                        msg="MISSING reason: "+oment         # record missing reasoned concept
+                self.logcomp["missing"].append(msg)
+            if found>-1:
+                self.manage_Diff(oldi,found)                # record differences between oldi and its pair found
+           
+    def process_logfile(self):                                  # read logfile.txt and logfile_base.txt and evaluate them
+        success=self.read_logfile("logfile.txt",self.logrow)                # read logfile into self.logrow
+        if success==1:
+            self.log_KB(self.lognewkb,self.logrow)                          # process the KB content of the current log file, "lognew"
+        success=self.read_logfile("logfile_base.txt",self.baselogrow)       # read earlier logfile into self.baselogrow
+        if success==1:                                                      # if we have an earlier log file
+            self.log_KB(self.logoldkb,self.baselogrow)                      # process the KB content of the old log file, "logold", name: logfile_base.txt
+            self.log_Compare()                                              # compare new KB and old KB, evaluate differences.
+        self.print_Logeval()                                                # print the self.lognewkb and self.logoldkb evaluations on screen
+        self.write_Logeval()                                                # write the log file evaluations into log_result.txt
+                
+    def print_Logeval(self):                    # print the self.lognewkb and self.logoldkb evaluations on screen
+    #    for row in self.logoldkb:               # old _base log file
+     #       print (row["prval"])                # the printable evaluation row
+      #      if "detail" in row:                 # INPUT and REASON details
+       #         for ditem in row["detail"]:
+        #            print (ditem)
+        for row in self.lognewkb:               # current log file
+            print (row["prval"])                 # the printable evaluation row
+            #if row["used"]!=[]: print ("USED: ",row["used"][0])
+            if "detail" in row:                 # INPUT and REASON details
+                for ditem in row["detail"]:
+                    print (ditem)
+        print ("LOGCOMP:")
+        for item in self.logcomp["missing"]:
+            print (item)
+        for item in self.logcomp["diff"]:
+            print (str(item)+": "+self.logcomp["diff"][item])
+    
+    def write_Logeval(self):                    # write the log file evaluations into log_result.txt
+        self.log_result.write("\n"+"COMPARE with base:"+"\n")
+        for item in self.logcomp["missing"]:
+            self.log_result.write(item+"\n")
+        for item in self.logcomp["diff"]:
+            self.log_result.write("DIFF "+str(item)+" p="+str(self.lognewkb[item]["pval"])+" k="+str(self.lognewkb[item]["know"])+" "+self.lognewkb[item]["ment"]+" "+self.logcomp["diff"][item]  +"\n")
+
+        self.log_result.write("\n"+"NEW logfile : KB content"+"\n")
+        for row in self.lognewkb:               # current log file
+            self.log_result.write(row["prval"]+"\n") # the printable evaluation row
+            if "detail" in row:                 # INPUT and REASON details
+                for ditem in row["detail"]:
+                    self.log_result.write(ditem+"\n")
+        self.log_result.write("\n"+"OLD logfile : KB content"+"\n")
+        for row in self.logoldkb:               # current log file
+            self.log_result.write(row["prval"]+"\n") # the printable evaluation row
+            if "detail" in row:                 # INPUT and REASON details
+                for ditem in row["detail"]:
+                    self.log_result.write(ditem+"\n")
                     
+
             
 class Temptest:                                 # unit tests and other temporary data
     def __init__(self):
