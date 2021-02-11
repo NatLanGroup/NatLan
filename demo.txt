@@ -1,0 +1,90 @@
+
+A penguin is a bird.		C(penguin,bird)
+
+... young penguins ....   F(penguin,young)    C(F(penguin,young),bird)   Ramification problem.
+
+rule:
+
+IM( C(%1,%2), C(F(%1,%3),%2) )   
+
+C(penguin,bird)
+
+F(penguin,young)
+
+
+C(F(penguin,young),bird)
+
+
+F(boy,?)   F(boy, .....  )
+
+
+
+
+MENTALESE : the representation of natural language    ABC(a,b,c)  
+
+CONCEPT A(bird,sing) p (probability)   A(bird,sing).p=4.g=1   g generality  exception=0...4  0: no exceptions  A(bird,sing).g=1  exception=2
+
+make a nest = I(make,nest)
+
+Birds make nests.= A(birds, I(make, nest)).p=4    A(penguins, I(make, nest)).p=1
+
+
+The bird sings. 		A(bird,sing).p=4
+The bird does not sing.		A(bird,sing).p=0.g=0
+The bird is yellow.		F(bird,yellow).p=4
+Some birds sing.		A(Q(some,bird),sing).p=4
+The bird sings often.		A(bird,sing,often)    or   F(A(bird,sing),often) ambiguity 
+The bird is in the garden.	F(bird, R(in,garden))
+The bird sings in the garden.	A(bird,sing,R(in,garden))
+Birds have wings.		P(bird,wing)
+Birds' wings have feathers.	P(P(bird,wing),feathers)
+A penguin is a bird.		C(penguin,bird)
+
+If a bird is young,it doesn't fly. IM(F(bird,young),A(bird,fly).p=0) 
+
+young penguin:  F(penguin,young)
+
+
+
+
+
+
+Birds make a nest.   = 	A(birds, I(make, nest))
+			p=4 means it is not surpirising at all. 
+			p=0 means it is not true, it would be very very surprising.
+			g=1 means this applies to birds in general (not to a specific bird)
+			exception=0 would mean this applies to each and every bird without exception
+			exception=1 would mean this applies to every bird, with rare exceptions
+			exception=4 would mean this applies to some birds in a well-known way but it does not apply for many other birds.
+
+
+"The emperor penguin does not make a nest."
+
+    A(birds,I(make,nest))
+    C(penguins,birds)
+    A(penguins,I(make,nest))
+    IM(AND( C(penguins,birds), A(birds,I(make,nest)) ), A(penguins,I(make,nest))
+
+"emperor penguin" = F(penguin, emperor)
+    IM(AND(C(%1,%2),F(%1,%3)), C(F(%1,%3),%2))
+    C(F(penguin,emperor),birds)
+    A(F(penguin,emperor),I(make,nest))
+
+NOT(A(F(penguin,emperor),I(make,nest)))
+NOT(A(penguins,I(make,nest)))
+
+    IM( AND(IM(%1,%2),%1,NOT(%2)),R(but,%1,NOT(%2)) )
+
+%1: C(penguins,birds)        
+%2: A(penguins,I(make,nest))
+"not all penguins make a nest" = NOT (A(penguins,I(make,nest)))   = NOT(%2)
+
+---> R(but,%1,%2)  = R(but,C(penguins,birds), NOT (A(penguins,I(make,nest))) )
+
+Do penguins make a nest?
+question representation: A(penguins,I(make,nest))?
+found in KB: A(penguins,I(make,nest))
+also found in KB: NOT(A(penguins,I(make,nest)))
+
+
+Penguins are birds but not all penguins make a nest.

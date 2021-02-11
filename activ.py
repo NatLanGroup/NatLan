@@ -22,13 +22,41 @@ class Activate:
             db.activ_new.add(conc)                  # add conc to the set of newly activated concepts
         # for KB, we always need to do activation with regard to a specific WM, not just in general.
         
-    def activate_inKB(self,db,curr,around):         # activate concepts for curr in KB beyond relevance limit
-        if db.cp[curr].kblink!=[]:
+    def activate_inKB(self,db,curr,around,isinput):         # FIX:isinput. activate concepts for curr in KB beyond relevance limit
+        if db.cp[curr].kblink!=[] and isinput==True:    # FIX: input=False means thsi is a reasoned concept, do not activate currently.
             kbi = db.cp[curr].kblink[0]
             wmapto = -1
             for child in gl.KB.cp[kbi].child:
-                if gl.KB.cp[child].relevance >= gl.args.kbactiv_limit[around] and gl.KB.cp[child].known>0: # relevance limit for the round met
+                if max(gl.KB.cp[child].relevance) >= gl.args.kbactiv_limit[around] and gl.KB.cp[child].known>0 and "%1" not in gl.KB.cp[child].mentstr: # relevance limit for the round met
                     db.kbactiv.add(child)           # add this KB concept to the list of KB-activated concepts with regard to this WM
+                    db.kbactiv_new.add(child)       # add this KB concept to the list of KB-activated concepts with regard to this WM
+                    
+    def activKB_Allchild(self,db,start,curri,wmdb,around,isinput,nextch=0):                 #nextp fixed recursive activation of curri and all children, used in KB
+        #if gl.d==3: print ("ACTIVKB db",db.name,"curri",curri,"wmdb",wmdb.name)
+        while (curri<len(db.cp) and len(db.cp[curri].child)>0 and nextch<len(db.cp[curri].child)):  # walk over children 
+            if len(gl.args.kbactiv_limit)>around+1: nextround=around+1
+            else: nextround=around
+            self.activKB_Allchild(db,curri,db.cp[curri].child[nextch],wmdb,nextround,isinput,0)       # one level down. curri is the parent that was used to access child.
+            nextch=nextch+1
+        if isinput==True and curri<len(db.cp):    # FIX: input=False means thsi is a reasoned concept, do not activate currently in KB.
+            if max(db.cp[curri].relevance) >= gl.args.kbactiv_limit[around] and db.cp[curri].known>0 and "%1" not in db.cp[curri].mentstr: # relevance limit for the round met
+                if start==curri:                    # top level, not the children
+                    wmdb.kbactiv.add(curri)         # add this KB concept to the list of KB-activated concepts with regard to this WM
+                    wmdb.kbactiv_new.add(curri)     # add this KB concept to the list of KB-activated concepts with regard to this WM
+                else:                               # we are at children
+                    wmdb.kbactiv.add(curri)         # add this KB concept to the list of KB-activated concepts with regard to this WM
+                    wmdb.kbactiv_new.add(curri)     # add this KB concept to the list of KB-activated concepts with regard to this WM
+                    for pari in range(len(db.cp[curri].parent)):                            # look at relevance of each parent separately
+                        if db.cp[curri].parent[pari]==start:
+                            if db.cp[curri].relation in gl.args.kbactiv_addone:             # additional limit may apply for this relation
+                                if pari in gl.args.kbactiv_addone[db.cp[curri].relation]:   # additional limit DOES apply for this parent position !! like for C(...,x)
+                                    addlimit=gl.args.kbactiv_addone[db.cp[curri].relation][pari]
+                                    if db.cp[curri].relevance[pari] < gl.args.kbactiv_limit[around]+addlimit:   # relevance of the specific parent is not high enough
+                                        wmdb.kbactiv.discard(curri)                         # remove it from activation set
+                                        wmdb.kbactiv_new.discard(curri)
+#                                        if gl.d==6: print ("ACTKB 6 discarded",curri)
+        return
+
 
     def get_Thisactiv(self,wmpos):              # collect all activated concepts from relevant branches
         thisact=set()
@@ -37,10 +65,6 @@ class Activate:
         return thisact
 
     def update_Para(self):                      # update paragraph information when new paragraph starts
-        #VS if len(gl.WM.thispara)>0:               # nonempty
-        #    gl.WM.prevpara = gl.WM.thispara[:]  # copy previous paragraph
-        #    gl.WM.thispara[:]=[]                # this para empty
-        #if gl.vstest>0:
         for livewmind in gl.VS.wmliv:               # all live WMs
             livewm = gl.VS.wmliv[livewmind]         # get live WM object
             if len(livewm.thispara)>0:              # nonempty
@@ -111,11 +135,11 @@ class Activate:
         #print ("ACTFROMW kblinklist:",kblinklist,"pos:",pos,gl.WM.cp[pos].mentstr)
         for kbcon in kblinklist:                                    # concepts in KB that occur in pos as a parent on any level
             for kbch in gl.KB.cp[kbcon].child:                  # direct children only (limitation)
-                if gl.KB.cp[kbch].known!=0 and gl.KB.cp[kbch].relevance>=gl.args.kbactiv_qlimit[1]:   # relevance above questionb threshold
+                if gl.KB.cp[kbch].known!=0 and max(gl.KB.cp[kbch].relevance) >=gl.args.kbactiv_qlimit[1]:   # relevance above questionb threshold
                     gl.WM.kbactiv.add(kbch)                     # activate in KB
                     gl.WM.kbactiv_new.add(kbch)                 # activate in KB
             if gl.KB.cp[kbcon].relation!=1:                         # not a word: activate itself too
-                if gl.KB.cp[kbcon].known!=0 and gl.KB.cp[kbcon].relevance>=gl.args.kbactiv_qlimit[1]:   # relevance above questionb threshold
+                if gl.KB.cp[kbcon].known!=0 and max(gl.KB.cp[kbcon].relevance) >=gl.args.kbactiv_qlimit[1]:   # relevance above questionb threshold
                     gl.WM.kbactiv.add(kbcon)                     # activate in KB
                     gl.WM.kbactiv_new.add(kbcon)                 # activate in KB
         gl.args.settimer("activ_100: activate_Fromword",timer()-s)

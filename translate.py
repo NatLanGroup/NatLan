@@ -24,6 +24,7 @@ class Parserinput:
             self.read_test()  # reading the input
         except:
             print("ERROR: Test input: input file could not be opened:" + testfilename)
+        self.logf = open("logtr.txt", "w")
 
     def read_test(self):
         for line in self.testf:
@@ -58,7 +59,7 @@ class Parserinput:
 class Translator():
     """this class translate the spacy parser output with the help of the rules"""
 
-    def __init__(self, parse, rules):
+    def __init__(self, parse, rulesf):
         self.parse = None  # spacy output
         self.rules = dict()
         self.irreg_verb = {"is":"be", "has":"have"}                 # irregular verbs
@@ -73,7 +74,7 @@ class Translator():
         self.right_priority = {                                 # on rule right side: assign bonuses
             "SENT+":-1 }
         try:
-            self.rule_file = open(rules, "r")
+            self.rule_file = open(rulesf, "r")
             self.read_rulefile()
         except:
             print("ERROR: input rule file cannot be found")
@@ -189,7 +190,8 @@ class Translator():
             new_rule = new_rule.replace(wildcard,vars[wildcard])    # replace rule wildcard with actual values
         self.evaluate[i] = row[:findpos[0]-1] + new_rule + row[findpos[0]+findpos[1]-1:]   # perform replacement in row
         self.evaluate[i] = self.evaluate[i].replace("\r","")        # remove \r newline chgaracters
-        print ("REPLACE in row=",i," rule left:",bestrule," rule right:",new_rule," new row:",self.evaluate[i])
+#        print ("REPLACE in row=",i," rule left:",bestrule," rule right:",new_rule," new row:",self.evaluate[i])
+        self.parse.logf.write("REPLACE in row="+str(i)+" rule left:"+bestrule+" rule right:"+new_rule+" new row:"+self.evaluate[i]+"\n")
         return
 
     def change_Capital(self,word,type,i):               # change capital letters in word
@@ -349,6 +351,8 @@ if __name__ == '__main__':
         transl = Translator(parse, rules)
         transl.translate()
         transl.write_result()
+        
+        transl.parse.logf.close()             # close log file
 
         print("The End")
     else:

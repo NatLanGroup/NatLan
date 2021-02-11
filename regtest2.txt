@@ -26,28 +26,29 @@ m/ P(animal,head)
 m/ C(pike,animal)
 m/ P(pike,head)?				a/ P(pike,head)
 
-m/ P(Q(all,bird),head)
+m/ P(Q(bird,all),head)
 m/ C(duck,bird)
-m/ P(Q(all,duck),head)?			a/ P(Q(all,duck),head)
+m/ P(Q(duck,all),head)?			a/ P(Q(duck,all),head).p=4
 
 m/ C(sparrow,bird) 
-m/ P(Q(all,sparrow),head)?		a/ P(Q(all,sparrow),head)
+m/ P(Q(sparrow,all),head)?		a/ P(Q(sparrow,all),head)
 
-m/ P(Q(all,F(snake,long)),head)
+m/ P(Q(F(snake,long),all),head)
 m/ C(eel,snake)
-m/ P(Q(all,F(eel,long)),head)? 		a/ P(Q(all,F(eel,long)),head)
+m/ P(Q(F(eel,long),all),head)? 		a/ P(Q(F(eel,long),all),head)
 
 m/ C(viper,snake)
-m/ P(Q(all,F(viper,long)),head)? 	a/ P(Q(all,F(viper,long)),head)
+m/ P(Q(F(viper,long),all),head)? 	a/ P(Q(F(viper,long),all),head)
 
 m/ C(boa,F(snake,long))
-m/ P(Q(all,boa),head)?				a/ P(Q(all,boa),head)
+m/ P(Q(boa,all),head)?				a/ P(Q(boa,all),head)
 
 m/ F(snake,fast)
-m/ F(?,fast)						a/ F(snake,fast) F(eel,fast) F(viper,fast)
+m/ F(?,fast)						a/ F(snake,fast) 
+									// eel, viper not activated
 
-m/ F(Q(some,bird),yellow)
-m/ F(Q(some,sparrow),yellow)?		a/ F(Q(some,sparrow),yellow)
+m/ F(Q(bird,some),yellow)
+m/ F(Q(sparrow,some),yellow)?		a/ F(Q(sparrow,some),yellow)
 
 m/ F(F(snake,long),dangerous)
 m/ F(boa,dangerous)?               a/ F(boa,dangerous)
@@ -58,7 +59,6 @@ m/ F(boa,dangerous)?               a/ F(boa,dangerous)
 m/ F(girl,nice, big, smart)
 m/ F(boy,big)
 m/ IM(F(boy,big),F(boy,huge))
-m/ F(boy,huge)?					a/ F(boy,huge)
 
 m/ IM(F(boy,big),F(boy,strong))
 m/ F(boy,strong)?				a/ F(boy,strong)
@@ -69,7 +69,8 @@ m/ IM(A(boy,eat),F(boy,hungry))
 
 m/ A(boy,eat)
 m/ F(boy,hungry)?				a/ F(boy,hungry).p=4
+m/ F(Bill,hungry)?				a/ F(Bill,hungry).p=4
 // F(Bill,big)
 
-// 4023 attempted, 57 concepts reasoned
+//  1466 attempted, 32 concepts reasoned
 

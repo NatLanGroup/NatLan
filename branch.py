@@ -52,11 +52,12 @@ class Version:                  # inventory of WM versions (formerly branches)
         if pwmid>-1: self.copy_WMfields(pwmid,id)   # copy fields of old wm into new
         return nwm
      
-    def kill_Branch(self,wmi,reason):                             # kill the WM version wmi (given by index)
+    def kill_Branch(self,wmi,reason):           # kill the WM version wmi (given by index)
         gl.log.add_log(("BRANCH KILLED db=",wmi," WM value was:",gl.VS.wmlist[wmi].branchvalue," ",reason," All living versions:",gl.VS.wmliv.keys()))
         print ("BRANCH KILLED db=",wmi," WM value was:",gl.VS.wmlist[wmi].branchvalue,reason," All living versions:",gl.VS.wmliv.keys())
+        if "low branch value" in reason: gl.VS.wmlist[wmi].printlog_WM(gl.VS.wmlist[wmi])     # print WM on screen
          #gl.WM.printlog_WM(gl.VS.wmliv[wmi])
-        del gl.VS.wmliv[wmi]     
+        del gl.VS.wmliv[wmi]                    # kill the WM version 
 
 class Branch:           #branching in WM
 
@@ -113,14 +114,12 @@ class Branch:           #branching in WM
         while currentwm>0:                             
             thispara = self.collect_Potential(thispara,currentwm)       # add currentwm to potential words to map, if so.   
             #TO DO: if currentwm is a word, search for C relation  in KB  (done in earlier WM) !!
-            if gl.d==1: print ("TRYMAP thispara=",thispara,"currwm",currentwm,gl.WM.cp[currentwm].mentstr,"wmpos",self.wmpos)
             wmapto=-1                                                   # this will be the word we can try to map to
             if gl.WM.cp[currentwm].relation==4 and gl.WM.cp[currentwm].wmuse==[-1]:   #C relation needed to try mapping. only input is valid, no reasoning.
                 wmapto=self.word_Tomapto(thispara,currentwm)            # find out if this C relation has a word to map to
-            if gl.WM.cp[currentwm].relation==1 and thispara==1 :        # this is a word in this paragraph not yet mapped to
+            if gl.WM.cp[currentwm].relation==1 and gl.WM.cp[currentwm].wmuse==[-1] and thispara==1 :        # FIX:wmuse==-1 means this was input!! not reasoned!! this is a word in this paragraph
                 if (self.wmpos not in gl.WM.mapped_Already) or (currentwm not in gl.WM.mapped_Already[self.wmpos]):
-                    if gl.d==1: print ("TRYMAP: a word",currentwm)
-                    wmapto=gl.WM.check_Crel(currentwm)                   # check if there is a C-relation for currentwm in KB or in this WM
+                    wmapto=gl.WM.check_Crel(currentwm,maprule)          # check if there is a C-relation for currentwm in KB or in this WM
             if wmapto!=-1:  
                 if gl.d==1: print ("TRYMAP 2 wmapto=",wmapto,gl.WM.cp[wmapto].mentstr)
                 ruleword=gl.KB.cp[maprule].parent[1]                    # in the rule in KB, second parent is a new word to be added
@@ -145,7 +144,6 @@ class Branch:           #branching in WM
             mapped_earlier.update(gl.WM.mapped_Already[self.wmpos]) # collect
             for mcon in gl.WM.mapped_Already[self.wmpos]:
                 mapped_earlier.update(gl.WM.cp[mcon].same)          # add the concepts that are the same as those mapped to earlier
-        if gl.d==5: print ("ADD mapped earlier=",mapped_earlier,"wmpos:",self.wmpos)
         if currentword not in mapped_earlier:                       # this will be a new mapping
             self.mapped.append(currentword)                             #remember this is mapped
         #    gl.reasoning.currentmapping[gl.WM.cp[self.wmpos].mentstr]=self.wmpos    # VS? kell?  remember mapping happening in this row
@@ -162,7 +160,7 @@ class Branch:           #branching in WM
             mapconcept = gl.WM.add_concept(gl.KB.cp[maprule].p, 3, [self.wmpos,currentword])        # mapping added to WM D()
             gl.WM.mapped_Inpara[gl.WM.cp[self.wmpos].mentstr]=currentword   # note that the concept on wmpos was mapped to currentword within paragraph
             gl.WM.cp[mapconcept].wmuse=[-1]                             #wmuse for a mapping is  -1 like for concepts that were in the input
-            gl.act.activate_inKB(gl.WM,currentword,1)                   # activate KB based on the word mapped to. activation round=1.
+            gl.act.activate_inKB(gl.WM,currentword,1,True)              # activate KB based on the word mapped to. activation round=1.
             if gl.d==1: print ("ADD MAPPING currentw:",currentword,gl.WM.cp[currentword].mentstr,"KB activ:",gl.WM.kbactiv)
             gl.log.add_log(("ADD BRANCH: MAPPING: old wm:",oldwm.this," old wm concept:",ruleinwm," mentalese:",oldwm.cp[ruleinwm].mentstr," new WM:",gl.WM.this," WM value=",gl.WM.branchvalue," mapped concept:",self.wmpos," ",gl.WM.cp[self.wmpos].mentstr," bonus=",bonus," mapped to:",gl.WM.cp[mapconcept].mentstr))
             gl.WM = oldwm                                               #COMP compatibility, set back original wm
@@ -175,7 +173,6 @@ class Branch:           #branching in WM
             gl.log.add_log(("MAPPING SAME as earlier in paragraph. WM:",gl.WM.this," mapped what:",self.wmpos," ",gl.WM.cp[self.wmpos].mentstr," mapped to:",gl.WM.cp[mapconcept].mentstr))
         else:
             maplist = db.get_Maprules(self.wmpos)           #mapping rules list
-            if gl.d==5: print ("VS BRANCHING db=",db.this,"WM=",gl.WM.this,"wmpos",self.wmpos,db.cp[self.wmpos].mentstr,"maplist",maplist)
             lastconc=-1
             for maprule in maplist:
                 lastconc = self.trymap_Single(maprule)      # perform mapping, lastconc is the last concept used in old wm

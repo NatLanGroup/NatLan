@@ -1,0 +1,603 @@
+
+e/ Coral reefs are a habitat for many animals.
+e/ Coral reefs are in warm oceans all over the world.
+e/ Coral reefs are habitats occupied by many kinds of animals.
+e/ Coral is a kind of small animal.
+e/ They live in coral reefs and they produce the hard body of it.
+e/ They have soft bodies but they make a hard shell in which they live.
+e/ Corals eat small plant-like and animal-like living things that float in the water.
+e/ Besides corals, there are many inhabitants of coral reefs.
+e/ They include soft corals, the nautilus, the lionfish, the striped angelfish, the red reef crabs, the blue-spotted ray, the spotted butterflyfish, scallops, and sea anemones.
+
+e/ Soft corals are corals that do not make a hard shell.
+e/ If you look at them carefully, you can see white hard parts.
+e/ When the animal dies these become part of the sand near the reef.
+
+e/ The nautilus is a relative of an octopus.
+e/ It is striped on the top part of the shell, and light colored on the bottom.
+e/ This way it blends in with its surroundings.
+
+e/ The lionfish is one of the most beautiful fish in the ocean.
+e/ However, it is dangerous.
+e/ Its spines have a poison that can be deadly to people.
+
+e/ Red reef crabs dig burrows in the sand near coral reefs.
+e/ Many are scavengers, which means that they eat the remains of dead things.
+
+e/ The blue-spotted ray is a relative of sharks.
+e/ It has a skeleton that is not made of bone but of a softer, more flexible material called cartilage.
+
+e/ The spotted butterflyfish has a long snout with which it searches holes in the reef for food. 
+e/ Each spotted butterflyfish has its own territory, which it guards against all other fish.
+
+e/ Scallops are soft-bodied animals with hard shells.
+e/ They are related to clams.
+e/ Sometimes you can see two rows of blue eyes along the opening of the shells.
+
+e/ Sea anemones are related to corals.
+e/ They have poison they can inject into animals to stun them.
+e/ This helps them capture food.  
+
+e/ Antelopes are a little bit like deer. 
+e/ They eat plants. 
+e/ Wildebeests are a kind of antelope. 
+e/ They often are in the same places as zebras. 
+e/ These animals all live in the savannah.
+e/ Some cat-like animals called cheetahs also live in the savannah.
+e/ They are a kind of big cat. 
+e/ They eat other animals. 
+e/ The animals they eat are often the weak or the sick animals. 
+e/ A cheetah might eat an antelope or a zebra.
+e/ Do antelopes, zebras and cheetahs form an animal community?
+
+e/ Elephants are very large animals in the savannah. 
+e/ Elephants eat plants. 
+e/ Elephants are so big that other animals don't try to eat them.
+e/ Other animals in the savannah are giraffes. 
+e/ Giraffes are a little like horses with very long necks. 
+e/ Giraffes have black tongues. 
+e/ They eat the leaves from the tops of the trees.
+
+e/ Hyenas live in the savannah too. 
+e/ They are a little bit like dogs. 
+e/ They eat other animals. 
+e/ Sometimes when a lion eats there is food left over. 
+e/ Hyenas will eat this leftover food. 
+e/ They are like garbage collectors. 
+e/ They help keep their communities clean. 
+
+e/ Lions are a kind of big cat. 
+e/ Lions will eat zebras and antelopes. 
+e/ Lions do not try to eat elephants or giraffes.
+
+e/ Zebras are like horses with black and white stripes. 
+e/ Zebras eat plants. 
+e/ Zebras run away when they are scared.
+
+e/ Wart hogs are like pigs. 
+e/ Wart hogs will eat almost anything, like plants and small animals.
+e/ They have long teeth called tusks. 
+e/ They use their tusks to protect themselves.
+
+e/ Plants are also part of the community of the savannah. 
+e/ For some animals plants are like grocery stores. 
+e/ Animals go to eat the plants. 
+e/ Zebras, wart hogs, antelopes, giraffes, and elephants all eat plants.
+ 
+e/ Ladybugs eat fruit flies and other plant-sucking insects that damage crops.
+e/ The environment of the animal is everything that surrounds and affects the animal, including living and nonliving things.
+e/ It also includes things affected by the animal.
+e/ An ecosystem is made up of groups of living things and the environment they live in.
+// now is it possible to know that ecosystem=community of animals, plants, and the environment?
+e/ The parts of an ecosystem - animals, plants and nonliving things - interact with each other.
+
+e/ Deserts are the driest places on Earth. 
+e/ A desert is an ecosystem where there is very little rainfall. 
+// now we know that ecosystems also include a place! 
+e/ Most deserts get less than 25 cm of rain each year. 
+e/ Desert plants and animals need very little water to live.
+
+e/ There are two kinds of deserts, hot and cold deserts. 
+e/ Hot deserts can have temperatures over 43°C during the day. 
+e/ Night temperatures drop to about 7°C. 
+e/ Even winters are mild, with temperatures usually above freezing. 
+e/ Cold deserts have freezing temperatures and blizzards in the winter. 
+e/ But in the summer, they get as hot as hot deserts. 
+e/ The Sonoran Desert is a hot desert located in parts of California, Arizona, and Mexico. 
+e/ It is divided into several regions. 
+e/ Its northeastern region is called the Arizona Upland.
+
+e/ Many different types of plants and animals live in the Arizona Upland region of the Sonoran Desert.
+e/ Low-lying trees, thorny shrubs (called scrub), and cacti are common here.
+e/ The saguaro cactus grows only in the Sonoran Desert and is found everywhere in this region except on valley floors. 
+e/ This area is known as the saguaro-paloverde forest because of the saguaro cacti and the paloverde trees. 
+e/ Different flowers bloom at different times of the year. 
+e/ Animals living in the Arizona Upland include javelinas, desert tortoises, kangaroo rats, snakes, birds, coyotes, and lizards. 
+
+e/ Native Americans lived in the Arizona Upland region of the Sonoran Desert more than a thousand years ago. 
+e/ Today, people still live throughout this area. 
+e/ Tucson, Arizona, a large city, is found in the Arizona Upland region.
+
+e/ The Arizona Upland region is both the highest and the coldest part of the Sonoran Desert. 
+e/ Mountain ranges and valleys are found in this area.
+e/ There are five seasons in this region: fall, winter, spring, the foresummer drought (from May through June), and the rainy season (from July to mid-September). 
+e/ During the rainy season, there is about 13 cm (5 in.) of rain. 
+e/ Though that is not much rain, it is more than a third of the rain that falls all year. 
+e/ There is some rain and frost in the winter.
+
+e/ Animals live.							
+e/ If something lives, then it is an animal.		
+e/ Animals are the same as living things.	
+e/ Nonliving things do not live.
+e/ Animals are not nonliving things.
+e/ Nonliving things are not animals.
+e/ A dead animal does not live.				
+e/ An animal not living is dead.			
+e/ An animal that lives is not dead.		
+e/ An animal that is not dead lives.		
+e/ Living animals move.						
+e/ Moving animals live.						
+e/ Animals move.							
+e/ Dead animals do not move.				
+e/ Things that are alive are the same as living things.  
+
+e/ The world is made up of living things and nonliving things.
+e/ Animals move by themselves.
+e/ Animals eat.
+e/ Animals grow.
+e/ Animals have babies.
+e/ All living things grow and change.
+e/ They need food, water and air.
+e/ Things that are not alive are nonliving.
+e/ They do not need food, water and air.
+e/ You can tell that something is alive if it can move by itself without being pushed or pulled.
+e/ Living things eat food.
+e/ Only living things can reproduce, which means produce offspring.
+e/ Living things can use their senses of taste, smell, sight, and hearing to react to the world around them.
+
+e/ Animals can move, eat and grow.
+e/ Animals have babies.
+e/ Things that are not alive cannot do any of these things.
+e/ Dead animals cannot do any of these things.
+
+e/ Things are alive when you see them move by themselves.
+e/ They can move without being pushed or driven, and they do not need batteries or engines.
+
+e/ A dog and a chick are living things.
+e/ They come from other living things.
+e/ Like all living things, they need food, air, and water.
+e/ Like all living things, they grow and change.
+
+e/ Air, water, and light are nonliving things.
+e/ They do not grow.
+e/ They do not need food.
+e/ Living things need nonliving things.
+e/ Animals need air, food, and water to live.
+
+e/ What are three ways living things are alike?
+e/ How do living things use nonliving things?
+
+e/ Animals need to breathe.
+e/ They breathe in oxygen.
+e/ They must have it to live.
+e/ There is lots of oxygen in the air.
+e/ Animals living on land breathe air to get the oxygen they need.
+e/ These animals use their lungs to breathe air.
+
+e/ Many animals live in water.
+e/ These are animals like fish and shells.
+e/ They cannot breathe air because there is no air under the water.
+e/ So these animals don`t have lungs.
+e/ Water in streams and ponds and oceans has oxygen in it.
+e/ Fish use gills to get oxigen.
+e/ Only animals living in water have gills.
+
+e/ When a fish uses its gill, it first opens its mouth.
+e/ The water goes in. It has some oxygen in it.
+e/ The water goes past the gills.
+e/ Gills get the oxygen out of the water.
+e/ The oxygen goes into the fish`s body.
+e/ The water keeps going. It goes out of the gills, back into the pond.
+e/ That is how the fish uses gills to breathe oxygen in the water.
+
+e/ If an animal breathes, then it lives.
+e/ Living animals breathe.
+e/ Dead animals do not breathe.
+
+e/ Why do animals need air?
+e/ Do all animals need air?
+e/ What do all animals need?
+
+e/ Legs, head, mouth, eyes, ears, teeth, skin are body parts of animals.
+e/ Animals have a body.
+e/ The body of animals is a tangible object.
+e/ Many animals have legs.							
+e/ Snakes are animals.								
+e/ Snakes and worms don`t have legs.				
+e/ Birds are animals.							
+e/ Birds have wings.							
+e/ Other animals mostly don`t have wings.		
+e/ Animals have a head.								
+e/ Animals have eyes on their head.
+e/ Animals have mouth on their head.
+e/ Many animals have teeth in their mouth.
+e/ A jaw is a mouth with many teeth.
+e/ Many animals have a tail.						
+
+e/ Animals have skin.						
+e/ The skin covers the animal all around.		
+e/ The skin protects the animal.					
+e/ The skin is often covered by fur.			
+e/ The skin of birds is covered by feathers.		
+e/ Thus the skin of birds is not covered by fur.	
+
+e/ Different animals have different types of skin.
+e/ The skin is the same as body covering.
+e/ Some animals have hair or fur.
+e/ Some animals have feathers.
+e/ Some have scales and spines.
+e/ Some have a hard shell.
+e/ Crabs, tortoise, and snails have a hard shell.
+e/ Birds have feathers.
+e/ Dogs, elephants have hair.
+
+e/ Some animals use special body parts to fly, swim, or walk.
+e/ Animals use legs to move.					
+e/ Some animals don`t have legs.
+e/ They use their body to crawl.
+e/ Birds use their wings to fly.
+e/ To crawl or to fly is to move.
+e/ Fish use fins to swim.
+e/ To swim is to move.
+ 
+e/ Animals use eyes to see.
+e/ Animals use ears to hear.
+
+e/ Animals use mouth to eat.
+e/ Animals use teeth to eat and bite.
+
+e/ Fur protects animals from heat and cold.
+e/ Feathers protect animals from heat and cold.
+
+e/ Gills help fish to breathe in the water.
+
+e/ Some animals are big, like horses, elephants, giraffes, camels, cows, bears and lions.
+e/ These are all bigger than a man.
+e/ Antelopes and deer are big as well.
+e/ Elephants are the biggest ones.
+
+e/ Dogs, cats, foxes, birds, snakes are not very big.
+e/ They are not small, either.
+e/ They are smaller than a man, but bigger  than a pencil.
+
+e/ Worms and bugs are small animals, smaller than a pencil.
+e/ If an animal is big, its size is big.
+e/ If an animal is small, its size is small.
+e/ All animals have a size.
+e/ Nonliving things often have a size, too.
+e/ The size of something is usually either big, or small.
+
+e/ Some animals eat other animals.
+e/ These eat animals which are smaller or weaker than themselves.
+e/ Small and weak animals are afraid of large animals who may eat them.
+e/ They try to avoid being eaten.
+
+e/ If you look closely at an animal, you can count how many legs it has.
+e/ This helps to tell you what sort of animal it is.
+e/ Spiders have eight legs.
+e/ Insects have six legs.
+e/ Mammals, reptiles and amphibians have four legs.
+e/ Birds have two legs.
+
+e/ You can recognize different animal groups by the features they have in common.
+e/ For example, mammals have hair on their skin, birds have feathers, reptiles have scales, amphibians have slimy skin, and fish have scales and fins.
+
+e/ A pigeon is a bird.
+e/ It has feathers.
+e/ A lizard is a reptile.
+e/ It has scales.
+e/ A cat is a mammal.
+e/ It has hair.
+e/ A frog is an amphibian.
+e/ It has slimy skin.
+e/ A goldfish is a fish.
+e/ It has scales and fins.
+
+e/ Cats, dogs, horses, birds, wolfs, foxes, snakes, worms, bugs are types of animals.
+e/ Two animals of the same type look similar.
+e/ Two animals of the same type have similar body parts.
+e/ Two animals of the same type behave similarly.
+e/ Cats, dogs, horses, wolfs, foxes, elephants, giraffes, camels, cows and zebras have four legs.
+e/ They have a head and a tail.
+e/ They have fur covering their body.
+e/ Some of them eat plants, like horses, elephants, giraffes, camels, zebras and cows.
+
+e/ Dogs, cats, wolves, foxes, lions eat meat.
+e/ This means they hunt other animals, for example zebras.
+e/ They are predators.
+e/ The animals hunted by predators are the prey of the predators.
+e/ When predators catch the prey, they kill it and eat it.
+e/ Monkeys are animals being somewhat similar to people.
+e/ They have two hands and two legs.
+e/ They are very good at climbing trees.
+e/ Birds have two legs and two wings.
+e/ Unlike most animals, birds can fly.
+e/ Snakes have no legs but they have a head and a tail.
+e/ Worms have no legs and no head.
+e/ Most bugs have six legs and a head. 
+e/ Many bugs have wings and can fly.
+
+e/ Two foxes or two snakes are similar to each other.
+e/ They have similar form, size and colour.
+e/ They eat similar food and do similar things.
+e/ This is true for all other kinds of animals.
+
+e/ Animals can be grouped by their body parts.
+e/ All the animals on these two pages have bones inside their bodies.
+e/ They have other body parts that make them different.
+e/ Cats and dogs are mammals.
+e/ A mammal is an animal that has fur or hair.
+e/ A mother mammal makes milk and feeds it to its young.
+e/ Birds are animals.
+e/ Birds have feathers to protect their bodies.
+e/ They also have wings.
+e/ Most birds use their wings to fly.
+e/ Lizards, snakes and turtles are reptiles.
+e/ A reptile is an animal that is covered with scales.
+e/ Its skin is rough and dry.
+e/ Frogs and toads are amphibians. 
+e/ An amphibian often has smooth, wet skin.
+e/ Its skin helps it live both in water and on land.
+e/ All fish live in water.
+e/ A fish uses its fins to swim and its gills to breathe.
+
+e/ Frogs are amphibians.
+e/ This means frogs seem to live two lives.
+e/ Young frogs live and grow in water.
+e/ As full grown frogs, they live on land and in water.
+
+e/ Frogs start life inside an egg in the water.
+e/ A single frog lays a lot of eggs.
+e/ After some time young frogs hatch from their eggs.
+e/ This means they leave the egg.
+e/ Can you see the young frog before it has left the egg?
+e/ These young frogs are called tadpoles.
+e/ Tadpoles live in the water and breathe with gills.
+e/ Tadpoles have no legs.
+e/ They swim with a tail.
+e/ Very young tadpoles feed on the egg yolk they still have in their gut.
+
+e/ Soon tadpoles grow back legs, and after that, front legs.
+e/ But they still keep their tail.
+e/ They may begin to eat foods like insects and plants.
+
+e/ Then tadpoles become froglets.
+e/ A froglet looks like a small adult frog.
+e/ It has four legs and it breathes with lungs.
+e/ But it still has a stubby tail.
+e/ Soon it will leave the water and live on dry land.
+
+e/ A full grown frog no longer looks like a tadpole.
+e/ It has legs and lungs.
+e/ Its gills and tail are gone.
+e/ Full grown frogs start the life cycle again when females lay more eggs.
+
+e/ If something is good for an animal, then the animal`s goal is to achieve it.    
+e/ If something is bad for an animal, then the animal`s goal is to avoid it.  	
+e/ To avoid something means it is not the actor`s goal.
+e/ The animal is better off means something is good for the animal.
+e/ The needs of an animal are the goals of the animal.
+e/ To meet needs is the same as to achieve goals.
+e/ To live is good for the animal.			
+e/ To sleep is good for the animal.			
+e/ The animal has goals that are good for the animal.
+e/ To die is bad for the animal.
+e/ Therefore animals want to survive.
+e/ If an animal dies, it does not survive.
+e/ Survive means the animal does not die.
+e/ If the animal does not die then it lives.
+e/ A threat to the animal is something that is bad for the animal.
+e/ A threat for the animal may cause the animal to die.
+
+e/ If an animal can do something and wants to do that, then the animal does it.
+e/ If an animal has a goal, it wants that goal.
+e/ If the animal`s goal is to avoid something, then the animal does not want that something.
+e/ If the animal cannot do something, then it doesn`t do it.
+e/ If the animal does not want to do something, then it usually does not do it.
+e/ In case it does, then it does it unintentionally.
+
+e/ Animal action means the animal does something.
+e/ Animal actions are usually intentional.
+e/ An animal action is intentional means the animal does the action intentionally.
+e/ Move, eat, see, hear, smell, touch, hunt, search, flee, communicate, stand, sit, lay, hide, live, do, try, use, achieve, avoid, mate, raise, feed are all intentional actions of animals.
+e/ To have a goal is an intentional action of the animal.
+
+e/ By doing an intentional action, the animal usually has a goal.
+e/ The goal the animal has is called the goal of the action.
+e/ If an action has a goal, then the action is intentional.
+
+e/ Some actions of animals are unintentional.
+e/ These are actions that may be done by nonliving things as well.
+e/ Actions specific to animals are usually intentional.
+e/ The birth of an animal is an unintentional action.
+e/ If an animal dies, that is unintentional.
+e/ Grow, fall, become are unintentional actions.
+e/ The actions freeze, fear, bleed, collapse are unintentional.
+e/ Unintentional actions are often bad for the animal.
+e/ Unintentional actions are rarely good for the animal.
+e/ Actions an animal wants to avoid are usually unintentional.
+e/ A dead animal can only do unintentional actions.
+
+e/ If an animal does an intentional action, then the animal wants that action.
+e/ If the animal does not want something but does it, then it is an unintentional action of the animal.
+e/ If an animal wants something and does it, then it is an intentional action of the animal.
+
+e/ Animals eat food.
+e/ Feeding helps animals to grow and stay healthy.
+e/ All animals need to eat food and drink water to stay alive.
+e/ If animals do not eat or drink, they die.
+e/ Some animals eat plants and some eat other animals.
+e/ Some animals eat both plants and other animals.
+e/ Animals of the same kind eat the same thing.
+
+e/ Owls eat mice.
+e/ Rabbits eat plants.
+e/ Caterpillars eat plants.
+e/ Foxes eat mice and chicken.
+e/ Chickens eat corn and worms.
+e/ When something eats, it must be alive.
+e/ Only animals need to eat food, so they can grow and stay healthy.
+
+e/ Being hungry is bad for the animal.  			
+e/ Animals are often hungry.					
+e/ Animals are sometimes not hungry.			
+e/ If an animal eats, it is not hungry. 		
+e/ If an animal is hungry, it wants to eat.  		
+e/ If an animal is not hungry, it doesn`t want to eat.  
+e/ If an animal has food, it can eat.			
+e/ If an animal has no food, it cannot eat.  		
+e/ If an animal finds food, it has food.  			
+e/ If an animal doesn`t find food, it has no food.  
+e/ If an animal doesn`t hunt, it has no food.		
+e/ If an animal eats, it eats food.				
+e/ Some animals eat other animals.
+e/ These animals usually hunt to get food.
+e/ Other animals eat plants.
+e/ These animals don`t hunt.
+e/ They search for food.
+e/ A few animals may eat both other animals or plants.
+
+e/ If the animal is hungry, it wants to eat.
+e/ If the animal wants to eat, then it may hunt, or it may search for food.
+e/ If the animal wants to hunt, it usually hunts.	 				
+e/ If the animal wants to search food, it usually searches food.  	
+e/ If the animal hunts, it usually has food.						
+e/ If the animal searches food, it usually finds food.				
+e/ If the animal finds food, it has food.
+e/ If the animal has food, it can eat.
+e/ If the animal eats, it is not hungry for a while.
+
+e/ If an animal hunts, it hunts prey.
+e/ If the animal wants to hunt, it starts searching for prey.
+e/ Prey is another animal that the animal wants to catch in order to eat it.
+e/ If the animal searches for prey, it may move in a large territory where the prey lives.
+e/ After some time, the animal may notice the prey.
+e/ If the animal does not notice any prey for a long time, then hunting was not successful.
+e/ If the animal notices some prey, it tries to catch it.
+e/ In order to catch it, the animal follows the prey.
+e/ Or the animal hides, and suddenly jumps on the prey.
+e/ Or the animal runs very fast and chases the prey. 
+e/ The goal of following, jumping on or chasing the prey is to get close to it.
+e/ Finally, if the animal is close enough, it catches the prey.
+e/ To catch the prey is a contact action.
+e/ If the animal catches the prey, then it usually kills it.
+e/ Before the animal catches the prey, the prey tries to get away.
+e/ If the prey is faster than the animal, then it flees.
+e/ If the prey flees, then it gets too far from the animal.
+e/ Contact action is not possible anymore.
+e/ So the animal does not catch the prey.
+e/ If the animal does not catch any prey, then the hunting is unsuccessful.
+
+e/ If the animal catches the prey, then the prey may fight to get free.
+e/ If the prey gets free, it flees, and the hunting was not successful.
+e/ If the hunting is not successful, the animal has no food.
+e/ If the prey does not get free, the animal kills it.
+e/ In this case the hunting was successful.
+e/ The prey is the food for the animal.
+e/ Now the animal has food.
+ 
+e/ An action by an animal or object may be exclusive.
+e/ This means that the action takes a time interval and no other action can be performed in that interval.
+e/ If an action is not exclusive, then another action may be done in the same time interval.
+
+e/ An object impacted by an action may be exclusive.
+e/ This means that during the time interval of the action no other object can be impacted.
+e/ If an object is not exclusive, then another object can be impacted in the same time interval.
+e/ Most animal actions and their impacted objects are exclusive.
+
+e/ If the animal makes an action, and it impacts something, then this may be a contact action.
+e/ A contact action means that the animal and the impacted something are close to each other.
+e/ They are so close that the animal can touch the impacted something.
+e/ If they are not close enough, the contact action is not possible.
+
+e/ Some actions are not contact actions. 
+e/ These are called distant actions. 
+e/ For a distant action, the animal and the impacted something does not need to be close to each other.
+
+e/ If the animal is doing an action, it is not doing another action at the same time.
+e/ The animal can do the next action after the current action is finished.
+e/ If the animal can do actions X and Y and wants to do X and Y, then it needs to select which action to do.
+e/ The animal selects the most important action.
+e/ The most important action is good for the animal.
+e/ The most important action is better for the animal than the least important action.
+
+e/ If an animal doesn`t eat for a long while, it will die.
+
+e/ Animals may walk, run, jump, flee, crawl, climb, swim or fly.
+e/ All these mean that the animal moves and changes location.
+e/ All these are intentional actions.
+e/ Animals can also move like nonliving things, and these actions are unintentional.
+e/ If an animal makes a movement, that means the animal moves.
+e/ Some movements do not change the animal`s location.
+e/ These are turn, stretch, bend.
+e/ These change the form of the animal.
+e/ If an animal stops, sits, lays, stays or hides, it means the animal does not move.
+
+e/ Things that are not alive move in different ways.
+e/ Some things fall, some roll, some fly, some slide, some bounce, and some things pour.
+e/ These are not intentional actions.
+e/ Only animals can do intentional actions.
+
+e/ Mallard ducks live in ponds.
+e/ For food, they like insects, snails, and seeds.
+e/ The brown male can change color.
+e/ When he courts the female, his head turns green, and his chest feathers become purple.
+e/ What kind of duck is the story about?
+e/ Where do these ducks live?
+e/ What part of the plant do they eat?
+e/ What color is the male most of the time?
+e/ What happens to his feathers when he courts the female?
+e/ What turns green?
+
+e/ For almost 5000 years, cats have been kept as pets.
+e/ Cats have a great sense of smell, but they can`t see as well as people.
+e/ Whiskers help them feel their way in the dark.
+e/ Kittens` eyes open within two weeks of their birth.
+e/ How long have cats been kept as pets?
+e/ What sense is strong in cats?
+e/ What sense is weak in cats?
+e/ How do cats find their way in the dark?
+e/ What is a bay cat called?
+e/ When do the eyes open?
+e/ What part of a cat is very important?
+
+e/ The African Rock Python lives in the savanna.
+e/ It grows to 26 feet long.
+e/ It is a constrictor snake.
+e/ The snake kills its prey by wrapping itself around it until it can`t breathe.
+e/ The snake does not use its small teeth.
+e/ It swallows its prey whole.
+e/ It can open its mouth so wide it can swallow an antelope.
+e/ Where does the African Rock Python live?
+e/ What kind of snake is it?
+e/ How long is it?
+e/ How does it kill its prey?
+e/ Does it use its teeth to eat?
+e/ How does it swallow its food?
+e/ What large animal can it swallow?
+
+e/ The killer whale is also known as the orca.
+e/ It is black and white.
+e/ It is found mostly near polar ice regions.
+e/ The males are 30 feet long.
+e/ The females are 15 feet in length.
+e/ They are the most feared whales in the sea because they are deadly hunters.
+e/ They eat dolphins, penguins, fish, and squid.
+e/ They have large teeth and a fin on their backs, which is called a dorsal fin.
+e/ What is another name for the killer whale?
+e/ What length are male killer whales?
+e/ What length are female killer whales?
+e/ What is the name of the killer whale`s fin?
+e/ Where do they live?
+e/ Why is the killer whale feared?
+e/ What do killer whales eat?

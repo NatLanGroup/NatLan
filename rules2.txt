@@ -437,5 +437,24 @@ VPB+be;NPS+%1;ADV+%2;NPN+%3 > SENT+C(%1,%3,%2)
 #116 > 300
 #117 > 300
 VPN+%1;NPS+%2;ADV+%3 > SENT+A(%2,%1,%3)
-
+#new series > 0
+([if:ADP,IN,mark];SENT+%2;SENT+%3(%4,%5,then);[.:PUNCT,.,punct]) > IM(%2,%3(%4,%5))
+([if:ADP,IN,mark];SENT+%2(something,%3);SENT+%4(it,%5,then);[.:PUNCT,.,punct]) > IM(%2(%1,%3),%4(%1,%5))p=pos1
+([if:ADP,IN,mark];SENT+%2(something,%3);SENT+C(it,Q(%4,an),then);[.:PUNCT,.,punct]) > IM(%2(%1,%3),C(%1,%4))p=pos1
+NP%5+%1;[%2:VERB,VBG,amod] > NP%5+F(%1,%2,-ing)
+([same:ADJ,%,%];[the:DET,%,%];ADV+R(as,%1)) > ADJ+same_as;NPN+%1
+VPB+be;NPS+%1;ADJ+same_as;NP%+%2 > SENT+D(%1,%2)
+Q(%1,s) > %1
+Q(%1,a) > %1
+Q(%1,an) > %1
+(%1+Q(%2,%3);[not:ADV,RB,neg]) > %1+Q(%2,%3,not)
+A(%1,Q(%2,do,not)) > A(%1,NOT(%2))
+VPB+%1;(NPS+%2;VPG+%3);ADJ+%4 > SENT+F(A(%2,%3),%4)
+F(A(%1,Q(%2,-ing)),%3) > F(A(%1,%2),%3)
+F(A(%1,Q(%2,-ing,not)),%3) > F(A(%1,NOT(%2)),%3)
+(NPS+%1;(VP+%2;NPS+ADJWDT_%3)) > SENT+A(%1,%2);NPS+%1
+VPB+be;SENT+A(%1,%2);NPS+%1;ADJ+%3 > SENT+F(A(%1,%2),%3)
+F(%1,not) > NOT(%1)
+F(%1,%2,Q(not)) > F(%1,NOT(%2))
+A(%1,%2)_D(%1,that)_F(that,%3) > F(A(%1,%2),%3)
 SENT+X(%1) > SENT+X(%1)     ]]))))))))))))))))))))))]]))))))))))]]))))))))))))))))))))))))))))))))))))))))))))))))]]

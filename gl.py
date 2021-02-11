@@ -28,19 +28,32 @@ class Arguments:
 
         self.upd_pvalue = 1     # switch on p (etc) value update when contradicting, in update_Dimensions
         self.paragraph_tokb = 1 # switch for previous paragraph to move to kb. 0 means no move to kb.
-        self.kbactiv_limit = [0,2,2,1,0] # limit of relevance, for KB concept activation, based on input occurence. Dimension is activation round.
-                                # [0,2,2,1,0] means ordinary concepts in the input (round=1, r=2, threshold=2) activate all children in KB
-                                # [0,3,2,1,0] means ordinary concepts in the input (round=1, r=2, threshold=3) do not activate their children in KB
+        
+        self.loglevel = 1       # level of logging. 0 is least log.
+        self.tr_reas = 1        # track limit for REASONED
+        self.tr_upd = 1         # track limit for UPDATE
+        self.tr_reject = 1      # track limit for REJECT (do not update KB based on WM)
+        self.tr_over = 1        # track limit for p, known overrides
+        self.tr_inp = 1         # track limit for INPUT
+        self.tr_match = 4       # track level for MATCHING
+        self.tr_att = 1         # track level for ATTEMPT
+        self.tr_attcd = 2       # track level for ATTEMPT CD
+        self.tr_dis = 1         # track level for DISABLE
+        self.tr_stop = 1        # track limit for stopping / inhibiting of add concept. (usually reason.)
+        self.tr_addkb = 3       # track limit for ADDKB
+        self.tr_add = 3         # track additions in WM
+        self.tr_finaladd = 4    # track additions in WM from finaladd_concept
+        self.tr_set_spec = 5    # SET_SPEC most_special_use got set
+        
+        self.kbactiv_limit = [0,1,2,3,4] # limit of relevance, for KB concept activation, based on input occurence. Dimension is level deepness in terms of children.
+                                # [0,1,2,3,4] means to activate first children concepts of the input (first children: round=2, threshold=2). But for children of children limit=3.
+                                # [0,1,2,2,2] means children on all levels are activated.
         self.kbactiv_qlimit = [0,2,2,1,0] # limit of relevance, for KB concept activation, for question
                                 # [0,2,2,1,0] means ordinary concepts in the input (round=1, r=2, threshold=2) activate all children in KB        
 #        self.kbactiv_spreadlimit = [0,4,2,1,0] # TO DO IMPLEMENT: limit of relevance, for KB concept spreading activation. Dimension is activation round.
+        self.kbactiv_addone =   { 4:{1:1}, 11:{1:1} }  # exceptions to kbactiv_limit activations: relevance limit higher C(.., x) and P(.., x) is activated based on x with higher limit=+1.
 
-        
-
-        self.debug = 0          # debug mode
-        self.loglevel = 1       # level of logging. 0 is least log.
-
-        
+      
         self.im = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 3, 3], [2, 2, 2, 3, 4]]         # IM rule
         self.kp_im = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 1, 1], [0, 0, 1, 2, 2], [0, 0, 1, 2, 2]]      # known conversion for IM rule, addressed by p1,p2        
         self.can = [[0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 1, 2, 2, 2], [0, 1, 2, 3, 3], [0, 1, 2, 3, 4]]        # can rule
@@ -48,10 +61,14 @@ class Arguments:
         self.does = [2,3,4,4,4]                                                                                 # does rule: doing sth means can do it
         self.cannot = [2,2,2,1,0]                                                                               # cannot rule
         self.pide1 = [0,1,2,3,4]                                                                                # D-rule single arg
-        self.spec = [2,2,2,3,4]                                                                                 # if special then general: IM(C(%1,F(%2,%3)),C(%1,%3))
+        self.kp_pide1 = [2,2,2,2,2]                                                                                # known D-rule single arg
+        self.pos1 = [2,2,2,3,4]                                                                                 # if special then general: IM(C(%1,F(%2,%3)),C(%1,%3))
+        self.kp_pos1 = [0,0,1,2,2]                                                                                 # known: if special then general: IM(C(%1,F(%2,%3)),C(%1,%3))  IM(A(%1,live),C(%1,animal))
         self.pnot1 = [4,3,2,1,0]                                                                                # NOT() rule
+        self.kp_pnot1 = [2,2,2,2,2]                                                                                # known: NOT() rule
         self.idedegrade = [1,1,2,3,3]                                                                           # degrading D rule
         self.pide2 = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [1, 1, 2, 2, 3], [0, 1, 2, 3, 4]]      # D-rule IM(AND(D(),D()),D())
+        self.kp_pide2 = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [1, 1, 1, 1, 2]]      # known: D-rule IM(AND(D(),D()),D())
         self.pand = [[0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 1, 2, 2, 2], [0, 1, 2, 3, 3], [0, 1, 2, 3, 4]]       # AND-rule
         self.pclass = [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [2, 2, 2, 2, 2], [1, 1, 2, 2, 3], [0, 1, 2, 3, 4]]     # class relation
         self.kp_pclass = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [2, 2, 2, 2, 2]]  # known conversion for class rule, addressed by p1,p2        
@@ -62,9 +79,10 @@ class Arguments:
         self.branchvalue = [[0,0,0,0,0,0],[0,1,1,1,1,1],[0,1,2,2,2,3],[0,2,3,3,3,4],[1,2,3,4,4,5],[2,3,4,5,5,5]]   #consistency conversion for entire branch
         self.branch_kill = [0,1,2,2,3,4]   # index = best branch value. output=limit below which branch is killed.
         self.pmap = {
-            "im":self.im, "pide1":self.pide1,"spec":self.spec,"pide2":self.pide2,"pclass":self.pclass,"pxor":self.pxor,
+            "im":self.im, "pide1":self.pide1,"pos1":self.pos1,"pide2":self.pide2,"pclass":self.pclass,"pxor":self.pxor,
             "idedegrade":self.idedegrade, "degrade":self.degrade, "pnot1":self.pnot1, "pand":self.pand,
-            "can":self.can, "cando":self.cando, "does":self.does,"cannot":self.cannot,"kp_im":self.kp_im,"kp_pclass":self.kp_pclass
+            "can":self.can, "cando":self.cando, "does":self.does,"cannot":self.cannot,"kp_im":self.kp_im,"kp_pclass":self.kp_pclass,
+            "kp_pide1":self.kp_pide1, "kp_pos1":self.kp_pos1, "kp_pnot1":self.kp_pnot1, "kp_pide2":self.kp_pide2
         }
         self.avg_lookback = 10                                                  # rolling average on this number of occurence. avg=0.9*avg+0.1*current
         self.worst_known = [[0,0,0,0,0],[0,1,1,1,1],[0,1,2,2,2],[0,1,2,3,3],[0,1,2,3,4]]   # known conversion from two known values
@@ -119,6 +137,8 @@ class Arguments:
 
         self.noactivate_fromword ={                 # some concepts should not be activated from word if found in the given position
             4:[1]  }                                # relation not to activate : [list of positions of word]
+            
+        self.subject_rel = {5,6,7,9,11,17}          # concepts which have the subject of the proposition in the first argument like A(subject, ...)
 
         self.nospread_general = [0]                 # some rules should not spread .general backwards in reasonuse
 
@@ -139,7 +159,6 @@ class Logging:
             self.logf.write("\n")
         except:
             print("ERROR: Logging: log file not present or called incorrectly", str(what))
-
 
 if __name__ == "__main__":
     print("This is a module file, run natlan.py instead")

@@ -16,10 +16,10 @@ m/ F(Joe,?)			a/ F(Joe,nice)
 
 m/ A(policeman, run)
 
-m/ A(?,run)			a/ A(policeman, run) A(Joe,run)
+m/ A(?,run)			a/ A(policeman, run)
 
-m/ F(policeman,strong)
-m/ F(?,strong)		a/ F(policeman,strong) F(Joe,strong)
+m/ F(policeman,strong)   // Joe not yet activated
+m/ F(?,strong)		a/ F(policeman,strong)        
 m/ F(Joe,?)			a/ F(Joe,nice) F(Joe,strong)
 m/ A(?,run)			a/ A(policeman, run) A(Joe,run)
 
@@ -27,8 +27,8 @@ m/ A(?,run)			a/ A(policeman, run) A(Joe,run)
 m/ IM(C(%1,%2)p=p0,T(%1))p=pide1
 
 m/ C(Mary,girl)
-m/ P(policeman,hat)
-m/ T(?)				a/ T(Joe) T(Mary)
+m/ P(policeman,hat)    // this will not activate C(Joe,policeman) we have no activation route concept->parent->children
+m/ T(?)				a/  T(Mary)
 
 // a few cases with branching
 m/ C(he,person)r=4
@@ -38,5 +38,7 @@ m/ A(Joe,read)
 m/ F(Mary,nice)
 m/ A(he,eat)
 m/ A(?,eat)			a/ A(he,eat) A(Mary,eat)
-// 2105 attempted. 50 concepts reasoned
+				    // A(Joe,eat) also shown from branch=2 which is a wrong branch
+
+// 1296 attempted. 37 concepts reasoned
 

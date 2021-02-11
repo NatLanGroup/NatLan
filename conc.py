@@ -10,7 +10,7 @@ class Concept:
         self.acts = 0                       # activation level of concept
         self.exception = gl.args.exdef      # are exceptions possible? 4=yes. Also for rules. Concepts inherit from rule.        
         self.known = int(gl.args.kmax/2)    # how solid is the knowledge of p, exception for this concept
-        self.relevance = int(gl.args.rmax/2) # relevance of the concept
+        self.relevance = [] # relevance of the concept, a value for each parent
         self.count = 1      # count the occurance of this concept
         self.relation = rel # relation code
         self.parent = []    # parents list
@@ -23,6 +23,8 @@ class Concept:
         self.wmuse = [-1]   # what concepts (from WM) were used to get this one by reasoning. [-1]: original input [-2]: parent [-3]: reasoned, based on KB only
         self.kb_use = []    # what concepts in KB were used for reasoning
         self.use_ever = set()   # set of sets, which concepts (in KB) were ever used to reason this concept.
+        self.most_special_used = 0   # the most special concept used to get this reasoned concept.
+        self.most_special_used_wm = 0   # the most special concept used to get this reasoned concept, if found only in wm
         self.reasonwith_ever = dict()  # NOT YET USED which concepts were used together with this one. rule:concept list.
         self.override = set()   # what were the wmuse concepts, based on which this concept was overridden
         self.reasonuse = [] # rule and concepts directly used for reasoning (from WM)
@@ -41,6 +43,7 @@ class Concept:
         self.track = 0      # track the usage of this concept for debugging
         self.compared_upto=0 # this comcept was already compared to older ones up to this index
         self.reasoned_with = set()  # set of concepts that were already used to reason with
+        self.unirule_with = set()  # set of rules for which Uniconcept reasoning was already done
         
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
@@ -55,8 +58,8 @@ class Kbase:
         self.cp = []                    # CONCEPT LIST CP
         self.ci = -1
         self.branch=[]                  #list of living branches (branch leafs)
-        self.samestring = {}            # for each branch leaf: a map of mentalese string: all occurence index on branch
-        self.paragraph = []             # concepts where the latest paragraph ended on all branches
+    #    self.samestring = {}            # for each branch leaf: a map of mentalese string: all occurence index on branch
+    #    self.paragraph = []             # concepts where the latest paragraph ended on all branches
         self.name = instancename        # the name of the instance can be used in the log file
         self.thispara = []              # list of concepts in this paragraph
         self.prevpara = []              # list of concepts in previous paragraph
@@ -114,7 +117,9 @@ class Kbase:
         return more_general
         
     def check_Contradiction(self,sindex,rule,pin,conclist):     # process contradiction before adding the new reasoned concept
-        pmatch=0;  new_special=0                            # flag: the concept to be reasoned will be based on more special input
+        pmatch=0;  new_special=0                            # flag: the concept to be reasoned will be based on more special input      
+    #    if gl.d==4: print ("CHECKC 1 sindex",sindex,self.cp[sindex].mentstr,"p=",self.cp[sindex].p,"new p:",pin)
+    #    gl.log.add_log(("CONTRAD 1 sindex:",sindex,self.cp[sindex].mentstr,"p=",self.cp[sindex].p,"new p:",pin))
         if self.cp[sindex].p == pin:                        # no contradiction
             pmatch=1                                        # match found
         else:                                               # contradiction found
@@ -126,7 +131,7 @@ class Kbase:
                     gl.log.add_log(("CONTRADICTION: PVALUE OVERRIDE in check_Contra because p was based on general rule. index=",sindex," old p=",self.cp[sindex].p," new p=",pin," used by:",self.cp[sindex].usedby))
                     self.cp[sindex].p=pin                   # override p in old
                     for used in self.cp[sindex].usedby:     # concepts that used this sindex
-                        gl.log.add_log(("CONTRADICTION: OVERRIDE TO KNOWN=0 in check_Contra because based on p-overriden concept. index=",used," old p=",self.cp[used].p," overriden concept:",sindex))
+                        gl.log.add_log(("CONTRADICTION: KNOWN OVERRIDE TO KNOWN=0 in check_Contra because based on p-overriden concept. index=",used," old p=",self.cp[used].p," overriden concept:",sindex))
                         self.cp[used].known=0               # set known value to unknown
                         
             except: a=0
@@ -237,39 +242,46 @@ class Kbase:
 
     def getp_backward(self,swhat):                  # search earlier occurence of swhat and return p
         s=timer()
-        sindex=self.cp[swhat].previous              # proceed on branch
+        sindex=swhat-1                              # proceed on branch
         wmfound=0; kback=0
         while sindex>-1 and kback==0:               # do not stop on unknown concept
             if self.rec_match(self.cp[swhat], self.cp[sindex], [swhat,sindex]) == 1:
                 kback=self.cp[sindex].known         # the known value of this earlier occurence
                 if kback>0: wmfound=sindex          # this is the earlier occurence
-            sindex=self.cp[sindex].previous
+            sindex=sindex-1
         gl.args.settimer("concep_906: getp_backward",timer()-s)
         return wmfound                              # return the latest, same concept occurence
 
-    def clone_Values(self,new,fromwm,fromkb):       # clone dimensions onto new, from earlier concept in wm (fromwm) or kb (fromkb)
-        if fromkb>0:                                # we have an occurence in KB - we only use this for cloning
+    def clone_Values(self,new,fromwm,fromkb):           # clone dimensions onto new, from earlier concept in wm (fromwm) or kb (fromkb)
+        if fromkb>0:                                    # we have an occurence in KB - we only use this for cloning
+            oldp=self.cp[new].p; oldk=self.cp[new].known
             gl.log.add_log(("DIMENSION OVERRIDE during add_concept, on concept:",new," ",self.cp[new].mentstr," earlier KB occurence:",fromkb, " old p,known,c:",self.cp[new].p," ",self.cp[new].known," ",self.cp[new].c," new p,known,c:",gl.KB.cp[fromkb].p," ",gl.KB.cp[fromkb].known," ",gl.KB.cp[fromkb].c))  
-            self.cp[new].p = gl.KB.cp[fromkb].p     # p value updated
+            self.cp[new].p = gl.KB.cp[fromkb].p         # p value updated
             self.cp[new].known = gl.KB.cp[fromkb].known     
-            self.cp[new].c = gl.KB.cp[fromkb].c     #  value updated
-            self.cp[new].relevance = gl.KB.cp[fromkb].relevance
+            self.cp[new].c = gl.KB.cp[fromkb].c         #  value updated
+            self.cp[new].relevance = gl.KB.cp[fromkb].relevance[:]
             #self.cp[new].reasonuse = gl.KB.cp[fromkb].reasonuse[:]    # FIX we dont want to clone reasonuse
             self.cp[new].rule_use = gl.KB.cp[fromkb].rule_use[:]
+            self.cp[new].most_special_used = -gl.KB.cp[fromkb].most_special_used  # FIX
+            self.cp[new].kb_use.append(fromkb)          # FIX
+            gl.test.track_double(self,new,"   OVERRIDE (ADD) p="+str(self.cp[new].p)+" k="+str(self.cp[new].known)+" (old p="+str(oldp)+" k="+str(oldk)+")",gl.KB,fromkb," Based on earlier occurence: ",gl.args.tr_over)
             #if gl.KB.cp[fromkb].wmuse!=[-1]:                           # FIX do not clone wmuse
             #    self.cp[new].wmuse = gl.KB.cp[fromkb].wmuse[:]
             #else: self.cp[new].wmuse = [fromkb]
-        if fromwm>0 and fromkb==0:                              
+        if fromwm>0 and fromkb==0: 
+            oldp=self.cp[new].p; oldk=self.cp[new].known
             gl.log.add_log(("DIMENSION OVERRIDE during add_concept, on concept:",new," ",self.cp[new].mentstr," earlier WM occurence:",fromwm, " old p,known,c:",self.cp[new].p," ",self.cp[new].known," ",self.cp[new].c," new p,known,c:",gl.WM.cp[fromwm].p," ",gl.WM.cp[fromwm].known," ",gl.WM.cp[fromwm].c))  
-            self.cp[new].p = gl.WM.cp[fromwm].p     # p value updated
+            self.cp[new].p = gl.WM.cp[fromwm].p         # p value updated
             self.cp[new].known = gl.WM.cp[fromwm].known     
-            self.cp[new].c = gl.WM.cp[fromwm].c     #  value updated
-            self.cp[new].relevance = gl.WM.cp[fromwm].relevance    
+            self.cp[new].c = gl.WM.cp[fromwm].c         #  value updated
+            self.cp[new].relevance = gl.WM.cp[fromwm].relevance[:]    
             self.cp[new].reasonuse = gl.WM.cp[fromwm].reasonuse[:]
             self.cp[new].rule_use = gl.WM.cp[fromwm].rule_use[:]
             if gl.WM.cp[fromwm].wmuse!=[-1]:
                 self.cp[new].wmuse = gl.WM.cp[fromwm].wmuse[:]
             else: self.cp[new].wmuse = [fromwm]
+            self.cp[new].most_special_used = gl.WM.cp[fromwm].most_special_used  # FIX
+            gl.test.track_double(self,new,"   OVERRIDE (ADD) p="+str(self.cp[new].p)+" k="+str(self.cp[new].known)+" (old p="+str(oldp)+" k="+str(oldk)+")",gl.WM,fromwm," Based on earlier occurence: ",gl.args.tr_over)
             
     def update_Condip(self):                            # update p value of condition. Uses KB as well.
         pari=0                                          # p value updated on parent of self.ci. self.ci is an IM relation.
@@ -362,7 +374,7 @@ class Kbase:
         newwm.cp[newwm.ci].acts = oldwm.cp[concid].acts
         newwm.cp[newwm.ci].exception = oldwm.cp[concid].exception
         newwm.cp[newwm.ci].known = oldwm.cp[concid].known
-        newwm.cp[newwm.ci].relevance = oldwm.cp[concid].relevance
+        newwm.cp[newwm.ci].relevance = oldwm.cp[concid].relevance[:]
         newwm.cp[newwm.ci].count = oldwm.cp[concid].count
         newwm.cp[newwm.ci].parent = oldwm.cp[concid].parent[:]
         newwm.cp[newwm.ci].kblink = oldwm.cp[concid].kblink[:]
@@ -370,6 +382,7 @@ class Kbase:
         newwm.cp[newwm.ci].mapto = oldwm.cp[concid].mapto
         newwm.cp[newwm.ci].wmuse = oldwm.cp[concid].wmuse[:]
         newwm.cp[newwm.ci].kb_use = oldwm.cp[concid].kb_use[:]
+        newwm.cp[newwm.ci].most_special_used = oldwm.cp[concid].most_special_used
         newwm.cp[newwm.ci].override = oldwm.cp[concid].override.copy()
         newwm.cp[newwm.ci].reasonuse = oldwm.cp[concid].reasonuse[:]
         newwm.cp[newwm.ci].rule_use = oldwm.cp[concid].rule_use[:]
@@ -400,6 +413,9 @@ class Kbase:
         inhibit=0
         latest_wmu=self.get_Usedconc(latest)                # earlier occurence used these concs
         new_over = list(gl.WM.cp[new].override)
+ #       if gl.d==4: print ("INHIBIT 1 new latest",new,latest,"latest wmu",latest_wmu,"newover",new_over)
+        if latest in new_over:                              # latest was already used to override new
+            inhibit=1                                       # inhibit repeated update
         if len(latest_wmu)>0 and len(new_over)>0:
             if sorted(latest_wmu)[-1] in new_over:          # the most recent used concept of latest is used in overriding new
                 inhibit=1                                   # inhibit dimension override of new, it would be duplicate override
@@ -412,6 +428,7 @@ class Kbase:
         gl.WM.cp[new].cons_avg = float(gl.WM.cp[latest].cons_avg*(div-1))/div + float(gl.WM.cp[new].c)/div     # calc average consistency
         k1 = gl.WM.cp[latest].known; k2 = gl.WM.cp[new].known
         inhibit_over = self.inhibit_Update(latest,new)      # inhibit duplicate overrides
+    #    if gl.d==4: print ("UPD DIM 1 new:",new,"latest",latest,"new override",gl.WM.cp[new].override,"inhibit:",inhibit_over)
         # known update:
         if k2>=k1:
             bigk=k2
@@ -435,9 +452,16 @@ class Kbase:
                 gl.WM.cp[new].p = pfinal                        # update p value
                 usedc = self.get_Usedconc(latest)               # used concepts of latest
                 gl.WM.cp[new].override = gl.WM.cp[new].override | (set(usedc) - set(gl.WM.cp[new].wmuse))   # remember which base concepts were involved in the override
-                if pfinal != pold : 
-                    gl.log.add_log(("PVALUE OVERRIDE in update_Dimensions, db=",gl.WM.this," on conc:",new," ",gl.WM.cp[new].mentstr," based on old conc:",latest," ",gl.WM.cp[latest].mentstr," original p:",pold," new p:",pfinal," kadv:",kadv," p1 p2:",p1," ",p2," k1 k2:",k1," ",k2))
-                    gl.WM.track_Concept(new," Dimensions OVERRIDE. old p="+str(pold)+". Based on earlier occurence:"+str(latest)+".")   # track used concepts
+                msg=""
+                if pfinal != pold : msg="PVALUE "
+       #         if gl.d==4: print ("UPD DIM 3",msg,"on:",new,gl.WM.cp[new].mentstr,"new p=",gl.WM.cp[new].p)
+                if k2 != gl.WM.cp[new].known: msg=msg+"KNOWN "
+                if len(msg)>0:
+                    gl.log.add_log((msg+"UPDATE in update_Dimensions, db=",gl.WM.this," on conc:",new," ",gl.WM.cp[new].mentstr," based on old conc:",latest," ",gl.WM.cp[latest].mentstr," original p:",pold," new p:",pfinal," kadv:",kadv," p1 p2:",p1," ",p2," k1 k2:",k1," ",k2))
+                    gl.WM.track_Concept(new," Dimensions Update. old p="+str(pold)+". Based on earlier occurence:"+str(latest)+".")   # track used concepts
+                    msg="   UPDATE (DIM)"+msg+" p="+str(pfinal)+" k="+str(gl.WM.cp[new].known)+" (old p="+str(pold)+" k="+str(k2)+") on:"
+                    msg2=" Based on earlier p="+str(gl.WM.cp[latest].p)+" k="+str(k1)+" on:"
+                    gl.test.track_double(gl.WM,new,msg,gl.WM,latest,msg2,gl.args.tr_upd)
             except: gl.log.add_log(("ERROR in update_Dimensions (reason.py): k_advan table or pe_final table read failed. index k,p:",k1," ",k2," ",p1," ",p2," at concept:",new," db=",gl.WM.this))
          
     def manage_Consistency(self,new):                           # calculate consistency and occurence
@@ -461,7 +485,7 @@ class Kbase:
                         if cons<gl.WM.cp[new].c:                # consistency is worse than stored
                             gl.WM.cp[new].c=cons                # we store the top inconsistency per concept, since compared_upto
                         if cons>gl.WM.cp[new].c: 
-                            if gl.WM.cp[old].relevance == gl.args.rmax and cons==gl.args.cmax-1:     # top relevant and top consistent
+                            if gl.args.rmax in gl.WM.cp[old].relevance  and cons==gl.args.cmax-1:     # top relevant and top consistent
                                 gl.WM.cp[new].c=gl.args.cmax        # set new top consistent
         else: 
             if len(same_list)>0: latest = same_list[-1]         # for words
@@ -472,12 +496,20 @@ class Kbase:
                 more_general=gl.WM.based_General(new,latest)    # is one of these based on more general concs?
                 if more_general==0:                             # nothing more general
                     self.update_Dimensions(latest,new)          # update p etc based on latest and new occurence
-                if more_general==1:                             # new is based on more general
-                    if gl.WM.cp[new].known>0: gl.log.add_log(("KNOWN OVERRIDE (in manage_Consistency) to zero because old occurence was more special. on new conc:",new," ",gl.WM.cp[new].mentstr," based on old conc:",latest," ",gl.WM.cp[latest].mentstr))
-                    gl.WM.cp[new].known=0
+         #       if gl.d==4: print ("CONSISTENC General? new",new,"latest",latest,"more gen:",more_general)
+                if more_general==1 and gl.WM.cp[latest].known>0:    # new is based on more general
+                    if gl.WM.cp[new].p!=gl.WM.cp[latest].p or gl.WM.cp[new].known!=gl.WM.cp[latest].known:
+                        gl.log.add_log(("UPDATE PVALUE KNOWN 1 (in manage_Consistency) to zero because old occurence was more special. on new conc:",new," ",gl.WM.cp[new].mentstr," new p=",gl.WM.cp[latest].p," old p=",gl.WM.cp[new].p," based on old conc:",latest," ",gl.WM.cp[latest].mentstr))
+                        msg=" UPDATE (GEN1)"
+                        if gl.WM.cp[new].p!=gl.WM.cp[latest].p: msg=msg+" PVALUE (old p="+str(gl.WM.cp[new].p)+") "
+                        if gl.WM.cp[new].known!=gl.WM.cp[latest].known: msg=msg+" KNOWN (old k="+str(gl.WM.cp[new].known)+") "
+                        gl.test.track_double(gl.WM,new,msg,gl.WM,latest," Based on old more special.",gl.args.tr_over)
+                        gl.WM.cp[new].known=gl.WM.cp[latest].known
+                        gl.WM.cp[new].p=gl.WM.cp[latest].p
                 if more_general==2:                             # new based on more special
-                    if gl.WM.cp[latest].known>0: gl.log.add_log(("KNOWN OVERRIDE (in manage_Consistency) to zero because new occurence is more special. on old conc:",latest," ",gl.WM.cp[latest].mentstr," based on new conc:",new," ",gl.WM.cp[new].mentstr))
-                    gl.WM.cp[latest].known=0
+                    #if gl.WM.cp[latest].known>0: gl.log.add_log(("KNOWN OVERRIDE 2 (in manage_Consistency) to zero because new occurence is more special. on old conc:",latest," ",gl.WM.cp[latest].mentstr," based on new conc:",new," ",gl.WM.cp[new].mentstr))
+                    #gl.WM.cp[latest].known=0
+                    a=1  # old is not updated, it is old anyway.
         gl.args.settimer("reason_020: manage_Consistency",timer()-s)
 
     def set_Samegen(self,inwhat,gene):              # gene concept is also general to those same as inwhat
@@ -497,18 +529,19 @@ class Kbase:
                 con.general.add(con.parent[0])                      # x is more general than F(x,y)
                 con.general.update(self.cp[con.parent[0]].same)     # concepts same to x are also general to F(x,y)
                 con.general.update(self.cp[con.parent[0]].general)  # concepts general to x are also general to F(x,y)
-                self.set_Samegen(newi,con.parent[0])                # in concepts same as newi set general as well
+    #            self.set_Samegen(newi,con.parent[0])                # in concepts same as newi set general as well
         if con.relation==4 and con.p==gl.args.pmax and con.known>=gl.args.kmax/2:  # C relation, p=pmax, known
             if len(con.parent)>1:
                 cla=1
                 special = con.parent[0]             # remember: C(x,y) and x is special    
                 while cla<len(con.parent):          # C(x,y,z) y and z are more general than x
-                    self.cp[con.parent[0]].general.add(con.parent[cla])
-                    self.cp[con.parent[0]].general.update(self.cp[con.parent[cla]].same)
-                    self.cp[con.parent[0]].general.update(self.cp[con.parent[cla]].general)
-                    self.set_Samegen(con.parent[0],con.parent[cla])     # in concepts same as con.pernt[0] set general as well
+                    if con.parent[cla] != con.parent[0]:   # exclude C(x,x)
+                        self.cp[con.parent[0]].general.add(con.parent[cla])
+                        self.cp[con.parent[0]].general.update(self.cp[con.parent[cla]].same)
+                        self.cp[con.parent[0]].general.update(self.cp[con.parent[cla]].general)
+    #                self.set_Samegen(con.parent[0],con.parent[cla])     # in concepts same as con.pernt[0] set general as well
                     cla+=1
-        while self.cp[old].previous!=-1:        # entire WM on current branch backward
+        while old>1:        # FIX !!!! entire WM on current branch backward
             old=old-1                           # next item on branch
             genword = self.get_Generalword([newi,old])  # set general field based on same field
             if special>0 and special in self.cp[old].general:           # we had a special recorded, and now this "old" has special as general
@@ -527,29 +560,44 @@ class Kbase:
             if match==3:
                 self.cp[newi].general.update(self.cp[old].general)      # old is more general, generality inherited to newi
                 self.cp[newi].general.update(self.cp[old].same)         # general gets extended with same as mewi
+            self.cp[old].general.discard(old)                           # remove itself from geenral
+            self.cp[old].general.difference_update(self.cp[old].same)         # FIX remove from general those that are same
             #if gl.d==1 and newi<10: print ("SETGEN 2 db=",self.this,"con=",newi,"old=",old,"general=",self.cp[newi].general)
         #if gl.d==1 and newi<10: print ("SETGEN 4 db=",self.this,"con=",newi,"general=",self.cp[newi].general)
+        self.cp[newi].general.discard(newi)                             # remove itself from general
+        self.cp[newi].general.difference_update(self.cp[newi].same)     # FIX remove from general those that are same
         self.spread_General(newi,self.cp[newi].general)    # spread the .general property to concepts in reasonuse
         self.override_Old(contralist)              # override p in contraditions found
         gl.args.settimer("concep_810: set_General",timer()-s)
   
     def copyto_WM(self,db,curri,abovep=[],nextp=0):                         # recursive copy the curri concept with all parents in db to self, which is probably WM
- #       if gl.d==4: print ("COPYWM from db:",db.name,"concept:",curri,db.cp[curri].mentstr,"abovep:",abovep)
         while (len(db.cp[curri].parent)>0 and nextp<len(db.cp[curri].parent)):  # walk over parents of same level
             self.copyto_WM(db,db.cp[curri].parent[nextp],abovep,0)              # one level down
             nextp=nextp+1
             
         fromc = db.cp[curri]
         added=self.add_concept(fromc.p,fromc.relation,abovep,kbl=[curri],nknown=fromc.known,reason="REASONED IM ")
- #       if gl.d==4: print ("COPYWM 2 conc added:",added,self.cp[added].mentstr,"abovep:",abovep)
         if nextp>0 and nextp == len(db.cp[curri].parent):   # all parenmst are collected
             abovep=[]                                       # initialize above parent list                                                            
         abovep.append(added)                                        # added concept is a parent above, add to above parent list
-  #      if gl.d==4: print ("COPYWM 3 abovep new:",abovep)
         return added
+
+    def set_Mostspecial(self,coni):              # set most_special_used field 
+        rel=self.cp[coni].relation
+        if rel==1:
+            self.cp[coni].most_special_used=coni    # for a word, most special is itself
+        else:
+            if self.name=="WM" and rel!=4:          # in a WM, not C() relation
+                self.cp[coni].most_special_used = self.cp[self.cp[coni].parent[0]].most_special_used   # take it from the first parent
+                gl.test.track(self,coni,"      SET_SPEC (set_Mostspec 1 conc.py) to value:"+str(self.cp[coni].most_special_used)+" ",gl.args.tr_set_spec,rule="")
+            if self.name=="WM" and rel == 4 and len(self.cp[coni].parent)>1:        # in a WM,  C() relation
+                self.cp[coni].most_special_used = self.cp[self.cp[coni].parent[1]].most_special_used   # take it from the second parent, C( ...,  mostspecial)
+                gl.test.track(self,coni,"      SET_SPEC (set_Mostspec 2 conc.py) to value:"+str(self.cp[coni].most_special_used)+" ",gl.args.tr_set_spec,rule="")                
+                
                            
     def add_concept(self, new_p, new_rel, new_parents,kbl=[],gvalue=None,isquestion=0,isinput=True,nknown=-1,reason=""):        #add new concept to WM or KB. parents argument is list
         s=timer()
+     #   if gl.d==4: print ("ADDCON 1 self:",self.name,"new parents:",new_parents,"kbl",kbl,"ci",self.ci)
         self.cp.append(Concept(new_rel))                        #concept added
         self.ci = len(self.cp) - 1                              #current index
         self.thispara.append(self.ci)                           #note concept is in current paragraph
@@ -562,6 +610,12 @@ class Kbase:
         elif nknown>=0: self.cp[self.ci].known=nknown                     # FIX3
         self.cp[self.ci].track = 0                              # set default tracking to NO        
         self.cp[self.ci].add_parents(new_parents)               # set parents
+   #     if gl.d==6: print ("ADDC ci",self.ci,"parenmt",self.cp[self.ci].parent)
+        for par in self.cp[self.ci].parent:
+            self.cp[self.ci].relevance.append(int(gl.args.rmax/2))   # add the relevance value for each parent
+  #          if gl.d==6: print ("ADDC ci 2",self.ci, "rel",self.cp[self.ci].relevance)
+        if len(self.cp[self.ci].relevance)==0:                  # for words
+            self.cp[self.ci].relevance.append(int(gl.args.rmax/2))
         self.cp[self.ci].kblink[:]=kbl[:]                       # set link to KB
         if kbl==[] and self.name=="KB" and new_rel==1:          # word addition in KB
             self.cp[self.ci].kblink.append(self.ci)             # add own index in KB
@@ -574,12 +628,13 @@ class Kbase:
             if gvalue!=None: self.cp[self.ci].g=gvalue          #explicit generality provided
         if new_rel==3 and len(self.cp[self.ci].parent)>1 and isquestion==0: # D relation with 2+ parents
             self.update_Same(self.ci)                           # update same field based on D()
-        if self.name=="WM" and isquestion==0:
+        if self.name=="WM": # FIX 12.22 and isquestion==0:
             self.update_Samecon(self.ci)                        # update same field based on parents, and vs_samestring
-            self.manage_Consistency(self.ci)                    # update consistency field, override known value.
-            self.vs_set_General(self.ci)                        # set .general field
+            if isinput: self.vs_set_General(self.ci)            # set .general field
+            if isinput: self.manage_Consistency(self.ci)        # FIX 12.22 update consistency field, override known value. (for reasoned conc, called from finalconcept)
+        if isinput: self.set_Mostspecial(self.ci)               # set most_special_used field   
         if new_rel == 13 and self.name=="WM" :                  # IM relation
-            self.update_Condip()                                # update p value of condition if needed
+            self.update_Condip()                                # update p value of condition and copy other relevant values
         if new_rel != 1:                                        # not a word
             gl.act.vs_activate_Conc(self.ci,self)               # activate this concept just added (WM)
         if self.name=="WM" and kbl==[]:                         # FIX 09.27 fill kbpos!!!
@@ -590,7 +645,8 @@ class Kbase:
                 #if gl.d==4 and len(self.cp[self.ci].kblink[0])>0: print ("ADD CONC on kblink:",gl.KB.cp[self.cp[self.ci].kblink[0]].mentstr)
         if self.name=="WM" and "%1" not in self.cp[self.ci].mentstr and len(kbl)>0:  # rules should not be activated based on %1 
             #gl.act.activate_inKB(self,self.ci,1,isinput)         # activate KB concepts based on occurence in WM (word etc) beyond relevance limit, in round=1
-            gl.act.activKB_Allchild(gl.KB,kbl[0],self,1,isinput) # recursively activate KB concepts based on occurence in WM (word etc) beyond relevance limit, in round=1
+            gl.act.activKB_Allchild(gl.KB,kbl[0],kbl[0],self,1,isinput) # recursively activate KB concepts based on occurence in WM (word etc) beyond relevance limit, in round=1
+    #        if gl.d==6: print ("ADD CONC activate in KB. this con:",gl.WM.ci,gl.WM.cp[gl.WM.ci].mentstr,"act in KB:",gl.WM.kbactiv)
         dbstr=" db="+str(self.this)
         mentalese=""
         if len(self.cp[self.ci].mentstr)>0: mentalese=" ment= "+self.cp[self.ci].mentstr
@@ -729,6 +785,7 @@ class Kbase:
         return is_special
             
     def get_Generalword(self,wmind):                # which word is more general
+    #    if gl.d==6: print ("GENWORD 1 wmind",wmind,gl.WM.cp[wmind[0]].mentstr,gl.WM.cp[wmind[1]].mentstr,gl.WM.cp[wmind[1]].same)
         w0g = gl.WM.cp[wmind[0]].general
         w1g = gl.WM.cp[wmind[1]].general
         w0s = gl.WM.cp[wmind[0]].same
@@ -738,10 +795,12 @@ class Kbase:
         if len(w0gen)>0:                            # wmind[0] more general than wmind[1]
             if len(w1gen)==0:
                 gl.WM.cp[wmind[0]].general.add(wmind[1])
+                gl.WM.cp[wmind[0]].general.difference_update(w0s)     # remove from general those that are same
                 return 3
         if len(w1gen)>0:                            # wmind[1] more general than wmind[0
             if len(w0gen)==0:
                 gl.WM.cp[wmind[1]].general.add(wmind[0])
+                gl.WM.cp[wmind[1]].general.difference_update(w1s)     # remove from general those that are same
                 return 2
         return 0
 
@@ -840,7 +899,7 @@ class Kbase:
         return
 
 
-    def copyto_kb(self,curri,reason,lasti=-2):         # copy concept in WM on curri to KB with all parents
+    def copyto_kb(self,curri,reason,lasti=-2):         # copy concept in WM on curri to KB with all parents known
         while (len(self.cp[curri].parent)>0 and lasti!=self.cp[curri].parent[-1]):
             try: nextp=self.cp[curri].parent.index(lasti)+1
             except:
@@ -849,17 +908,18 @@ class Kbase:
             lasti=self.copyto_kb(self.cp[curri].parent[nextp],reason,lasti)
         # COPY ACTION to follow:
         if self.name=="WM":                         # copy from WM only
+            #if gl.d==4: print ("COPYTOKB curri",curri)
             if len(self.cp[curri].kblink)==0:       # not yet in KB
                 plist=[]                            # holds parent indices valiod in KB
                 for pari in self.cp[curri].parent:  # parents valid in WM
                     plist.append(self.cp[pari].kblink[0])   # append parent index valid in KB
                 kbl=gl.KB.get_child(self.cp[curri].relation,plist)   # search concept in KB as child of parent
                 if kbl==-1:                         # not found in KB
+                    #if gl.d==4: print ("COPYTO 2 curri",curri,"KB.ci:",gl.KB.ci)
                     kbl=gl.KB.add_concept(self.cp[curri].p,self.cp[curri].relation,plist,nknown=self.cp[curri].known,reason=reason)   # copy to KB, FIX: with same known value
-                    gl.KB.cp[kbl].relevance = self.cp[curri].relevance  #copy relevance
+                    gl.KB.cp[kbl].relevance = self.cp[curri].relevance[:]  #copy relevance
                     gl.KB.cp[kbl].g = self.cp[curri].g  # copy generality
                     gl.KB.cp[kbl].track = self.cp[curri].track  # copy track property
-                    if gl.d==5: print ("COPYTO kbl=",kbl,"mentstr=",gl.KB.cp[kbl].mentstr)
                 self.cp[curri].kblink.append(kbl)   # set KB link in WM
         return curri
 
@@ -901,6 +961,7 @@ class Kbase:
             except:
                 lasti=-2        # enter lower level
                 nextp=0
+            #if gl.d==4: print ("SEARCHKB 2 CALL self:",self.name,"curri:",self.cp[curri].parent[nextp],self.cp[self.cp[curri].parent[nextp]].mentstr)
             lasti=self.search_KB(self.cp[curri].parent[nextp],lasti,found)[0]
         # SEARCH ACTION to follow:
         if self.name=="WM":                                             # copy from WM only
@@ -952,7 +1013,7 @@ class Kbase:
         
 
     def move_relevant(self, starti):                # if this is top relevant knowledge, move it to KB
-        if (gl.WM.cp[gl.WM.ci].relevance>=gl.args.rmove):    #r>=rmove limit, for example r=3 or 4
+        if (max(gl.WM.cp[gl.WM.ci].relevance) >= gl.args.rmove):    #r>=rmove limit, for example r=3 or 4
             gl.WM.copyto_kb(gl.WM.ci,"RELEVANT ")               #copy the relevant concept to KB
             for i in range(gl.WM.ci-starti):        #entire group of moved concept
                 gl.WM.remove_concept()              #remove copied concept from WM
@@ -1175,7 +1236,7 @@ class Kbase:
             for child in gl.KB.cp[word_kb].child:
                 if gl.KB.cp[child].relation==4:     #C relation
                     
-                    if gl.KB.cp[child].relevance==gl.args.rmax: #top relevant C relation
+                    if gl.args.rmax in gl.KB.cp[child].relevance: #top relevant C relation
                         if wordstr==gl.KB.cp[gl.KB.cp[child].parent[0]].mentstr:  #word is x in C(x,y)
                             if rulecount==1:    #TO DO now we handle 1 rule only
                                 maplist.append(child)
@@ -1209,10 +1270,12 @@ class Kbase:
                     genset.update(self.cp[gen].same)
             gen_used=(set(self.cp[old].reasonuse) | set(self.cp[old].wmuse)) & genset   # general items that were used to reason old
             if len(gen_used)>0:                     # any used: p needs override
-                gl.log.add_log(("CONTRADICTION: KNOWN=0 OVERRIDE from set_General: old p was based on more general input. index=",old," old p=",self.cp[old].p," new index=",newi," new p=",self.cp[newi].p))
+                gl.log.add_log(("GENERAL: KNOWN OVERRIDE KNOWN=0 from set_General: old p was based on more general input. index=",old," old p=",self.cp[old].p," new index=",newi," new p=",self.cp[newi].p))
+                gl.test.track_double(self,old,"   OVERRIDE (GEN1) KNOWN k=0",self,newi," Based on more special:",gl.args.tr_over)
                 self.cp[old].known = 0              # override known
                 for used in self.cp[old].usedby:    # reasoned concepts that use this old
-                    gl.log.add_log(("CONTRADICTION: PVALUE and KNOWN OVERRID from set_General: make concept unknown. This concept used a too general input. index=",used," old p=",self.cp[used].p," contradicting concept:",old))
+                    gl.log.add_log(("GENERAL: PVALUE and KNOWN OVERRIDE from set_General: make concept unknown. This concept used a too general input. index=",used," old p=",self.cp[used].p," contradicting concept:",old))
+                    gl.test.track_double(self,used,"   OVERRIDE (GEN2) KNOWN k=0",self,old," Based on used concept that is known=0:",gl.args.tr_over)
                     self.cp[used].p=gl.args.pmax/2  # set this concept to unknown
                     self.cp[used].known=0           # set this concept unknown
 
@@ -1228,6 +1291,7 @@ class Kbase:
                 self.spread_General(nowuse[0],gener)   # recursive call one level deeper, this can only be 1 element
             else:
                 self.cp[thiscon].general.update(gener)  # update .general on wmuse concept
+                #if gl.d==4: print ("SPREAD *** GENERAL 9 here:",thiscon,"general:",self.cp[thiscon].general)
 
     def copydata_KB(self,concid,newconid):           # copy concept fields from WM to the KB copy of the concept
         newwm = gl.KB                                       # the new database is KB
@@ -1275,7 +1339,10 @@ class Kbase:
                                         if type(rm3) is list:   # should never happen
                                             gl.log.add_log(("ERROR in copy_Rulematch: more than 3 level deep list. concept=",kbcon.mentstr," rule_match:",kbcon.rule_match))
                                         else:
-                                            if rm3>0: newrm=wm_tokb[rm3]                # transform the value to that valid in KB
+                                            if rm3>0 and rm3 in wm_tokb: newrm=wm_tokb[rm3]                # transform the value to that valid in KB
+                                            elif rm3>0:  
+                                                newrm=0                        # FIX4 12.23 rm3 not found error!!
+                                                if self.cp[rm3].known>0: print ("ERROR in TRANSF RULEMATCH: rm3 not in wm_tokb. KB:",wm_tokb[wmoldi],"was in WM:",wmoldi,"rm3",rm3)
                                             if rm3<=0: newrm=-rm3                       # FIX3: negative shows this is valid in KB !!
                                             kbcon.rule_match[ind1][ind2][ind3]=newrm    # transform the value to that valid in KB
                                             if kbcon.rule_match[ind1] in kbcon.rule_match[:ind1]: 
@@ -1338,27 +1405,150 @@ class Kbase:
         gl.KB.cp[kbi].wmuse.append(self.cp[wmi].wmuse)     # current wm wmuse list is added as an element in KB wmuse list
         gl.KB.cp[kbi].kb_use.append(self.cp[wmi].kb_use)   # current wm kbuse list is added as an element in KB kbuse list
         
+    def update_Track(self,odb,old,ndb,new,tmsg,msg,msg2,oldspec):   # create tracking ang logging for the update
+        ncon=ndb.cp[new]
+        if len(msg)>0:
+ #           if gl.d==4: print ("UPD VALUES new",new,ncon.mentstr)
+            msg=tmsg+msg+" p="+str(ncon.p)+" k="+str(ncon.known)+" on:"
+            gl.test.track_double(ndb,new,msg,odb,old,msg2,gl.args.tr_upd)
+            gl.log.add_log(("UPDATE (SPEC)"+msg+" p="+str(ncon.p)+" k="+str(ncon.known)+" db:",ndb.this," on:",new,ncon.mentstr," Based on db:",odb.this,"on:",old,"spec:",oldspec))
+
+    def update_Values(self,odb,old,ndb,new,tmsg,oldspec):        # update new with values from old because old was based on more special
+        ncon=ndb.cp[new]
+        wmcon=odb.cp[old]
+        msg=""
+        if ncon.p!=wmcon.p: msg=" PVALUE"
+        if ncon.known!=wmcon.known: msg=msg+" KNOWN"
+        oldp=ncon.p
+        ncon.p=wmcon.p                                  # update p etc with old values
+        ncon.known=wmcon.known
+        ncon.most_special_used=-oldspec    # oldspec is from odb:old. It is always KB. the reason we update this too is that new totally takes teh role of old, even if new was originally general. 
+        gl.test.track(ndb,new,"      SET_SPEC (update_Values conc) to value:"+str(ncon.most_special_used)+" ",gl.args.tr_set_spec,rule="")
+        if ndb.name=="WM" and odb.name=="WM": ncon.override.add(old)     # for WM, remember which WM concept was used already for the update
+        msg2=" old p="+str(oldp)+" Based on spec="+str(oldspec)+" on:"
+        self.update_Track(odb,old,ndb,new,tmsg,msg,msg2,oldspec)            # create tracking ang logging for the update
+ #       if len(msg)>0:
+  #          msg=tmsg+msg+" p="+str(ncon.p)+" k="+str(ncon.known)+" on:"
+   #         msg2=" old p="+str(oldp)+" Based on spec="+str(oldspec)+" on:"
+    #        gl.test.track_double(ndb,new,msg,odb,old,msg2,gl.args.tr_upd)
+     #       gl.log.add_log(("UPDATE (SPEC)"+msg+" p="+str(ncon.p)+" k="+str(ncon.known)+" db:",ndb.this," on:",new,ncon.mentstr," Based on db:",odb.this,"on:",old,"spec:",oldspec))
+        
+    def update_Used(self,genspec,gdb,gcon,oldspec,sdb,scon):       # try to update the concepts used for the more general one. gen is more general than spec.
+        usedcount=len(gdb.cp[gcon].reasonuse)
+        kb_usecount=len(gdb.cp[gcon].kb_use)
+        for used in gdb.cp[gcon].reasonuse:                  # concepts directly used to reason gcon, the general one (if only KB is used then this is not working)
+            kbok=0
+            if kb_usecount==0: kbok=1                       # we will perform the update if no concept used from KB
+            if gdb.cp[gcon].kb_use == gdb.cp[used].kb_use: 
+                kbok=1  # we will also proceed if used has just inherited kb_use, so did not use it genuinly
+            if usedcount==1 and kbok==1:                    # currently we only process if 1 concept was used and no new usage from KB.
+                if gdb.cp[used].known>0: msg = " KNOWN"     # remember that known gets updated
+                gdb.cp[used].known=0                        # update known. means make known=0. As gcon is (based on) more general, and it is based on "used", therefore "used" is invalid.
+                msg2=" was used by too general conc:"+str(gcon)+" Based on spec="+str(oldspec)+" on:"
+                self.update_Track(sdb,scon,gdb,used,"   UPDATE (SPEC USED)",msg,msg2,oldspec)            # create tracking ang logging for the update
+                for sameu in gdb.cp[used].same:             # try to update same concepts if they are not better
+                    if genspec == -gdb.cp[sameu].most_special_used:   # minus because it should be in KB therefore it has negative value
+                        if gdb.cp[sameu].known>0:          # still alive: known=0 update needed
+                            msg=" KNOWN"
+                            gdb.cp[sameu].known=0           # update known. means make known=0. 
+                            msg2=" same as:"+str(used)+" which was used by too general conc:"+str(gcon)+" Based on spec="+str(oldspec)+" on:"
+                            self.update_Track(sdb,scon,gdb,sameu,"   UPDATE (SPEC USED SAME)",msg,msg2,oldspec)   # create tracking ang logging for the update
+                        
+    def consolidate_Specialuse(self,odb,wmoldi,ndb,new):    # # consolidate p known and most_special. Called only from reason, finaladd.
+#        if gl.d==6: print ("CONSOL SPEC old occurence:",odb.name,wmoldi,"new to consolidate:",ndb.name,new)
+        nspec=0;oldspec=0
+        if odb.cp[wmoldi].known>0 and ndb.cp[new].known>0:  # only if known is >0
+            if odb.cp[wmoldi].most_special_used<0:
+                oldspec=-odb.cp[wmoldi].most_special_used      # spec in KB
+            elif odb.name=="WM" and gl.WM.ci>=gl.WM.cp[wmoldi].most_special_used:   # spec is in WM
+                oldspec=gl.WM.cp[gl.WM.cp[wmoldi].most_special_used].kblink[0]   # spec in KB or 0
+            elif odb.name=="KB":
+                oldspec=odb.cp[wmoldi].most_special_used      # spec in KB
+            if ndb.cp[new].most_special_used<0:
+                nspec=-ndb.cp[new].most_special_used             # spec in KB
+            elif ndb.name=="KB":
+                nspec=ndb.cp[new].most_special_used
+            elif ndb.name=="WM" and ndb.ci>=ndb.cp[new].most_special_used:          # spec is in WM
+                if len(ndb.cp[ndb.cp[new].most_special_used].kblink)>0:
+                    nspec=ndb.cp[ndb.cp[new].most_special_used].kblink[0]   # spec in KB or 0
+#            if gl.d==6: print ("CONSOL SPEC 2 oldspec",oldspec,"nspec",nspec)
+            if oldspec>0 and nspec>0 and odb.name=="WM":        # DEBUG ==WM itt tartok we have the values in KB
+                ncon=ndb.cp[new]
+                if nspec in gl.KB.cp[oldspec].general:          # new more general
+                    self.update_Values(odb,wmoldi,ndb,new,"   UPDATE (SPEC1)",oldspec)    # update new with values from old
+                    self.update_Used(nspec,ndb,new,oldspec,odb,wmoldi)    # try to update the concepts used for the more general one. nspec is more general.
+                if oldspec in gl.KB.cp[nspec].general:          # old more general, new more special, new needs to be preserved
+                    if ndb.name=="WM" and odb.name=="WM" : ncon.override.add(wmoldi)     # for WM, remember which WM concept was used already for the update
+                    gl.test.track_double(ndb,new,"   UPDATE (SPEC2) skipped. new spec="+str(nspec),gl.WM,wmoldi," Based on old spec="+str(oldspec)+" on:",gl.args.tr_upd)
+                    if gl.d==4: print ("CONSOLID SPECIALUSE 9 old more general, new special. Call update_Used. old",wmoldi,gl.WM.cp[wmoldi].mentstr,"new",new,ndb.cp[new].mentstr)
+            if oldspec>0 and nspec>0 and odb.name=="KB":        # DEBUG 
+                ncon=ndb.cp[new]
+                if nspec in gl.KB.cp[oldspec].general:          # new more general
+                    if gl.d==6: print ("CONSOL CALL UPD VALUES ndb",ndb.name,"new",new)
+                    self.update_Values(odb,wmoldi,ndb,new,"   UPDATE (SPEC1)",oldspec)    # ERROR update new with values from old
+                
+ 
+    def match_Specialuse(self,wmoldi,wm_tokb):        # consolidate the field most_special_used
+        wmcon = self.cp[wmoldi]
+        kbi = wm_tokb[wmoldi]
+        if wmcon.most_special_used < 0:                 # it is in KB
+ #           gl.KB.cp[kbi].most_special_used = -wmcon.most_special_used   # override
+            a=1
+        elif wmcon.most_special_used > 0:               # it is in WM
+            if wmcon.most_special_used in wm_tokb:      # we know where it is in KB
+                newmost = wm_tokb[wmcon.most_special_used]
+                gl.test.track(self,wmoldi,"      SET_SPEC (match_Specialuse 1) to value:"+str(-newmost)+" ",gl.args.tr_set_spec,rule="")
+                wmcon.most_special_used = -newmost
+  #              gl.KB.cp[kbi].most_special_used = newmost           # override  to do in consolidate_Specialuse
+            else:
+                gl.log.add_log(("ERROR in consolidate_KB: most special used WM concept not found in the wm_tokb mapping. WM:",self.this,"not found:",wmcon.most_special_used))
+        if wmcon.most_special_used < 0:
+            if gl.KB.cp[kbi].most_special_used == 0:        # not yet filled
+                gl.test.track(gl.KB,kbi,"      SET_SPEC (match_Specialuse 2) to value:"+str(-wmcon.most_special_used)+" ",gl.args.tr_set_spec,rule="")
+                gl.KB.cp[kbi].most_special_used = -wmcon.most_special_used       # override with the value in wmcon
+            else:                                           # needs consolidation
+                a=1
+                # call consolidate_Specialuse
 
     def consolidate_KB(self,wm_tokb):       # consolidate various attributes of concepts just copied to KB
         trans_done=set()
         for wmoldi in wm_tokb:                      # all old wm indices that were moved to KB
             wmcon = self.cp[wmoldi]    
+            kbi = wm_tokb[wmoldi]
             if wmcon.known>0 and wm_tokb[wmoldi] not in trans_done:   # wm concept known, transformation not yet done
-                kbi = wm_tokb[wmoldi]
                 kbcon = gl.KB.cp[kbi]               # the concept in KB 
+                oldp=kbcon.p; oldk=kbcon.known; wmp=wmcon.p; wmk=wmcon.known
                 kbcon.cons_avg = (kbcon.cons_avg * kbcon.count + wmcon.cons_avg * wmcon.count)/(kbcon.count + wmcon.count)
                 if kbcon.known > wmcon.known:       # KB is better known
                     a=1                             # we keep values in KB
                 if kbcon.known == wmcon.known:      # same level known 
-                    newp = gl.args.pmerge[kbcon.p][wmcon.p]      # read consolidation table
-                    #if gl.d==1: print ("CONSOLID wmold",wmoldi,wmcon.mentstr,wmcon.p,"kb conc",kbi,kbcon.mentstr,kbcon.p,"newp",newp)
-                    if newp != kbcon.p: gl.log.add_log(("PVALUE OVERRIDE IN KB when paragraph was copied. KB conc:",kbi," ",kbcon.mentstr," old p:",kbcon.p, " new p:",newp))
-                    kbcon.p = newp                  # override p in KB
+                    newp = gl.args.pmerge[kbcon.p][wmcon.p]      # read consolidation table FIX 12.21
+                    consolid_done=0                 # not yet consolidated
+                    for sami in wmcon.same:
+                        if sami > wmoldi and self.cp[sami].known >= wmcon.known:  # the same concept is later and at least that much known
+                            consolid_done=1         # consolidatetiomn done earlier
+                    if consolid_done==0:             # consolidation not yet done
+                        kbcon.p = newp                  # override p in KB
                 if kbcon.known < wmcon.known:       # we know better now!
                     kbcon.known = wmcon.known
                     kbcon.p = wmcon.p
-                kbcon.count = kbcon.count + wmcon.count # just increase already existing count
+                kbcon.count = kbcon.count + 1       # just increase already existing count for each wm occurence by 1
                 self.ever_Fill(wmoldi,kbi)          # fill use=ever and reasonedwith_ever in the KB concept
+                self.match_Specialuse(wmoldi,wm_tokb)   # consolidate the field most_special_used
+                msg=""
+                if oldp!=kbcon.p: msg=" PVALUE"
+                if oldk!=kbcon.known: msg=msg+" KNOWN"
+                if wmp!=kbcon.p and oldp==kbcon.p and oldk==kbcon.known: msg=msg+" REJECT"    # update was rejected
+                if msg!=" REJECT" and len(msg)>0:
+                    msg="   UPDATE (CKB)"+msg+" p="+str(kbcon.p)+" k="+str(kbcon.known)+" on:"
+                    msg2=" (old p="+str(oldp)+" k="+str(oldk)+") Based on p="+str(wmp)+" k="+str(wmk)+" on:"
+                    gl.test.track_double(gl.KB,kbi,msg,gl.WM,wmoldi,msg2,gl.args.tr_upd)
+                    gl.log.add_log(("UPDATE"+msg+" IN KB when paragraph was copied. KB conc:",kbi," ",kbcon.mentstr," old p:",oldp, " new p:",kbcon.p," based on concept:",self.name," ",self.this," ",wmoldi))
+                if msg==" REJECT":
+                    msg="   REJECT (CKB)"+" p="+str(kbcon.p)+" k="+str(kbcon.known)+" on:"
+                    msg2=" Based on p="+str(wmp)+" k="+str(wmk)+" on:"
+                    gl.test.track_double(gl.KB,kbi,msg,gl.WM,wmoldi,msg2,gl.args.tr_reject)    
+            gl.test.track(gl.KB,kbi,"ADDKB:"+str(kbi)+" p="+str(gl.KB.cp[kbi].p)+" k="+str(gl.KB.cp[kbi].known)+" count="+str(gl.KB.cp[kbi].count)+" WM:"+str(wmoldi)+" k="+str(wmcon.known),gl.args.tr_addkb)                    
         kbadd_logged=set()
         for wmoldi in wm_tokb:                      # now clear wmuse and kb_use
             kbi = wm_tokb[wmoldi]
@@ -1438,7 +1628,7 @@ class Kbase:
         print (wminfo)
         gl.log.add_log((wminfo))
         for i,conc in enumerate(wmitem.cp): 
-            concinfo = str(i)+ " "+conc.mentstr+" p="+str(conc.p)+" parents="+str(conc.parent)+" known="+str(conc.known)+" wmuse="+str(conc.wmuse)+" kb_use="+str(conc.kb_use)+" use_ever="+str(conc.use_ever)+" kblink:"+str(conc.kblink)+" kbrules:"+str(conc.kb_rules)+" rulematch:"+str(conc.rule_match)
+            concinfo = str(i)+ " "+conc.mentstr+" p="+str(conc.p)+" parents="+str(conc.parent)+" known="+str(conc.known)+" wmuse="+str(conc.wmuse)+" kb_use="+str(conc.kb_use)+" use_ever="+str(conc.use_ever)+" kblink:"+str(conc.kblink)+" reasonuse:"+str(conc.reasonuse)+" general:"+str(conc.general)+" most sp:"+str(conc.most_special_used)
             print (concinfo)
             gl.log.add_log((concinfo))
  
@@ -1563,7 +1753,8 @@ class Kbase:
                                 self.zero_Known(newindex)                                   # parent known value is zero
                         
                     if r_result is not None:
-                        self.cp[newindex].relevance=r_result[0]
+                        for i in range(len(self.cp[newindex].relevance)):
+                            self.cp[newindex].relevance[i]=r_result[0]
                     if g_result is not None:
                         self.cp[newindex].g=g_result[0]
                     self.cp[newindex].track=istrack             # track concept if needed
@@ -1571,6 +1762,11 @@ class Kbase:
                 
             actPos=actPos+1
         return
+
+    def track_row(self,ment,ri):
+        tr = gl.test.is_tracked(" TRACKED","",ment)    # see if mentalese is tracked
+        if gl.args.debug>=1 or len(tr)>0: gl.test.tracking.append ("ROW input" + tr+": "+str(ri)+" "+ment)
+
 
     def branch_read_concept(self,starti,tfment,tf,ri):      # read new input on all branches
         s=timer()
@@ -1582,6 +1778,7 @@ class Kbase:
             gl.WM = gl.VS.wmliv[lwmid]                      # next living WM into gl.WM
             mentalese3 = mentalese[:]
             lastcon=gl.WM.ci
+            self.track_row(mentalese[0],ri)
             if len(tfment[0])>1:                            # tfment is not yet processed (it will become zero length)
                 gl.WM.read_concept(tfment,isquestion,istrack=tf.debug[ri])   # read input into this branch
             else:
@@ -1592,6 +1789,7 @@ class Kbase:
             if isquestion == 1: gl.WM.last_question = gl.WM.ci
             for newcon in range(gl.WM.ci-lastcon):          # cycle through newly added concepts
                 curcon=lastcon+newcon+1                     # current concept
+                gl.test.track(gl.WM,curcon,"INPUT concept.",gl.args.tr_inp) # track input in track.txt
                 brancho.wmpos=curcon                        # position of new concept
                 brancho.vs_perform_Branching(gl.WM)         # call branching after new concept was added to this branch
             #if gl.d==1: print ("BR READ db=",gl.WM.this,"thispara=",gl.WM.thispara)

@@ -24,6 +24,8 @@ class Testinput:
         self.lognewkb = []      # HOLDS the evaluation of KB based on log file
         self.logoldkb = []      # HOLDS the evaluation of KB base version based on log file    
         self.logcomp = []       # holds teh comparison of new and old KB
+        self.tracking = []      # holds tracking info output
+        self.track_con = []     # which concepts to track
         try:
             self.testf = open(testfilename, "r")
             pos=testfilename.find(".")
@@ -32,10 +34,34 @@ class Testinput:
         except:
             gl.log.add_log(("ERROR: Testinput: input or output file could not be opened:", self.name))
         try:
+            self.trackf = open("track.txt","r")                   # tracking file as input
+            trackflag=1
+        except:
+            trackflag=0
+            gl.log.add_log(("WARNING: Testinput: track.txt file could not be opened for read."))        
+        try:
             basefname = testfilename[:pos]+"_base"+testfilename[pos:]               # base file to compare result with
             self.basef = open(basefname, "r")
             print ("MESSAGE: Base file found: ",basefname)
         except: a=0
+        if trackflag==1:                                        # there is track.txt to read
+            self.read_Track()                                   # read which concepts to track                         
+            self.trackf.close()
+        try:
+            self.trackf = open("track.txt","w")                 # tracking file as output  
+        except:
+            gl.log.add_log(("ERROR: Testinput: track.txt file could not be opened for write."))        
+
+    def read_Track(self):
+        lnum=0; trackpresent=0
+        for line in self.trackf:
+            if lnum==0:                                                     # first row of track file
+                if "/TRACK" in line[0:6]: trackpresent=1                    # concepts follow to be tracked
+            if lnum>0 and trackpresent==1 and "/END" not in line[0:6]:      # concepts given to track   
+                self.track_con.append(line[:-1])
+            if "/END" in line[0:6]: trackpresent=0                          # concepts ended to be tracked
+            lnum+=1
+        return
 
     def get_Value(self,gstring,pos):                            # parse the .p=4 value postions
         pos=pos+1                       # on pos we have a . character. gstring is the portion of the row of teh test file with the good answer mentalese.
@@ -449,45 +475,135 @@ class Testinput:
             logfkb[rowi]["pval"]=int(pval)              # store the p value in the data structure
             logfkb[rowi]["know"]=int(know)              # store the known value in the data structure
             found=[]
-            if "frozenset({-1})" in row: 
+            if "wmuse=[-1]" in row or "frozenset({-1})" in row:   # FIXXXXX
                 found=self.get_Section(row,["INPUT","ment= "+ment],["p=","known="],"INPUT ",thislog)    # search for rows with "INPUT"
             found2=self.get_Section(row,["reasoned concept:"+ment],["p="],"REASON",thislog)             # search for rows with "reasoned concept:"
             for ite in found2: found.append(ite)
             found3 = self.get_Used(row,rowi,logfkb)     # returns the string and also populates logfkb with the used concept indices
             logfkb[rowi]["prval"]+=" "+found3
+            #print ("LOGKB rowi",rowi,"ment",ment,"found3",found3,"found",found,"***tghislog",thislog)
             self.add_detail(logfkb,rowi,found,ment)     # add rows showing INPUT and REASON origin of concepts
 
     def manage_Diff(self,oldi,found):                   # investigae differences between old and new KB content for a single concept
+        old_detail=""
+        for det in self.logoldkb[oldi]["detail"]:
+            old_detail+=det                             # details into single string
+        fnd_detail=""
+        for det in self.lognewkb[found]["detail"]:
+            fnd_detail+=det
+        old_in=0; old_r=0; fnd_in=0; fnd_r=0
+        if "INPUT" in old_detail: old_in=1              # oldi was (also) an input
+        if "INPUT" in fnd_detail: fnd_in=1              #  was (also) an input
+        if "REASON" in old_detail: old_r=1              #  was (also) a reasoned
+        if "REASON" in fnd_detail: fnd_r=1              #  was (also) a reasoned
+        if found not in self.logcomp["diff"] and (old_in!=fnd_in or old_r!=fnd_r):   # there will be difference
+            self.logcomp["diff"][found]={"prval":str(found)+" DIFF old_id:"+str(oldi)+" "+self.lognewkb[found]["ment"]+" "}
+            self.logcomp["diff"][found]["oldindex"]=oldi            
+        if old_in==1 and fnd_in==0: self.logcomp["diff"][found]["prval"] += "MISSING input. "
+        if old_in==0 and fnd_in==1: self.logcomp["diff"][found]["prval"] += "MORE input. "
+        if old_r==1 and fnd_r==0: self.logcomp["diff"][found]["prval"] += "MISSING reason. "
+        if old_r==0 and fnd_r==1: self.logcomp["diff"][found]["prval"] += "MORE reason. "
         pold = self.logoldkb[oldi]["pval"]
         pnew = self.lognewkb[found]["pval"]
         kold = self.logoldkb[oldi]["know"]
         knew = self.lognewkb[found]["know"]
         if pold!=pnew or kold!=knew:                    # any difference
-            if found not in self.logcomp["diff"]: self.logcomp["diff"][found]=""
-            if pold != pnew: self.logcomp["diff"][found]+=" DIFF_P old p="+str(self.logoldkb[oldi]["pval"])
-            if kold != knew: self.logcomp["diff"][found]+=" DIFF_K old k="+str(self.logoldkb[oldi]["know"])
+            if found not in self.logcomp["diff"]: 
+                self.logcomp["diff"][found]={"prval":str(found)+" DIFF old_id:"+str(oldi)+" "+self.lognewkb[found]["ment"]+" "}
+                self.logcomp["diff"][found]["oldindex"]=oldi
+            if pold != pnew: self.logcomp["diff"][found]["prval"] += " DIFF_P old p="+str(self.logoldkb[oldi]["pval"])
+            if kold != knew: self.logcomp["diff"][found]["prval"] += " DIFF_K old k="+str(self.logoldkb[oldi]["know"])
+
+    def comp_Missmore(self,logdb,index,pval,ment,strlow,strcap):         # create comparison messages
+        msg=strcap+" as parent: "+ment
+        for det in logdb[index]["detail"]:
+            if "INPUT" in det:
+                msg=strcap+" input: p="+str(pval)+" "+ment                          # record missing input
+            if "REASON" in det:
+                msg=strcap+" reason: p="+str(pval)+" "+ment                         # record missing reasoned concept
+                if "INPUT" in det:
+                    msg=strcap+" input and "+strcap+" reason: p="+str(pval)+" "+ment         # record missing reasoned concept
+        self.logcomp[strlow][index]={"prval":msg}
+        return msg
+
+    def diff_Reason(self):                                  # find out the underlying reasons for different reasoning    
+        for row in self.logcomp["missing"]:                                         # items found to be missing from new KB
+            self.logcomp["missing"][row]["detail"]=[]
+            if "used" in self.logoldkb[row] and self.logoldkb[row]["used"]!=[]:     # we have the used concepts
+                self.logcomp["missing"][row]["prval"] += " old used: "+str(self.logoldkb[row]["used"])   # extend the logged row of the missing concept
+                for uselist in self.logoldkb[row]["used"]:                          # used concepts for each separate reasoning case
+                    for used in uselist:
+                        usement=self.logoldkb[used]["ment"]
+                        for row2 in self.logcomp["missing"]:
+                            if used==row2 and usement in self.logcomp["missing"][row2]["prval"]:      # used mentalese is missing
+                                self.logcomp["missing"][row]["detail"].append("    "+str(used)+" USED "+self.logcomp["missing"][row2]["prval"])
+                        for row2 in self.logcomp["diff"]:
+                            #print ("logcomp diff row2=",row2,"element=",self.logcomp["diff"][row2])
+                            if used==self.logcomp["diff"][row2]["oldindex"]:        # used mentalese is different
+                                self.logcomp["missing"][row]["detail"].append("    "+str(used)+" USED "+self.logcomp["diff"][row2]["prval"])
+        for row in self.logcomp["diff"]:                                            # items found to be different from new KB
+            #if gl.d==4: print ("DIFFR 2 row",row)
+            oldrow=self.logcomp["diff"][row]["oldindex"]
+            self.logcomp["diff"][row]["detail"]=[]
+            if "used" in self.logoldkb[oldrow] and self.logoldkb[oldrow]["used"]!=[]:  # we have the used concepts
+                self.logcomp["diff"][row]["prval"] += " old used: "+str(self.logoldkb[oldrow]["used"])   # extend the logged row of the missing concept
+                for uselist in self.logoldkb[oldrow]["used"]:                          # used concepts for each separate reasoning case
+                    for used in uselist:
+                        usement=self.logoldkb[used]["ment"]
+                        for row2 in self.logcomp["missing"]:
+                            if used==row2 and usement in self.logcomp["missing"][row2]["prval"]:      # used mentalese is missing
+                                self.logcomp["diff"][row]["detail"].append("    "+str(used)+" USED "+self.logcomp["missing"][row2]["prval"])
+                        for row2 in self.logcomp["diff"]:
+                            if used==self.logcomp["diff"][row2]["oldindex"]:        # used mentalese is different
+                                self.logcomp["diff"][row]["detail"].append("    "+str(used)+" USED "+self.logcomp["diff"][row2]["prval"])
+            if "used" in self.lognewkb[row] and self.lognewkb[row]["used"]!=[]:     # we have the new used concepts
+                self.logcomp["diff"][row]["prval"] += " new used: "+str(self.lognewkb[row]["used"])   # extend the logged row of the missing concept
+                for uselist in self.lognewkb[row]["used"]:                          # used concepts for each separate reasoning case
+                    for used in uselist:
+                        if row in self.logcomp["more"]: 
+                            for row2 in self.logcomp["more"]:
+                                if used==row2:                                          # used  is more
+                                    self.logcomp["more"][row]["detail"].append("    "+str(used)+" USED "+self.logcomp["more"][row2]["prval"])
+        for row in self.logcomp["more"]:                                            # items found to be more in new KB
+            self.logcomp["more"][row]["detail"]=[]
+            if "used" in self.lognewkb[row] and self.lognewkb[row]["used"]!=[]:     # we have the used concepts
+                self.logcomp["more"][row]["prval"] += " used: "+str(self.lognewkb[row]["used"])   # extend the logged row of the missing concept
+                for uselist in self.lognewkb[row]["used"]:                          # used concepts for each separate reasoning case
+                    for used in uselist:
+                        for row2 in self.logcomp["diff"]:
+                    #        print ("more processing. used:",used,"row2:",row2,"row2 element:",self.logcomp["diff"][row2])
+                            if used==row2:                                          # used  is different
+                                self.logcomp["more"][row]["detail"].append("    "+str(used)+" USED "+self.logcomp["diff"][row2]["prval"])
+                        for row2 in self.logcomp["more"]:
+                            if used==row2:                                          # used  is more
+                                self.logcomp["more"][row]["detail"].append("    "+str(used)+" USED "+self.logcomp["more"][row2]["prval"])
 
 
     def log_Compare(self):                      # compare new KB and old KB based on logfile reports, evaluate differences.    
-        self.logcomp = {"missing":[]}
-        self.logcomp["diff"]=dict()
+        self.logcomp = {"missing":dict()}
+        self.logcomp["more"] = dict()
+        self.logcomp["diff"] = dict()
         for oldi in range(0,len(self.logoldkb)):            # old KB rows
-            print (oldi,self.logoldkb[oldi])
             found=-1
             oment=self.logoldkb[oldi]["ment"]               # old mentalese
+            opval=self.logoldkb[oldi]["pval"]               # old pval
             for newi in range(0,len(self.lognewkb)):        # new KB rows
                 nment=self.lognewkb[newi]["ment"]           # new mentalese
                 if oment==nment: found=newi                 # remember where this was found in new KB
             if found==-1:                                   # an old KB mentalese is missing from new KB
-                msg="MISSING as parent: "+oment
-                for det in self.logoldkb[oldi]["detail"]:
-                    if "INPUT" in det:
-                        msg="MISSING input: "+oment          # record missing input
-                    if "REASON" in det:
-                        msg="MISSING reason: "+oment         # record missing reasoned concept
-                self.logcomp["missing"].append(msg)
+                msg=self.comp_Missmore(self.logoldkb,oldi,opval,oment,"missing","MISSING")      # create comparison messages
+                #if "reason:" in msg: self.diff_Reason(oldi,oment) 
             if found>-1:
                 self.manage_Diff(oldi,found)                # record differences between oldi and its pair found
+        for newi in range(0,len(self.lognewkb)):            # new KB rows. Are any new concepts missing in OLD KB?
+            found=-1
+            nment=self.lognewkb[newi]["ment"]               # new mentalese
+            npval=self.lognewkb[newi]["pval"]               # new pval
+            for oldi in range(0,len(self.logoldkb)):        # old KB rows
+                oment=self.logoldkb[oldi]["ment"]           # old mentalese
+                if oment==nment: found=oldi                 # remember where this was found in old KB
+            if found==-1:                                   # a new KB mentalese is missing from old KB
+                self.comp_Missmore(self.lognewkb,newi,npval,nment,"more","MORE")      # create comparison messages
            
     def process_logfile(self):                                  # read logfile.txt and logfile_base.txt and evaluate them
         success=self.read_logfile("logfile.txt",self.logrow)                # read logfile into self.logrow
@@ -497,8 +613,10 @@ class Testinput:
         if success==1:                                                      # if we have an earlier log file
             self.log_KB(self.logoldkb,self.baselogrow)                      # process the KB content of the old log file, "logold", name: logfile_base.txt
             self.log_Compare()                                              # compare new KB and old KB, evaluate differences.
-        self.print_Logeval()                                                # print the self.lognewkb and self.logoldkb evaluations on screen
+            self.diff_Reason()                                              # evaulate the reasons for some of the differences
+        #self.print_Logeval()                                                # print the self.lognewkb and self.logoldkb evaluations on screen
         self.write_Logeval()                                                # write the log file evaluations into log_result.txt
+        self.write_Tracking()                                               # write the tracking file track.txt
                 
     def print_Logeval(self):                    # print the self.lognewkb and self.logoldkb evaluations on screen
     #    for row in self.logoldkb:               # old _base log file
@@ -513,17 +631,39 @@ class Testinput:
                 for ditem in row["detail"]:
                     print (ditem)
         print ("LOGCOMP:")
+        for item in self.logcomp["more"]:
+            print (self.logcomp["more"][item]["prval"])
+            if "detail" in self.logcomp["more"][item]:
+                for ditem in self.logcomp["more"][item]["detail"]:
+                    print (ditem)
         for item in self.logcomp["missing"]:
-            print (item)
+            print (str(item)+" "+self.logcomp["missing"][item]["prval"])
+            if "detail" in self.logcomp["missing"][item]:
+                for ditem in self.logcomp["missing"][item]["detail"]:
+                    print (ditem)
         for item in self.logcomp["diff"]:
-            print (str(item)+": "+self.logcomp["diff"][item])
+            print (self.logcomp["diff"][item]["prval"])
+            if "detail" in self.logcomp["diff"][item]:
+                for ditem in self.logcomp["diff"][item]["detail"]:
+                    print (ditem)
     
     def write_Logeval(self):                    # write the log file evaluations into log_result.txt
-        self.log_result.write("\n"+"COMPARE with base:"+"\n")
+        self.log_result.write("\n"+"COMPARE with logfile_base.txt:"+"\n")
+        for item in self.logcomp["more"]:
+            self.log_result.write(str(item)+" "+self.logcomp["more"][item]["prval"]+"\n")
+            if "detail" in self.logcomp["more"][item]:
+                for ditem in self.logcomp["more"][item]["detail"]:
+                    self.log_result.write(ditem+"\n")
         for item in self.logcomp["missing"]:
-            self.log_result.write(item+"\n")
+            self.log_result.write(str(item)+" "+self.logcomp["missing"][item]["prval"]+"\n")
+            if "detail" in self.logcomp["missing"][item]:
+                for ditem in self.logcomp["missing"][item]["detail"]:
+                    self.log_result.write(ditem+"\n")
         for item in self.logcomp["diff"]:
-            self.log_result.write("DIFF "+str(item)+" p="+str(self.lognewkb[item]["pval"])+" k="+str(self.lognewkb[item]["know"])+" "+self.lognewkb[item]["ment"]+" "+self.logcomp["diff"][item]  +"\n")
+            self.log_result.write(self.logcomp["diff"][item]["prval"] +" new: p="+str(self.lognewkb[item]["pval"])+" k="+str(self.lognewkb[item]["know"]) +"\n")
+            if "detail" in self.logcomp["diff"][item]:
+                for ditem in self.logcomp["diff"][item]["detail"]:
+                    self.log_result.write(ditem+"\n")
 
         self.log_result.write("\n"+"NEW logfile : KB content"+"\n")
         for row in self.lognewkb:               # current log file
@@ -537,7 +677,44 @@ class Testinput:
             if "detail" in row:                 # INPUT and REASON details
                 for ditem in row["detail"]:
                     self.log_result.write(ditem+"\n")
-                    
+    
+    def write_Tracking(self):                   # write the tracking file
+        if len(self.track_con)>0:               # any concepts to track
+            self.trackf.write("/TRACK"+"\n")
+            for ment in self.track_con:         # write back the concepts to track into track.txt, just as the input was
+                self.trackf.write(ment+"\n")
+            self.trackf.write("/END"+"\n")        
+        self.trackf.write("Tracking output:"+"\n")
+        for item in self.tracking:              # write the tracked items collected in self.tracking
+            self.trackf.write(str(item)+"\n")
+
+    def is_tracked(self,msg,tr,what):               # see if "what" is tracked
+        for tritem in gl.test.track_con:            # items tracked
+            if tritem == what:                      # rule has a tracked item
+                tr=tr+msg; break
+            if tritem[0]=="*" and tritem[1:] in what:
+                tr=tr+msg; break
+        return tr                
+
+    def track(self,db,coni,msg,level,rule=""):              # write self.tracking with tracking rows
+        tr=""; ruletext=""
+        tr = self.is_tracked(" TRACKED CONCEPT",tr,db.cp[coni].mentstr)    # record tracked concept in tr
+        if len(rule)>0 :
+            tr=self.is_tracked(" TRACKED RULE ",tr,rule)    # record tracked rule in tr              
+            ruletext="  rule: "+rule
+        if gl.args.debug>=level or len(tr)>0: 
+            self.tracking.append (msg+tr+" db="+str(db.this)+" "+str(coni)+" "+db.cp[coni].mentstr+ruletext)
+       # if gl.d==4: print (msg+tr+" db="+str(db.this)+" "+str(coni)+" "+db.cp[coni].mentstr+ruletext)
+
+    def track_double(self,db,coni,msg,db2,coni2,msg2,level,rule=""):
+        ruletext=""
+        tr = self.is_tracked(" TRACKED CONCEPT","",db.cp[coni].mentstr)    # record tracked concept in tr
+        if len(rule)>0 :
+            tr=self.is_tracked(" TRACKED RULE ",tr,rule)    # record tracked rule in tr  
+            ruletext="  rule: "+rule
+        tr2 = self.is_tracked(" TRACKED CONCEPT","",db2.cp[coni2].mentstr)    # record tracked concept2 in tr
+        if gl.args.debug>=level or len(tr)>0 or len(tr2)>0: 
+            self.tracking.append (msg+tr+" db="+str(db.this)+" "+str(coni)+" "+db.cp[coni].mentstr+msg2+tr2+" db2="+str(db2.this)+" "+str(coni2)+" "+db2.cp[coni2].mentstr+ruletext)
 
             
 class Temptest:                                 # unit tests and other temporary data

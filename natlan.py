@@ -13,15 +13,14 @@ from timeit import default_timer as timer
 # 22. KESZ a KB-ben most mar van kerdes alapu aktivalas.
 # 24. KESZ:  Minden aktivált conceptre,  ujra kell fusson a createconceptrules és a convert_kbrules. 
 # 25. KESZ: kb_rules töltése a vs_perform_reasonben minding megtörténik KB-ben is. A reasoning (UniConcept) KB esetben is megy.
-# hiba kicsi: néha wmuse-ban,néha kb_useban van amit használt még akkor is ha már KBban van a concept
-# IM reasonming: egyelore feltetel a KB-ben mukodik.
-# ITT TARTOK 1: reason_Inhibit 391 csak WM-re mukodik!!
-# ITT TARTOK: regtest2 lefut de többször hozzaadja hogy F(boy,huge). KB-ben nincs jol figyelembe veve a reasoned_with, vagyis mivel reasoneltunk mar. ez a gond.
-# 470-es sor ITT TARTOK IDE BEEPITENI: reasoned_with vizsgalat, Uj fv ami elvileg kesz: SETRW.
-# AND() feltételű, Multiconcept reasoningggel meg nem foglalkoztam KB esetre.
-# reverse_Drel KB eseten nincs meghivva.
-# lehetne a KB-ben spreading activation, es lehetne több activation round, lsd gl.py: self.kbactiv_limit
+# KESZ: track.txt : /TRACK es /END koze megy a trackkkelendo concept. Ha darab akkor *darab szintaxissal.
 
+# lookup_Rtable: kp_pide2 and similar kp_xxx known tranformation tables are not yet used (only in UniConcept)
+
+# AND()  Multiconcept reasoning not yet working in KB
+# reverse_Drel not called in case of KB based reasoning
+
+# regtest.txt small error in evaluation: // A(Joe,eat) also shown from branch=2 which is a wrong branch
 
 def process_testinput (tf):                     # run mentalese comprehension, input is the Testinput object
     for ri in range(len(tf.mentalese)):         # take mentalese items (rows in test input file)
@@ -43,11 +42,13 @@ def process_testinput (tf):                     # run mentalese comprehension, i
             tf.systemanswer[ri][:] = gl.WM.answer_question(starti)[:]    # answer question and record concept indices
         gl.test.write_result(ri)                    # write result file
 
+
 # GLOBAL VARIABLES
 
-gl.d=4                      # debugging
-gl.error = 0                # error counter
+gl.d=6                      # debugging
 gl.args = gl.Arguments()    # initialize global parameters
+gl.args.debug = 1           # debug mode
+gl.error = 0                # error counter
 gl.KB = conc.Kbase("KB")    # KNOWLEDGE BASE
 gl.WL = wrd.Wlist("WL")     # WORD LIST
 gl.VS = branch.Version()    # versions instance that keeps track of versions of WM
@@ -57,21 +58,31 @@ gl.act = activ.Activate()   # activation instance
 
 # START THE PROGRAM 
 
-if gl.args.argnum == 2:
+if gl.args.argnum == 2:         # an argument is needed , .txt file, which has the input mentalese
     gl.log = gl.Logging()       # log file
     gl.test = testing.Testinput(sys.argv[1])    # the instance that holds the input file
     gl.test.readtest()                          # read the input file into gl.test
     s=timer()                                   # measure total execution time
     process_testinput (gl.test)                 # PROCESSING: run the mentalese comprehension program
     end=timer()
-    
-    # OUTPUTS AFTER PROCESSING HAS FINISHED
+
+# INPUTS:
+    # inputfile             given as argument: input mentalese plus questions. (MANDATORY input)
+    # track.txt             is both an input and output. As input, it has the tracked mentalese between /TRACK and /END at the beginning of the file (use *what to inclusion matching)
+    # logfile_base.txt      is an input, if exists, and gets compared with logfile.txt, comparison result saved in log_result.txt
+    # inputfile_base.txt    previous _result file, to compare current results with previous results.
+ 
+# OUTPUTS AFTER PROCESSING HAS FINISHED
+    # logfile.txt
+    # log_result.txt        regression test of KB content
+    # track.txt
+    # inputfile_result.txt  answers to questions, plus regression test of question answers if inputfile_base.txt was present.
     
     print ("WM list count: "+str(len(gl.VS.wmlist))+" WM live: "+str(gl.VS.wmliv.keys()))
     for id,wmitem in enumerate(gl.VS.wmlist):           # all wms created
         if id in gl.VS.wmliv:                   # for living wm only
             print ("WM id:"+str(id)+" WM end:"+str(wmitem.ci)+" parent WM:"+str(wmitem.pawm)+" this wm id:"+str(wmitem.this)+" WMvalue="+str(wmitem.branchvalue)+" last conc used:"+str(wmitem.last)+" activated:"+str(wmitem.activ))
-            gl.WM.printlog_WM(wmitem)
+            #gl.WM.printlog_WM(wmitem)
 
     print ("KB list:")
     gl.WM.printlog_WM(gl.KB)        # print KB
@@ -87,7 +98,8 @@ if gl.args.argnum == 2:
     gl.test.check_result()                  # compare _base to _result file
     gl.log.logf.close()                     # close log file
     gl.test.process_logfile()               # create evaluations, reports based on log file
-    gl.test.log_result.close()              # close the output file of log file evaluations
+    gl.test.log_result.close()              # close the output file log_result.txt of log file evaluations
+    gl.test.trackf.close()                  # close the tracking file track.txt
     
     print ("TOTAL reasoning attempts=",gl.args.total_reasoncount," REASONed concepts=",gl.args.success_reasoncount,"ERROR in process_CDrel. count =",gl.error)
     
