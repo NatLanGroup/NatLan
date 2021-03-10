@@ -21,6 +21,7 @@ from timeit import default_timer as timer
 # reverse_Drel not called in case of KB based reasoning
 
 # regtest.txt small error in evaluation: // A(Joe,eat) also shown from branch=2 which is a wrong branch
+# regetst2 not activated: P(Q(bird,all),head).  (if +1 set for P in kbactiv_addone). Activation needed from two sides, bird and head !!!!!!!!!!!
 
 def process_testinput (tf):                     # run mentalese comprehension, input is the Testinput object
     for ri in range(len(tf.mentalese)):         # take mentalese items (rows in test input file)
@@ -45,7 +46,7 @@ def process_testinput (tf):                     # run mentalese comprehension, i
 
 # GLOBAL VARIABLES
 
-gl.d=6                      # debugging
+gl.d=7                      # debugging
 gl.args = gl.Arguments()    # initialize global parameters
 gl.args.debug = 1           # debug mode
 gl.error = 0                # error counter
@@ -91,9 +92,9 @@ if gl.args.argnum == 2:         # an argument is needed , .txt file, which has t
     gl.test.resultf.close()
     print ("branches:",gl.VS.wmliv.keys(),"this WM:",gl.WM.this," branchvalue:",gl.WM.branchvalue)
     
-    print ("TIME USAGE REPORT IN BPS FOLLOWS.",end-s, " s total run time.")
-    for t in sorted(gl.args.timecheck,reverse=False):
-        print (t, int(gl.args.timecheck[t]*10000/(end-s)))
+ #   print ("TIME USAGE REPORT IN BPS FOLLOWS.",end-s, " s total run time.")
+  #  for t in sorted(gl.args.timecheck,reverse=False):
+   #     print (t, int(gl.args.timecheck[t]*10000/(end-s)))
         
     gl.test.check_result()                  # compare _base to _result file
     gl.log.logf.close()                     # close log file

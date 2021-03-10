@@ -79,6 +79,7 @@ class Kbase:
     #    self.reasoned = set([1])        # for which concept is reasoning done in WM
         self.vs_samestring = {}         # a map of mentalese string: all occurences in this wm (or in kb)
         self.branchvalue = int(1+gl.args.bmax/2) # evaluation (consistency) of branch. 
+        self.inhibit_parent = {}        # (flattened) structures stored in KB that are inhibited to be a parent. kbindex:flattened inhibitor rule.
         
     def map_Attrib(self,concindex,char):    # read and return single letter attributes given in input (a/ good answer)
         conc = self.cp[concindex]
@@ -597,7 +598,7 @@ class Kbase:
                            
     def add_concept(self, new_p, new_rel, new_parents,kbl=[],gvalue=None,isquestion=0,isinput=True,nknown=-1,reason=""):        #add new concept to WM or KB. parents argument is list
         s=timer()
-     #   if gl.d==4: print ("ADDCON 1 self:",self.name,"new parents:",new_parents,"kbl",kbl,"ci",self.ci)
+        if gl.d==7: print ("ADD_CONCEPT 1 self:",self.name,"p=",new_p,"rel=",new_rel,"parents:",new_parents,"kblink",kbl,"ci",self.ci)
         self.cp.append(Concept(new_rel))                        #concept added
         self.ci = len(self.cp) - 1                              #current index
         self.thispara.append(self.ci)                           #note concept is in current paragraph
@@ -647,6 +648,7 @@ class Kbase:
             #gl.act.activate_inKB(self,self.ci,1,isinput)         # activate KB concepts based on occurence in WM (word etc) beyond relevance limit, in round=1
             gl.act.activKB_Allchild(gl.KB,kbl[0],kbl[0],self,1,isinput) # recursively activate KB concepts based on occurence in WM (word etc) beyond relevance limit, in round=1
     #        if gl.d==6: print ("ADD CONC activate in KB. this con:",gl.WM.ci,gl.WM.cp[gl.WM.ci].mentstr,"act in KB:",gl.WM.kbactiv)
+            gl.test.track(gl.KB,kbl[0],"   ACTIV (ADD) KB new activated="+str(gl.WM.kbactiv_new),gl.args.tr_act,rule="")
         dbstr=" db="+str(self.this)
         mentalese=""
         if len(self.cp[self.ci].mentstr)>0: mentalese=" ment= "+self.cp[self.ci].mentstr
@@ -993,6 +995,28 @@ class Kbase:
         self.check_Children(gl.KB,gl.WL.wcp[i1].wchild[0],kblink[0],speclist)   # in KB we take all children of the first meaning of word %1
         return speclist
             
+    def pattern_Flat(self,db,flat,conci):                    # store flat version of concept structure (relations and word meanings)
+        flat.append(db.cp[conci].relation)                          # flat structure starts with top level relation
+        flat.append("L")                                            # signals next level
+        curplist=["P"]                                              # signals next parent set
+        for par in db.cp[conci].parent:
+            curplist.append(par)                                    # holds the current level list of all parents
+        while len(curplist)>0:                                      # any further level left
+            nextplist=[]                                            # one level below current level
+            for parent in curplist:                                 # this level parents
+                if parent=="P":
+                    flat.append("P")                                # shows that a new parent set starts here
+                else:
+                    nextplist.append("P")                               # before each parent, in the list of lower parents a "P" shows when we start a new lower parent set
+                    for nexp in db.cp[parent].parent :                  # next level parents: collect parents one level below
+                        nextplist.append(nexp)                          # pepare the next level list 
+                    flat.append(db.cp[parent].relation)                 # flattened concept structure: relation is stored
+                    if db.cp[parent].relation==1:                       # the current parent is a word: the word itself must also match
+                        flat.append(db.cp[parent].kblink[0])            # the KB link of the word is added to flat, this must match
+                if conci==50: print ("PATTERN 1 parent",parent,"flat",flat,"nextplist",nextplist)
+            flat.append("L")
+            curplist=nextplist[:]
+            
     def move_rule(self,tf,ri,starti):           # if this is a rule then move it to KB
         moved=0
         if ("%1" in tf.mentalese[ri]):          # if this is a rule
@@ -1009,6 +1033,11 @@ class Kbase:
                 except: gl.log.add_log(("ERROR in move_rule in conc.py: could not assemble rule string. KB index:",kblink[0]," WM index:",gl.WM.ci)) 
                 gl.WM.remove_concept()          # remove rule from WM
                 moved=1                         # note something was moved
+                if "=inhibit" in gl.KB.cp[kblink[0]].rulestr[0][-8:] :      # =inhibit rules are inhibited as reasoned parents
+                    flat=[]                                                 # flat version of rule
+                    gl.KB.pattern_Flat(gl.KB,flat,kblink[0])                # "flat" will get the flattened rule       
+                    gl.KB.inhibit_parent[kblink[0]] = flat[:]               # the flat string mapped to the KB index       
+                if gl.d==6: print ("MOVE_R itt:",kblink,"rulestr:",gl.KB.cp[kblink[0]].rulestr,"inventory",gl.KB.inhibit_parent)
         return moved
         
 
@@ -1628,7 +1657,7 @@ class Kbase:
         print (wminfo)
         gl.log.add_log((wminfo))
         for i,conc in enumerate(wmitem.cp): 
-            concinfo = str(i)+ " "+conc.mentstr+" p="+str(conc.p)+" parents="+str(conc.parent)+" known="+str(conc.known)+" wmuse="+str(conc.wmuse)+" kb_use="+str(conc.kb_use)+" use_ever="+str(conc.use_ever)+" kblink:"+str(conc.kblink)+" reasonuse:"+str(conc.reasonuse)+" general:"+str(conc.general)+" most sp:"+str(conc.most_special_used)
+            concinfo = str(i)+ " "+conc.mentstr+" p="+str(conc.p)+" parents="+str(conc.parent)+" known="+str(conc.known)+" r="+str(conc.relevance)+" wmuse="+str(conc.wmuse)+" kb_use="+str(conc.kb_use)+" use_ever="+str(conc.use_ever)+" kblink:"+str(conc.kblink)+" reasonuse:"+str(conc.reasonuse)+" same:"+str(conc.same)
             print (concinfo)
             gl.log.add_log((concinfo))
  
@@ -1657,6 +1686,7 @@ class Kbase:
                        
     def read_concept(self,attrList,isquestion,isparent=-1,istrack=0):     # recursive function to read concepts from Mentalese input
                                                     # Function returns parent indices!
+        if gl.d==7: print ("READ_CONCEPT attrList:",attrList)
         aStr=str(attrList[0]).strip()               # parameter is passed in a wrapping list to be able to use recursion
         rulStr=""                                   # string for rule-information like p=p1
         actPos=0
@@ -1739,16 +1769,19 @@ class Kbase:
                         if isparent==-1:                                                # this is not a parent but the top concept
                             newindex=self.add_concept(p_result[0],relType,parents,isquestion=isquestion,reason="INPUT ")      # add the concept to WM
                         else:
+                            if gl.d==7: print ("READ_CONC: parent to WM 1")
                             newindex=self.add_concept(gl.args.pmax/2,relType,parents,isquestion=isquestion,reason="INPUT ",nknown=0)   # add the concept to WM, parent has p=pmax/2
                         self.cp[newindex].rulestr=p_result[2]                           # add the rule string
                     else:
                         if isquestion==1:                                               # for question set pmax/2 p value
+                            if gl.d==7: print ("READ_CONC: parent to WM 2")
                             newindex=self.add_concept(int(gl.args.pmax/2),relType,parents,isquestion=isquestion,reason="INPUT ")      # add the concept to WM
                             self.zero_Known(newindex)                                   # question known value is zero
                         else:
                             if isparent==-1:                                                # this is not a parent but the top concept
                                 newindex=self.add_concept(gl.args.pdefault,relType,parents,isquestion=isquestion,reason="INPUT ") # add the concept to WM
                             else:
+                                if gl.d==7: print ("READ_CONC: parent to WM 3")
                                 newindex=self.add_concept(gl.args.pmax/2,relType,parents,isquestion=isquestion,reason="INPUT ",nknown=0)   # add the concept to WM, parent has p=pmax/2
                                 self.zero_Known(newindex)                                   # parent known value is zero
                         

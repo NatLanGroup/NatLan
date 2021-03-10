@@ -32,6 +32,7 @@ m/ P(Q(duck,all),head)?			a/ P(Q(duck,all),head).p=4
 
 m/ C(sparrow,bird) 
 m/ P(Q(sparrow,all),head)?		a/ P(Q(sparrow,all),head)
+// self.kbactiv_addone =   { 4:{1:1}, 11:{1:0},  11:P() esetén +0 kell különben nem aktiválja hogy P(Q(bird,all),head).  KÉTIRÁNYÚ AKTIVÁLÁS KELL!! bird és head felől !!!!
 
 m/ P(Q(F(snake,long),all),head)
 m/ C(eel,snake)
@@ -72,5 +73,5 @@ m/ F(boy,hungry)?				a/ F(boy,hungry).p=4
 m/ F(Bill,hungry)?				a/ F(Bill,hungry).p=4
 // F(Bill,big)
 
-//  1466 attempted, 32 concepts reasoned
+//  1074 attempted, 30 concepts reasoned
 

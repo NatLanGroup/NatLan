@@ -1,6 +1,9 @@
 // Testing animals
 
 m/ F(dummy)
+m/ A(F(%1,%2,-ing),%2)p=inhibit
+// F(%2,F(%1,%2))p=inhibit
+
 
 // IM reasoning
 m/ IM(IM(%1,%2),%2)p=im
@@ -16,13 +19,13 @@ e/ If something lives, then it is an animal.    m/ IM(A(%1,live),C(%1,animal))p=
 e/ Elephants live. 								m/ A(elephant,live) 
 m/ C(elephant,animal)?							a/ C(elephant,animal).p=4
 
-e/ A dead animal does not live.                 m/ A(F(animal,dead),NOT(live))
-e/ An animal not living is dead.                m/  F(A(animal,NOT(live)),dead)
-m/ C(dog,animal)
-m/ F(dog,dead)
+e/ A dead animal does not live.                 // A(F(animal,dead),NOT(live))
+e/ An animal not living is dead.                //  F(A(animal,NOT(live)),dead)
+// C(dog,animal)
+// F(dog,dead)
 m/ A(dog,live)?									a/ A(dog,live).p=0
-e/ An animal that lives is not dead.            m/ F(A(animal,live),NOT(dead))
-e/ An animal that is not dead lives.            m/ A(F(animal,NOT(dead)),live) 
+e/ An animal that lives is not dead.            // F(A(animal,live),NOT(dead))
+e/ An animal that is not dead lives.            // A(F(animal,NOT(dead)),live) 
 
 // 7112 attempt 40 reasoned
 

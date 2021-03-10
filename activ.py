@@ -134,10 +134,13 @@ class Activate:
         gl.WM.visit_KBlinks(gl.WM,pos,kblinklist)                   # collect the kblinks: these parents are in KB
         #print ("ACTFROMW kblinklist:",kblinklist,"pos:",pos,gl.WM.cp[pos].mentstr)
         for kbcon in kblinklist:                                    # concepts in KB that occur in pos as a parent on any level
-            for kbch in gl.KB.cp[kbcon].child:                  # direct children only (limitation)
-                if gl.KB.cp[kbch].known!=0 and max(gl.KB.cp[kbch].relevance) >=gl.args.kbactiv_qlimit[1]:   # relevance above questionb threshold
-                    gl.WM.kbactiv.add(kbch)                     # activate in KB
-                    gl.WM.kbactiv_new.add(kbch)                 # activate in KB
+    #        for kbch in gl.KB.cp[kbcon].child:                  # direct children only (limitation)
+            self.activKB_Allchild(gl.KB,kbcon,kbcon,gl.WM,1,True)   # activate children as well
+            gl.test.track(gl.KB,kbcon,"   ACTIV (QUE) KB new activated="+str(gl.WM.kbactiv_new),gl.args.tr_act,rule="")
+#                if gl.KB.cp[kbch].known!=0 and max(gl.KB.cp[kbch].relevance) >=gl.args.kbactiv_qlimit[1]:   # relevance above questionb threshold
+ #                   gl.WM.kbactiv.add(kbch)                     # activate in KB
+  #                  gl.WM.kbactiv_new.add(kbch)                 # activate in KB
+   #                 test.append(kbch)
             if gl.KB.cp[kbcon].relation!=1:                         # not a word: activate itself too
                 if gl.KB.cp[kbcon].known!=0 and max(gl.KB.cp[kbcon].relevance) >=gl.args.kbactiv_qlimit[1]:   # relevance above questionb threshold
                     gl.WM.kbactiv.add(kbcon)                     # activate in KB

@@ -453,9 +453,9 @@ class Reasoning:
             gl.log.add_log(("ERROR lookup_Rtable: p=p1 missing in rule, more p= valéues needed. Rule: ",gl.KB.cp[rule[0]].mentstr))        
         return reasoned_p
 
-    def stop_Redundant(self,db,conc):                               # stop resoning if result will be a redundant concept
+    def stop_Redundant(self,db,conc,reas_rel,parent):                          # stop resoning if result will be a redundant concept
         stop=False
-        if db.cp[conc].relation == 5:                               # F(F()) will be stopped here
+        if db.cp[conc].relation == 5:                               # F(F())  will be stopped here
             p1 = db.cp[conc].parent[0]
             if db.cp[p1].relation ==  5:                            # F(F())
                 if len(db.cp[conc].parent)>1 and len(db.cp[p1].parent)>1:
@@ -467,26 +467,40 @@ class Reasoning:
                         stop=True
                     if "NOT("+db.cp[feat1].mentstr+")" == db.cp[feat2].mentstr:  # F(F(a,NOT(x)),x)  same feature
                         stop=True
+        if reas_rel == 4 and len(parent)>=2:                        # C(F(x,y),x) will be stopped, parent is in conc
+            if db.cp[parent[0]].relation==5:                        # F() is the parent in C(F(x,y),x)
+                if len(db.cp[parent[0]].parent)>0:
+                    if db.cp[parent[0]].parent[0] == parent[1]:     # x in C(F(x,y),b) is == b which is parent[1]
+                        stop=True
+                    if parent[1] in db.cp[db.cp[parent[0]].parent[0]].same:  # x==x in C(F(x,y),x)
+                        stop=True
+                        #if gl.d==6 : print ("STOPRED 9 stop it !!!!!! parent0",parent[0])
         return stop
-                        
             
     def reason_Inhibit (self,reasoned_rel,reasoned_concept,pdb):     #check reasoned concept to stop stupid reasoning
         inhibit=0; visitand=[]
         if type(reasoned_concept) is int:                               # reasoned concept provided
-            stop=self.stop_Redundant(pdb,reasoned_concept)              # stop resoning if result will be a redundant concept like F(F(x,y),y)
+            stop=self.stop_Redundant(pdb,reasoned_concept,0,[])              # stop resoning if result will be a redundant concept like F(F(x,y),y)
             if stop==True: 
                 inhibit=1
                 gl.test.track(pdb,reasoned_concept,"      STOP (REDUND1)",gl.args.tr_stop,rule="")
             reasoned_parents = pdb.cp[reasoned_concept].parent
             parent1=reasoned_parents[0]
-        else:
+            reasoned_rel = pdb.cp[reasoned_concept].relation
+        else:                                                           # parents provided
+            #if gl.d==6: print ("INHIB 2 parents",reasoned_concept,"rel",reasoned_rel)
             reasoned_parents = reasoned_concept                         # list of parents provided
             parent1=reasoned_parents[0]
             for parent in reasoned_parents:
-                stop=self.stop_Redundant(pdb,parent)                    # stop resoning if result will be a redundant concept like X(... , F(F(x,y),y))
+                stop=self.stop_Redundant(pdb,parent,reasoned_rel,reasoned_parents)       # stop resoning if result will be a redundant concept like X(... , F(F(x,y),y))
                 if stop==True: 
                     inhibit=1
                     gl.test.track(pdb,parent,"      STOP (REDUND2)",gl.args.tr_stop,rule="")
+        if reasoned_rel==13: 
+    #        for r_par in reasoned_parents:                              # all reasoned parents
+            flat=[]                                                     # flat version of concept parent reasoned
+            pdb.pattern_Flat(pdb,flat,reasoned_parents[0])              # store flat version of parent into flat
+    # ITT TARTOK        self.pattern_Inhibit()
         if reasoned_rel==5 and type(reasoned_concept) is list:          # F(a,b) will be reasoned and we have the parents
             reasoned_parents = reasoned_concept                         # list of parents provided
             if len(reasoned_parents)>1:
@@ -504,6 +518,31 @@ class Reasoning:
                                 #if gl.d==4: print ("INHIBIT 3 same property!!!!")
                                 inhibit=1                               # inhibit this:  F( A(F(x,y), ...), y)   same properties.  
                                 gl.test.track(pdb,subject,"      STOP (PROPERTY)",gl.args.tr_stop,rule="")
+        if reasoned_rel==13 and type(reasoned_concept) is list:          # IM(a,b) will be reasoned and we have the parents
+   #         if gl.d==6: print ("INHIBIT, parents:",reasoned_concept)
+            reasoned_parents = reasoned_concept                         # list of parents provided
+            if len(reasoned_parents)==2:
+                parent1=reasoned_parents[0]                             # a in IM(a,b)
+                parent2=reasoned_parents[1]                             # b in IM(a,b)
+                if parent2 in pdb.cp[parent1].same:                     # a==b, IM(a,a) reasoned
+                    inhibit=1                                           # inhibit IM(a,a)
+                    gl.test.track(pdb,parent1,"      STOP (IM_REDUND)",gl.args.tr_stop,rule="")
+        if reasoned_rel==7 and type(reasoned_concept) is list:          # A(a,b) will be reasoned and we have the parents
+   #         if gl.d==6: print ("INHIBIT, parents:",reasoned_concept)
+            reasoned_parents = reasoned_concept                         # list of parents provided
+            if len(reasoned_parents)==2:
+                parent1=reasoned_parents[0]                             # a in A(a,b)
+                parent2=reasoned_parents[1]                             # b in A(a,b)
+                if pdb.cp[parent1].relation == 5:                       # A(F(),b)
+                    if len(pdb.cp[parent1].parent)==3:                  # A(F(x,y,z),b)
+                        fpar2=pdb.cp[parent1].parent[1]                 # y
+                        fpar3=pdb.cp[parent1].parent[2]                 # z
+                        if pdb.cp[fpar3].mentstr=="-ing":               # A(F(x,y,-ing),b)  
+                            if fpar2 in pdb.cp[parent2].same:           # b==y A(F(x,b,-ing),b)
+                                inhibit=1                                           # inhibit A(F(x,b,-ing),b)
+                                gl.test.track(pdb,parent1,"      STOP (A_REDUND)",gl.args.tr_stop,rule="")
+                        
+                        
         allsame=1
         if pdb.name=="WM":                          # FIX3 TO DO make thsi work for KB
             for pind in range(len(reasoned_parents)):
@@ -1233,7 +1272,7 @@ class Reasoning:
                             self.finaladd_Concept(conclist_use[:],kb_use[:],pval,self.recordrel,self.recordparents,[0])  # add the reasoned concepts
                         else:
                             if gl.d==5: print ("CDREL 4 : inhibited.", ndb.name,"new",new,ndb.cp[new].mentstr,"odb",odb.name,"old",old,odb.cp[old].mentstr,"start",start,"ci",gl.WM.ci) 
-                            gl.test.track(ndb,new,"STOP (CD) using this C/D concept.",gl.args.tr_stop,rule="")
+                            gl.test.track(ndb,new,"      STOP (CD) using this C/D concept.",gl.args.tr_stop,rule="")
                             if gl.WM.ci>start:                                          # if something added in visit_Replace
                                 gl.test.track(gl.WM,gl.WM.ci,"      REMOVE (CD) concepts because reasoning inhibited. from up to: "+str(start)+" "+str(gl.WM.ci)+" ",gl.args.tr_add)
                                 while gl.WM.ci>start: gl.WM.remove_concept()            # remove them
