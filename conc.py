@@ -1683,11 +1683,33 @@ class Kbase:
             self.keep_OneBranch()               # force kill all WMs except a single one
             self.move_Paratokb()                # move a paragraph (can be the last one) to KB
         gl.act.update_Para()                    # update list of activated concepts in this and previous paragraph
-                       
+
+
+    def parse_Inputvalues(self,istr,ivalues):              # store values in the input, from istr, in the dictionary ivalues 
+                                                           # if the input is for example A(P(animal,F(head,big).r=1).p=1.r=3,F(live,long)).p=3
+                                                           # then this function will be called 3 times, and in ivalue we want to have:
+                                                                # {"r":1}
+                                                                # {"p":1, "r":3}
+                                                                # {"p":3}
+        if gl.d==7: print ("PARSE_INPUTVALUES 1. istr=",istr,"ivalues",ivalues)
+        
+    def get_Inputvalues(self,aStr,ivalues):              # call the function to store values in the input, from aStr, in the dictionary ivalues      
+        if gl.d==7: print ("GET_INP 1. aStr=",aStr,"ivalues",ivalues)
+        istr=aStr[:]
+        if len(aStr)>4:
+            if (aStr[0]==")" and aStr[1]==".") or (aStr[0]=="." and aStr[2]=="=" and aStr[4]==")"):  # either ).  or .x=y)
+                if not(len(aStr)>5 and aStr[0]=="." and aStr[2]=="=" and aStr[4]==")" and aStr[5]==")"):    # but not .x=y))     !!!
+                    for c in aStr:
+                        istr=istr[1:]                           # remove the charcters before ")"
+                        if c==")" and istr[0]==".":  
+                            self.parse_Inputvalues(istr,ivalues)  # istr has now the right format ! Now ivalues need to be populated.
+                            break
+            
+                    
     def read_concept(self,attrList,isquestion,isparent=-1,istrack=0):     # recursive function to read concepts from Mentalese input
                                                     # Function returns parent indices!
-        if gl.d==7: print ("READ_CONCEPT attrList:",attrList)
         aStr=str(attrList[0]).strip()               # parameter is passed in a wrapping list to be able to use recursion
+        if gl.d==7: print ("READ_CONCEPT 1 attrList:",attrList,"aStr",aStr)
         rulStr=""                                   # string for rule-information like p=p1
         actPos=0
         relType=0
@@ -1695,6 +1717,7 @@ class Kbase:
         isWord=1
         while (actPos<len(aStr)):
             c = aStr[actPos]                        #check the characters in the string one-by-one
+            if gl.d==7: print ("READ_C C=",c)
             if c == '(':                            #if finds a "(", check the relType before "(", and read the embedded concept
                 isWord=0
                 relType=gl.args.rcode[aStr[0:actPos]]
@@ -1703,8 +1726,10 @@ class Kbase:
                 aStr=str(attrList[0]).strip()
                 actPos=0
                 continue
-            elif c == ',':                          #if finds a ",", there is two possible way
-                if isWord==1:                       #if the concept is a word, register it to WL, add a new concept for it and return back its id
+            elif c == ',':                                  #if finds a ",", there is two possible way
+                ivalues = {}                                # values of p,g,r etc will be stored here in "r":1 etc format
+                self.get_Inputvalues(aStr,ivalues)          # store values in the input, from aStr, in the dictionary ivalues
+                if isWord==1:                               #if the concept is a word, register it to WL, add a new concept for it and return back its id
                     ss = aStr[0:actPos]
                     if ".g=" in ss: ss=aStr[0:aStr.find(".g=")]     #delete .g= from word TO DO make it general
                     wl_ind = gl.WL.find(ss)
@@ -1713,17 +1738,22 @@ class Kbase:
                     if wl_ind == -1:
                         wl_ind = gl.WL.add_word(ss,g_value)
                     thisparent = self.add_concept(gl.args.pmax,1,[],[wl_ind],g_value,isquestion=isquestion,reason="INPUT ")   #parent is empty, KB link is wl_ind
-                    overparent=self.override_Parent(isquestion,thisparent) #ez nem mukodik?? VS
-                    gl.WM.cp[thisparent].mapto=overparent           # remember in the word where it was overridden to
-                    return overparent   # return the parent after potential override
-                else:                               #if the concept is not a single word, register the embedded concept as parent, and read the next parent
+                #    overparent=self.override_Parent(isquestion,thisparent) #ez nem mukodik?? VS
+                #    gl.WM.cp[thisparent].mapto=overparent           # remember in the word where it was overridden to
+                #    return overparent   # return the parent after potential override
+                    return thisparent
+                else:                                       #if the concept is not a single word, register the embedded concept as parent, and read the next parent
                     attrList[0]=str(aStr[actPos+1:]).strip()
                     parents.append(self.read_concept(attrList,isquestion,isparent=1))
                     aStr=str(attrList[0]).strip()
                     actPos=0
                     continue
-            elif c == ')':                          #if finds a ")", there is two possible way
-                if isWord==1:                       #if the concept is a word, register it to WL, add a new concept for it and return back its id
+            elif c != ')' and actPos==len(aStr)-1:   # NEW 03.10 we are at the end of the mentalese, and it ends with some .p=3 or similar               
+                attrList[0]=""                                  # put an end to the cycle of calling read_concept
+            elif c == ')':                                      #if finds a ")", there is two possible way
+                ivalues = {}                                    # values of p,g,r etc will be stored here in "r":1 etc format
+                self.get_Inputvalues(aStr,ivalues)              # store values in the input, from aStr, in the dictionary ivalues
+                if isWord==1:                                       #if the concept is a word, register it to WL, add a new concept for it and return back its id
                     ss=aStr[0:actPos]
                     if ".g=" in ss: ss=aStr[0:aStr.find(".g=")]     #delete .g= from word TO DO make it general
                     wl_ind=gl.WL.find(ss)
@@ -1732,9 +1762,10 @@ class Kbase:
                     if wl_ind == -1:
                         wl_ind = gl.WL.add_word(ss,g_value)
                     thisparent = self.add_concept(gl.args.pmax,1,[],[wl_ind],g_value,isquestion=isquestion,reason="INPUT ")   #parent is empty, KB link is wl_ind
-                    overparent=self.override_Parent(isquestion,thisparent)
-                    gl.WM.cp[thisparent].mapto=overparent           # remember in the word where it was overridden to
-                    return overparent   # return the parent after potential override
+                #    overparent=self.override_Parent(isquestion,thisparent)
+                #    gl.WM.cp[thisparent].mapto=overparent           # remember in the word where it was overridden to
+                #    return overparent   # return the parent after potential override
+                    return thisparent
                 else:                               #if the concept is not a single word, register the embedded concept as parent, and read the next parent
                     p_result = None
                     r_result = None
@@ -1742,6 +1773,7 @@ class Kbase:
                     if actPos+2 < len(aStr) and aStr[actPos+1:actPos+3]=='p=':
                         p_result = self.get_p(aStr, actPos)
                         actPos = p_result[1]
+                        if gl.d==7: print ("READ_C 3 actPos",actPos,"aStr",aStr)
                         if actPos+2 < len(aStr) and aStr[actPos:actPos+3]==',r=':
                             r_result = self.get_r(aStr, actPos)
                             actPos = r_result[1]
@@ -1765,23 +1797,21 @@ class Kbase:
                         
                     attrList[0]=str(aStr[actPos:]).strip()
                     
+                    if gl.d==7: print ("READ_C 4 p_result",p_result) 
                     if p_result is not None:
                         if isparent==-1:                                                # this is not a parent but the top concept
                             newindex=self.add_concept(p_result[0],relType,parents,isquestion=isquestion,reason="INPUT ")      # add the concept to WM
                         else:
-                            if gl.d==7: print ("READ_CONC: parent to WM 1")
                             newindex=self.add_concept(gl.args.pmax/2,relType,parents,isquestion=isquestion,reason="INPUT ",nknown=0)   # add the concept to WM, parent has p=pmax/2
                         self.cp[newindex].rulestr=p_result[2]                           # add the rule string
                     else:
                         if isquestion==1:                                               # for question set pmax/2 p value
-                            if gl.d==7: print ("READ_CONC: parent to WM 2")
                             newindex=self.add_concept(int(gl.args.pmax/2),relType,parents,isquestion=isquestion,reason="INPUT ")      # add the concept to WM
                             self.zero_Known(newindex)                                   # question known value is zero
                         else:
                             if isparent==-1:                                                # this is not a parent but the top concept
                                 newindex=self.add_concept(gl.args.pdefault,relType,parents,isquestion=isquestion,reason="INPUT ") # add the concept to WM
                             else:
-                                if gl.d==7: print ("READ_CONC: parent to WM 3")
                                 newindex=self.add_concept(gl.args.pmax/2,relType,parents,isquestion=isquestion,reason="INPUT ",nknown=0)   # add the concept to WM, parent has p=pmax/2
                                 self.zero_Known(newindex)                                   # parent known value is zero
                         

@@ -3,7 +3,7 @@
 m/ F(dummy)
 // IM(A(F(%1,%2),%3),IM(F(%1,%2),A(%1,%3)))p=pide1
 
-e/ Animals live.  								m/ A(animal,F(live))p=3
+e/ The big head of animals live long.  		m/ A(P(animal,F(head,big).r=1).p=1.r=3,F(live,long)).p=3
 												// C(dog,animal)
 e/ A dead animal does not live.                 // A(F(animal,dead),NOT(live))
 

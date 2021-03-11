@@ -30,7 +30,7 @@ def process_testinput (tf):                     # run mentalese comprehension, i
         starti=gl.WM.ci; counter=0                  # start position in WM
         if ri>0 and len(tf.mentalese[ri-1])>3 and len(tfment[0])<2:   # if this is an empty row, and the previous was not, then process paragraph
             gl.WM.process_Para(tf.mentalese[ri-1])  # process paragraph
-        while len(tfment[0])>3 and counter<100:     # counter protects against endless loop
+        while len(tfment[0])>3 and counter<20:     # counter protects against endless loop
             gl.WM.branch_read_concept(starti,tfment,tf,ri) # store concepts in all WMs
             counter+=1
         if counter == 100: 
