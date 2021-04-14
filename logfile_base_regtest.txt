@@ -1,0 +1,813 @@
+Test file started:regtest.txt
+add WORD KB ment= dummyKB  db=-1 index=0 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word dummy wordindex=0 KB index=0
+add INPUT WM ment= dummy  db=0 index=0 parents=[] p=4 known=2 count=1 kbl=[0]
+add INPUT WM ment= F(dummy)  db=0 index=1 parents=[0] p=4 known=2 count=1 kbl=[]
+add WORD KB ment= %1KB  db=-1 index=1 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word %1 wordindex=1 KB index=1
+add INPUT WM ment= %1  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[1]
+add WORD KB ment= %2KB  db=-1 index=2 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word %2 wordindex=2 KB index=2
+add INPUT WM ment= %2  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[2]
+add WORD KB ment= -ingKB  db=-1 index=3 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word -ing wordindex=3 KB index=3
+add INPUT WM ment= -ing  db=0 index=4 parents=[] p=4 known=2 count=1 kbl=[3]
+add INPUT WM ment= F(%1,%2,-ing)  db=0 index=5 parents=[2, 3, 4] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= %2  db=0 index=6 parents=[] p=4 known=2 count=2 kbl=[2]
+add INPUT WM ment= A(F(%1,%2,-ing),%2)  db=0 index=7 parents=[5, 6] p=2 known=2 count=1 kbl=[]
+add RULE KB ment= F(%1,%2,-ing)  db=-1 index=4 parents=[1, 2, 3] p=2 known=0 count=1 kbl=[]
+add RULE KB ment= A(F(%1,%2,-ing),%2)  db=-1 index=5 parents=[4, 2] p=2 known=2 count=1 kbl=[]
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add INPUT WM ment= %1  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[1]
+add INPUT WM ment= %2  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[2]
+add INPUT WM ment= -ing  db=0 index=4 parents=[] p=4 known=2 count=1 kbl=[3]
+add INPUT WM ment= F(%1,%2,-ing)  db=0 index=5 parents=[2, 3, 4] p=2 known=0 count=1 kbl=[]
+add WORD KB ment= %3KB  db=-1 index=6 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word %3 wordindex=4 KB index=6
+add INPUT WM ment= %3  db=0 index=6 parents=[] p=4 known=2 count=1 kbl=[6]
+add INPUT WM ment= -ing  db=0 index=7 parents=[] p=4 known=2 count=2 kbl=[3]
+add INPUT WM ment= F(F(%1,%2,-ing),%3,-ing)  db=0 index=8 parents=[5, 6, 7] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= %2  db=0 index=9 parents=[] p=4 known=2 count=2 kbl=[2]
+add INPUT WM ment= A(F(F(%1,%2,-ing),%3,-ing),%2)  db=0 index=10 parents=[8, 9] p=2 known=2 count=1 kbl=[]
+add RULE KB ment= F(F(%1,%2,-ing),%3,-ing)  db=-1 index=7 parents=[4, 6, 3] p=2 known=0 count=1 kbl=[]
+add RULE KB ment= A(F(F(%1,%2,-ing),%3,-ing),%2)  db=-1 index=8 parents=[7, 2] p=2 known=2 count=1 kbl=[]
+WM remove concept index=10
+WM remove concept index=9
+WM remove concept index=8
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add INPUT WM ment= %1  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[1]
+add INPUT WM ment= %2  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[2]
+add INPUT WM ment= F(%1,%2)  db=0 index=4 parents=[2, 3] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= %3  db=0 index=5 parents=[] p=4 known=2 count=1 kbl=[6]
+add INPUT WM ment= X(F(%1,%2),%3)  db=0 index=6 parents=[4, 5] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= %2  db=0 index=7 parents=[] p=4 known=2 count=2 kbl=[2]
+add INPUT WM ment= F(X(F(%1,%2),%3),%2)  db=0 index=8 parents=[6, 7] p=2 known=2 count=1 kbl=[]
+add RULE KB ment= F(%1,%2)  db=-1 index=9 parents=[1, 2] p=2 known=0 count=1 kbl=[]
+add RULE KB ment= X(F(%1,%2),%3)  db=-1 index=10 parents=[9, 6] p=2 known=0 count=1 kbl=[]
+add RULE KB ment= F(X(F(%1,%2),%3),%2)  db=-1 index=11 parents=[10, 2] p=2 known=2 count=1 kbl=[]
+WM remove concept index=8
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add INPUT WM ment= %1  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[1]
+add INPUT WM ment= %2  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[2]
+add INPUT WM ment= NOT(%2)  db=0 index=4 parents=[3] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= F(%1,NOT(%2))  db=0 index=5 parents=[2, 4] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= %3  db=0 index=6 parents=[] p=4 known=2 count=1 kbl=[6]
+add INPUT WM ment= X(F(%1,NOT(%2)),%3)  db=0 index=7 parents=[5, 6] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= %2  db=0 index=8 parents=[] p=4 known=2 count=2 kbl=[2]
+add INPUT WM ment= NOT(%2)  db=0 index=9 parents=[8] p=2 known=0 count=2 kbl=[]
+add INPUT WM ment= F(X(F(%1,NOT(%2)),%3),NOT(%2))  db=0 index=10 parents=[7, 9] p=2 known=2 count=1 kbl=[]
+add RULE KB ment= NOT(%2)  db=-1 index=12 parents=[2] p=2 known=0 count=1 kbl=[]
+add RULE KB ment= F(%1,NOT(%2))  db=-1 index=13 parents=[1, 12] p=2 known=0 count=1 kbl=[]
+add RULE KB ment= X(F(%1,NOT(%2)),%3)  db=-1 index=14 parents=[13, 6] p=2 known=0 count=1 kbl=[]
+add RULE KB ment= F(X(F(%1,NOT(%2)),%3),NOT(%2))  db=-1 index=15 parents=[14, 12] p=2 known=2 count=1 kbl=[]
+WM remove concept index=10
+WM remove concept index=9
+WM remove concept index=8
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add INPUT WM ment= %1  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[1]
+add INPUT WM ment= %2  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[2]
+add INPUT WM ment= F(%1,%2)  db=0 index=4 parents=[2, 3] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= %2  db=0 index=5 parents=[] p=4 known=2 count=2 kbl=[2]
+add INPUT WM ment= F(F(%1,%2),%2)  db=0 index=6 parents=[4, 5] p=2 known=2 count=1 kbl=[]
+add RULE KB ment= F(F(%1,%2),%2)  db=-1 index=16 parents=[9, 2] p=2 known=2 count=1 kbl=[]
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add INPUT WM ment= %1  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[1]
+add INPUT WM ment= %2  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[2]
+add INPUT WM ment= NOT(%2)  db=0 index=4 parents=[3] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= F(%1,NOT(%2))  db=0 index=5 parents=[2, 4] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= %2  db=0 index=6 parents=[] p=4 known=2 count=2 kbl=[2]
+add INPUT WM ment= F(F(%1,NOT(%2)),%2)  db=0 index=7 parents=[5, 6] p=2 known=2 count=1 kbl=[]
+add RULE KB ment= F(F(%1,NOT(%2)),%2)  db=-1 index=17 parents=[13, 2] p=2 known=2 count=1 kbl=[]
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add INPUT WM ment= %1  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[1]
+add INPUT WM ment= %2  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[2]
+add INPUT WM ment= F(%1,%2)  db=0 index=4 parents=[2, 3] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= %2  db=0 index=5 parents=[] p=4 known=2 count=2 kbl=[2]
+add INPUT WM ment= NOT(%2)  db=0 index=6 parents=[5] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= F(F(%1,%2),NOT(%2))  db=0 index=7 parents=[4, 6] p=2 known=2 count=1 kbl=[]
+add RULE KB ment= F(F(%1,%2),NOT(%2))  db=-1 index=18 parents=[9, 12] p=2 known=2 count=1 kbl=[]
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add INPUT WM ment= %1  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[1]
+add INPUT WM ment= %2  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[2]
+add INPUT WM ment= -ing  db=0 index=4 parents=[] p=4 known=2 count=1 kbl=[3]
+add INPUT WM ment= F(%1,%2,-ing)  db=0 index=5 parents=[2, 3, 4] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= %2  db=0 index=6 parents=[] p=4 known=2 count=2 kbl=[2]
+add INPUT WM ment= NOT(%2)  db=0 index=7 parents=[6] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= A(F(%1,%2,-ing),NOT(%2))  db=0 index=8 parents=[5, 7] p=2 known=2 count=1 kbl=[]
+add RULE KB ment= A(F(%1,%2,-ing),NOT(%2))  db=-1 index=19 parents=[4, 12] p=2 known=2 count=1 kbl=[]
+WM remove concept index=8
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+PARAGRAPH ENDED. WM moved to KB: last row=A(F(%1,%2,-ing),NOT(%2))p=inhibit
+WM id:0 parent WM:-1 WM length:2 WMvalue=3 last conc used:-1 activated:{1} KB activ:{0, 2, 3, 6}
+0 dummy p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[0] reasonuse:[] same:set()
+1 F(dummy) p=4 parents=[0] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+add INPUT WM ment= %1  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[1]
+add INPUT WM ment= %2  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[2]
+add INPUT WM ment= C(%1,%2)  db=0 index=4 parents=[2, 3] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= %1  db=0 index=5 parents=[] p=4 known=2 count=2 kbl=[1]
+add INPUT WM ment= %2  db=0 index=6 parents=[] p=4 known=2 count=2 kbl=[2]
+add INPUT WM ment= P(%1,%2)  db=0 index=7 parents=[5, 6] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= IM(C(%1,%2),P(%1,%2))  db=0 index=8 parents=[4, 7] p=2 known=2 count=1 kbl=[]
+add RULE KB ment= C(%1,%2)  db=-1 index=20 parents=[1, 2] p=2 known=0 count=1 kbl=[]
+add RULE KB ment= P(%1,%2)  db=-1 index=21 parents=[1, 2] p=2 known=0 count=1 kbl=[]
+add RULE KB ment= IM(C(%1,%2),P(%1,%2))  db=-1 index=22 parents=[20, 21] p=2 known=2 count=1 kbl=[]
+WM remove concept index=8
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+PARAGRAPH ENDED. WM moved to KB: last row=IM(C(%1,%2)p=p0,P(%1,%2))p=pide1
+WM id:0 parent WM:-1 WM length:2 WMvalue=3 last conc used:-1 activated:set() KB activ:{2}
+0 dummy p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[0] reasonuse:[] same:set()
+1 F(dummy) p=4 parents=[0] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+add WORD KB ment= JoeKB  db=-1 index=23 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word Joe wordindex=5 KB index=23
+add INPUT WM ment= Joe  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[23]
+add WORD KB ment= policemanKB  db=-1 index=24 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word policeman wordindex=6 KB index=24
+add INPUT WM ment= policeman  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[24]
+add INPUT WM ment= C(Joe,policeman)  db=0 index=4 parents=[2, 3] p=4 known=2 count=1 kbl=[]
+add REASONED WM ment= P(Joe,policeman)  db=0 index=5 parents=[2, 3] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:0 on index:5 rule:[22, 20] reasoned concept:P(Joe,policeman) wmuse:[4] kb_use:[] p=4 known=2 parents:[2, 3]
+add INPUT WM ment= policeman  db=0 index=6 parents=[] p=4 known=2 count=2 kbl=[24]
+add WORD KB ment= niceKB  db=-1 index=25 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word nice wordindex=7 KB index=25
+add INPUT WM ment= nice  db=0 index=7 parents=[] p=4 known=2 count=1 kbl=[25]
+add INPUT WM ment= F(policeman,nice)  db=0 index=8 parents=[6, 7] p=4 known=2 count=1 kbl=[]
+add REASONED WM ment= F(Joe,nice)  db=0 index=9 parents=[2, 7] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:0 on index:9 rule:[0] reasoned concept:F(Joe,nice) wmuse:[4, 8] kb_use:[] p=4 known=2 parents:[2, 7]
+add INPUT WM ment= Joe  db=0 index=10 parents=[] p=4 known=0 count=2 kbl=[23]
+add WORD KB ment= ?KB  db=-1 index=26 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word ? wordindex=8 KB index=26
+add INPUT WM ment= ?  db=0 index=11 parents=[] p=4 known=0 count=1 kbl=[26]
+add INPUT WM ment= F(Joe,?)  db=0 index=12 parents=[10, 11] p=2 known=0 count=1 kbl=[]
+Question answering started. input row:22  F(Joe,?)			
+PARAGRAPH ENDED. WM moved to KB: last row= F(Joe,?)			
+WM id:0 parent WM:-1 WM length:13 WMvalue=3 last conc used:-1 activated:{8, 9, 4, 5} KB activ:{24, 25, 26, 23}
+0 dummy p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[0] reasonuse:[] same:set()
+1 F(dummy) p=4 parents=[0] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+2 Joe p=4 parents=[] known=2 r=[2] general={3, 6} wmuse=[-1] kb_use=[] use_ever=set() kblink:[23] reasonuse:[] same:{10}
+3 policeman p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[24] reasonuse:[] same:{6}
+4 C(Joe,policeman) p=4 parents=[2, 3] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+5 P(Joe,policeman) p=4 parents=[2, 3] known=2 r=[2, 2] general=set() wmuse=[4] kb_use=[] use_ever=set() kblink:[] reasonuse:[4] same:set()
+6 policeman p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[24] reasonuse:[] same:{3}
+7 nice p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[25] reasonuse:[] same:set()
+8 F(policeman,nice) p=4 parents=[6, 7] known=2 r=[2, 2] general={2, 3, 6, 10} wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+9 F(Joe,nice) p=4 parents=[2, 7] known=2 r=[2, 2] general={2, 3, 6, 8, 10} wmuse=[4, 8] kb_use=[] use_ever=set() kblink:[] reasonuse:[4, 8] same:set()
+10 Joe p=4 parents=[] known=0 r=[2] general={3, 6} wmuse=[-1] kb_use=[] use_ever=set() kblink:[23] reasonuse:[] same:{2}
+11 ? p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[26] reasonuse:[] same:set()
+12 F(Joe,?) p=2 parents=[10, -1] known=0 r=[2, 2] general={2, 3, 6, 8, 10} wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+add PARA_END KB ment= F(Joe,nice)  db=-1 index=27 parents=[23, 25] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= F(policeman,nice)  db=-1 index=28 parents=[24, 25] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= P(Joe,policeman)  db=-1 index=29 parents=[23, 24] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= C(Joe,policeman)  db=-1 index=30 parents=[23, 24] p=4 known=2 count=1 kbl=[]
+add MOVE_PARA KB ment=? index=26 parents=[] p=4 known=2 count=1
+add MOVE_PARA KB ment=Joe index=23 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=F(Joe,nice) index=27 parents=[23, 25] p=4 known=2 count=1
+add MOVE_PARA KB ment=F(policeman,nice) index=28 parents=[24, 25] p=4 known=2 count=1
+add MOVE_PARA KB ment=nice index=25 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=policeman index=24 parents=[] p=4 known=2 count=3
+add MOVE_PARA KB ment=P(Joe,policeman) index=29 parents=[23, 24] p=4 known=2 count=1
+add MOVE_PARA KB ment=C(Joe,policeman) index=30 parents=[23, 24] p=4 known=2 count=1
+WM remove concept index=12
+WM remove concept index=11
+WM remove concept index=10
+WM remove concept index=9
+WM remove concept index=8
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add INPUT WM ment= policeman  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[24]
+add WORD KB ment= runKB  db=-1 index=31 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word run wordindex=9 KB index=31
+add INPUT WM ment= run  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[31]
+add INPUT WM ment= A(policeman,run)  db=0 index=4 parents=[2, 3] p=4 known=2 count=1 kbl=[]
+PARAGRAPH ENDED. WM moved to KB: last row=A(policeman, run)
+WM id:0 parent WM:-1 WM length:5 WMvalue=3 last conc used:-1 activated:{4} KB activ:{24, 28, 29, 31}
+0 dummy p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[0] reasonuse:[] same:set()
+1 F(dummy) p=4 parents=[0] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+2 policeman p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[24] reasonuse:[] same:set()
+3 run p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[31] reasonuse:[] same:set()
+4 A(policeman,run) p=4 parents=[2, 3] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+add PARA_END KB ment= A(policeman,run)  db=-1 index=32 parents=[24, 31] p=4 known=2 count=1 kbl=[]
+add MOVE_PARA KB ment=A(policeman,run) index=32 parents=[24, 31] p=4 known=2 count=1
+add MOVE_PARA KB ment=run index=31 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=policeman index=24 parents=[] p=4 known=2 count=4
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add INPUT WM ment= ?  db=0 index=2 parents=[] p=4 known=0 count=1 kbl=[26]
+add INPUT WM ment= run  db=0 index=3 parents=[] p=4 known=0 count=1 kbl=[31]
+add INPUT WM ment= A(?,run)  db=0 index=4 parents=[2, 3] p=2 known=0 count=1 kbl=[]
+Question answering started. input row:26  A(?,run)			
+PARAGRAPH ENDED. WM moved to KB: last row= A(?,run)			
+WM id:0 parent WM:-1 WM length:5 WMvalue=3 last conc used:-1 activated:set() KB activ:{26, 31}
+0 dummy p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[0] reasonuse:[] same:set()
+1 F(dummy) p=4 parents=[0] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+2 ? p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[26] reasonuse:[] same:set()
+3 run p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[31] reasonuse:[] same:set()
+4 A(?,run) p=2 parents=[-1, 3] known=0 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+add MOVE_PARA KB ment=run index=31 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=? index=26 parents=[] p=4 known=2 count=1
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add INPUT WM ment= policeman  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[24]
+add WORD KB ment= strongKB  db=-1 index=33 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word strong wordindex=10 KB index=33
+add INPUT WM ment= strong  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[33]
+add INPUT WM ment= F(policeman,strong)  db=0 index=4 parents=[2, 3] p=4 known=2 count=1 kbl=[]
+add INPUT WM ment= ?  db=0 index=5 parents=[] p=4 known=0 count=1 kbl=[26]
+add INPUT WM ment= strong  db=0 index=6 parents=[] p=4 known=0 count=2 kbl=[33]
+add INPUT WM ment= F(?,strong)  db=0 index=7 parents=[5, 6] p=2 known=0 count=1 kbl=[]
+Question answering started. input row:29  F(?,strong)		
+add INPUT WM ment= Joe  db=0 index=8 parents=[] p=4 known=0 count=1 kbl=[23]
+add INPUT WM ment= ?  db=0 index=9 parents=[] p=4 known=0 count=2 kbl=[26]
+add INPUT WM ment= F(Joe,?)  db=0 index=10 parents=[8, 9] p=2 known=0 count=1 kbl=[]
+add REASONED WM ment= P(Joe,policeman)  db=0 index=11 parents=[8, 2] p=4 known=2 count=1 kbl=[]
+WM remove concept index=11
+add WM ment= run  db=0 index=11 parents=[] p=2 known=2 count=1 kbl=[31]
+add REASONED WM ment= A(Joe,run)  db=0 index=12 parents=[8, 11] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:0 on index:12 rule:[0] reasoned concept:A(Joe,run) wmuse:[-3] kb_use:[32, 30] p=4 known=2 parents:[8, 11]
+add REASONED WM ment= F(Joe,strong)  db=0 index=13 parents=[8, 3] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:0 on index:13 rule:[0] reasoned concept:F(Joe,strong) wmuse:[4] kb_use:[30] p=4 known=2 parents:[8, 3]
+add WM ment= nice  db=0 index=14 parents=[] p=2 known=2 count=1 kbl=[25]
+add REASONED WM ment= F(Joe,nice)  db=0 index=15 parents=[8, 14] p=4 known=2 count=1 kbl=[]
+WM remove concept index=15
+Question answering started. input row:30  F(Joe,?)			
+add INPUT WM ment= ?  db=0 index=15 parents=[] p=4 known=0 count=3 kbl=[26]
+add INPUT WM ment= run  db=0 index=16 parents=[] p=4 known=0 count=2 kbl=[31]
+add INPUT WM ment= A(?,run)  db=0 index=17 parents=[15, 16] p=2 known=0 count=1 kbl=[]
+Question answering started. input row:31  A(?,run)			
+PARAGRAPH ENDED. WM moved to KB: last row= A(?,run)			
+WM id:0 parent WM:-1 WM length:18 WMvalue=3 last conc used:-1 activated:{12, 4, 13} KB activ:{33, 23, 24, 26, 27, 28, 29, 30, 31}
+0 dummy p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[0] reasonuse:[] same:set()
+1 F(dummy) p=4 parents=[0] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+2 policeman p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[24] reasonuse:[] same:set()
+3 strong p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[33] reasonuse:[] same:{6}
+4 F(policeman,strong) p=4 parents=[2, 3] known=2 r=[2, 2] general={2} wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+5 ? p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[26] reasonuse:[] same:{9, 15}
+6 strong p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[33] reasonuse:[] same:{3}
+7 F(?,strong) p=2 parents=[-1, 6] known=0 r=[2, 2] general={5, 9, 15} wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:{13}
+8 Joe p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[23] reasonuse:[] same:set()
+9 ? p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[26] reasonuse:[] same:{5, 15}
+10 F(Joe,?) p=2 parents=[8, -1] known=0 r=[2, 2] general={8} wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+11 run p=2 parents=[] known=0 r=[2] general=set() wmuse=[-2] kb_use=[] use_ever=set() kblink:[31] reasonuse:[] same:{16}
+12 A(Joe,run) p=4 parents=[8, 11] known=2 r=[2, 2] general=set() wmuse=[-3] kb_use=[32, 30] use_ever=set() kblink:[] reasonuse:[-3] same:set()
+13 F(Joe,strong) p=4 parents=[8, 3] known=2 r=[2, 2] general={5, 8, 9, 15} wmuse=[4] kb_use=[30] use_ever=set() kblink:[] reasonuse:[4] same:{7}
+14 nice p=2 parents=[] known=0 r=[2] general=set() wmuse=[-2] kb_use=[] use_ever=set() kblink:[25] reasonuse:[] same:set()
+15 ? p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[26] reasonuse:[] same:{9, 5}
+16 run p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[31] reasonuse:[] same:{11}
+17 A(?,run) p=2 parents=[-1, 16] known=0 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+add PARA_END KB ment= F(Joe,strong)  db=-1 index=34 parents=[23, 33] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= A(Joe,run)  db=-1 index=35 parents=[23, 31] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= F(policeman,strong)  db=-1 index=36 parents=[24, 33] p=4 known=2 count=1 kbl=[]
+add MOVE_PARA KB ment=run index=31 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=? index=26 parents=[] p=4 known=2 count=1
+add MOVE_PARA KB ment=nice index=25 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=F(Joe,strong) index=34 parents=[23, 33] p=4 known=2 count=1
+add MOVE_PARA KB ment=A(Joe,run) index=35 parents=[23, 31] p=4 known=2 count=1
+add MOVE_PARA KB ment=Joe index=23 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=strong index=33 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=F(policeman,strong) index=36 parents=[24, 33] p=4 known=2 count=1
+add MOVE_PARA KB ment=policeman index=24 parents=[] p=4 known=2 count=5
+WM remove concept index=17
+WM remove concept index=16
+WM remove concept index=15
+WM remove concept index=14
+WM remove concept index=13
+WM remove concept index=12
+WM remove concept index=11
+WM remove concept index=10
+WM remove concept index=9
+WM remove concept index=8
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add INPUT WM ment= %1  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[1]
+add INPUT WM ment= %2  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[2]
+add INPUT WM ment= C(%1,%2)  db=0 index=4 parents=[2, 3] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= %1  db=0 index=5 parents=[] p=4 known=2 count=2 kbl=[1]
+add INPUT WM ment= T(%1)  db=0 index=6 parents=[5] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= IM(C(%1,%2),T(%1))  db=0 index=7 parents=[4, 6] p=2 known=2 count=1 kbl=[]
+add RULE KB ment= T(%1)  db=-1 index=37 parents=[1] p=2 known=0 count=1 kbl=[]
+add RULE KB ment= IM(C(%1,%2),T(%1))  db=-1 index=38 parents=[20, 37] p=2 known=2 count=1 kbl=[]
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+PARAGRAPH ENDED. WM moved to KB: last row=IM(C(%1,%2)p=p0,T(%1))p=pide1
+WM id:0 parent WM:-1 WM length:2 WMvalue=3 last conc used:-1 activated:set() KB activ:{2}
+0 dummy p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[0] reasonuse:[] same:set()
+1 F(dummy) p=4 parents=[0] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+add WORD KB ment= MaryKB  db=-1 index=39 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word Mary wordindex=11 KB index=39
+add INPUT WM ment= Mary  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[39]
+add WORD KB ment= girlKB  db=-1 index=40 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word girl wordindex=12 KB index=40
+add INPUT WM ment= girl  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[40]
+add INPUT WM ment= C(Mary,girl)  db=0 index=4 parents=[2, 3] p=4 known=2 count=1 kbl=[]
+add REASONED WM ment= P(Mary,girl)  db=0 index=5 parents=[2, 3] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:0 on index:5 rule:[22, 20] reasoned concept:P(Mary,girl) wmuse:[4] kb_use:[] p=4 known=2 parents:[2, 3]
+add REASONED WM ment= T(Mary)  db=0 index=6 parents=[2] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:0 on index:6 rule:[38, 20] reasoned concept:T(Mary) wmuse:[4] kb_use:[] p=4 known=2 parents:[2]
+add INPUT WM ment= policeman  db=0 index=7 parents=[] p=4 known=2 count=1 kbl=[24]
+add WORD KB ment= hatKB  db=-1 index=41 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word hat wordindex=13 KB index=41
+add INPUT WM ment= hat  db=0 index=8 parents=[] p=4 known=2 count=1 kbl=[41]
+add INPUT WM ment= P(policeman,hat)  db=0 index=9 parents=[7, 8] p=4 known=2 count=1 kbl=[]
+add INPUT WM ment= ?  db=0 index=10 parents=[] p=4 known=0 count=1 kbl=[26]
+add INPUT WM ment= T(?)  db=0 index=11 parents=[10] p=2 known=0 count=1 kbl=[]
+Question answering started. input row:38  T(?)				
+PARAGRAPH ENDED. WM moved to KB: last row= T(?)				
+WM id:0 parent WM:-1 WM length:12 WMvalue=3 last conc used:-1 activated:{9, 4, 5, 6} KB activ:{32, 36, 39, 40, 41, 24, 26, 28, 29}
+0 dummy p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[0] reasonuse:[] same:set()
+1 F(dummy) p=4 parents=[0] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+2 Mary p=4 parents=[] known=2 r=[2] general={3} wmuse=[-1] kb_use=[] use_ever=set() kblink:[39] reasonuse:[] same:set()
+3 girl p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[40] reasonuse:[] same:set()
+4 C(Mary,girl) p=4 parents=[2, 3] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+5 P(Mary,girl) p=4 parents=[2, 3] known=2 r=[2, 2] general=set() wmuse=[4] kb_use=[] use_ever=set() kblink:[] reasonuse:[4] same:set()
+6 T(Mary) p=4 parents=[2] known=2 r=[2] general=set() wmuse=[4] kb_use=[] use_ever=set() kblink:[] reasonuse:[4] same:set()
+7 policeman p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[24] reasonuse:[] same:set()
+8 hat p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[41] reasonuse:[] same:set()
+9 P(policeman,hat) p=4 parents=[7, 8] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+10 ? p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[26] reasonuse:[] same:set()
+11 T(?) p=2 parents=[-1] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+add PARA_END KB ment= P(policeman,hat)  db=-1 index=42 parents=[24, 41] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= T(Mary)  db=-1 index=43 parents=[39] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= P(Mary,girl)  db=-1 index=44 parents=[39, 40] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= C(Mary,girl)  db=-1 index=45 parents=[39, 40] p=4 known=2 count=1 kbl=[]
+add MOVE_PARA KB ment=? index=26 parents=[] p=4 known=2 count=1
+add MOVE_PARA KB ment=P(policeman,hat) index=42 parents=[24, 41] p=4 known=2 count=1
+add MOVE_PARA KB ment=hat index=41 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=policeman index=24 parents=[] p=4 known=2 count=6
+add MOVE_PARA KB ment=T(Mary) index=43 parents=[39] p=4 known=2 count=1
+add MOVE_PARA KB ment=P(Mary,girl) index=44 parents=[39, 40] p=4 known=2 count=1
+add MOVE_PARA KB ment=C(Mary,girl) index=45 parents=[39, 40] p=4 known=2 count=1
+add MOVE_PARA KB ment=girl index=40 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=Mary index=39 parents=[] p=4 known=2 count=2
+WM remove concept index=11
+WM remove concept index=10
+WM remove concept index=9
+WM remove concept index=8
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add WORD KB ment= heKB  db=-1 index=46 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word he wordindex=14 KB index=46
+add INPUT WM ment= he  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[46]
+add WORD KB ment= personKB  db=-1 index=47 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word person wordindex=15 KB index=47
+add INPUT WM ment= person  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[47]
+add INPUT WM ment= C(he,person)  db=0 index=4 parents=[2, 3] p=4 known=2 count=1 kbl=[]
+add RELEVANT KB ment= C(he,person)  db=-1 index=48 parents=[46, 47] p=4 known=2 count=1 kbl=[]
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add INPUT WM ment= girl  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[40]
+add INPUT WM ment= person  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[47]
+add INPUT WM ment= C(girl,person)  db=0 index=4 parents=[2, 3] p=4 known=2 count=1 kbl=[]
+add WM ment= he  db=0 index=5 parents=[] p=2 known=2 count=1 kbl=[46]
+add REASONED WM ment= P(he,person)  db=0 index=6 parents=[5, 3] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:0 on index:6 rule:[22, 20] reasoned concept:P(he,person) wmuse:[-3] kb_use:[48] p=4 known=2 parents:[5, 3]
+add REASONED WM ment= T(he)  db=0 index=7 parents=[5] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:0 on index:7 rule:[38, 20] reasoned concept:T(he) wmuse:[-3] kb_use:[48] p=4 known=2 parents:[5]
+add REASONED WM ment= P(girl,person)  db=0 index=8 parents=[2, 3] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:0 on index:8 rule:[22, 20] reasoned concept:P(girl,person) wmuse:[4] kb_use:[] p=4 known=2 parents:[2, 3]
+add REASONED WM ment= T(girl)  db=0 index=9 parents=[2] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:0 on index:9 rule:[38, 20] reasoned concept:T(girl) wmuse:[4] kb_use:[] p=4 known=2 parents:[2]
+PARAGRAPH ENDED. WM moved to KB: last row=C(girl,person)
+WM id:0 parent WM:-1 WM length:10 WMvalue=3 last conc used:-1 activated:{4, 6, 7, 8, 9} KB activ:{40, 44, 46, 47, 48}
+0 dummy p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[0] reasonuse:[] same:set()
+1 F(dummy) p=4 parents=[0] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+2 girl p=4 parents=[] known=2 r=[2] general={3} wmuse=[-1] kb_use=[] use_ever=set() kblink:[40] reasonuse:[] same:set()
+3 person p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[47] reasonuse:[] same:set()
+4 C(girl,person) p=4 parents=[2, 3] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+5 he p=2 parents=[] known=0 r=[2] general=set() wmuse=[-2] kb_use=[] use_ever=set() kblink:[46] reasonuse:[] same:set()
+6 P(he,person) p=4 parents=[5, 3] known=2 r=[2, 2] general=set() wmuse=[-3] kb_use=[48] use_ever=set() kblink:[] reasonuse:[-3] same:set()
+7 T(he) p=4 parents=[5] known=2 r=[2] general=set() wmuse=[-3] kb_use=[48] use_ever=set() kblink:[] reasonuse:[-3] same:set()
+8 P(girl,person) p=4 parents=[2, 3] known=2 r=[2, 2] general=set() wmuse=[4] kb_use=[] use_ever=set() kblink:[] reasonuse:[4] same:set()
+9 T(girl) p=4 parents=[2] known=2 r=[2] general=set() wmuse=[4] kb_use=[] use_ever=set() kblink:[] reasonuse:[4] same:set()
+add PARA_END KB ment= T(girl)  db=-1 index=49 parents=[40] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= P(girl,person)  db=-1 index=50 parents=[40, 47] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= T(he)  db=-1 index=51 parents=[46] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= P(he,person)  db=-1 index=52 parents=[46, 47] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= C(girl,person)  db=-1 index=53 parents=[40, 47] p=4 known=2 count=1 kbl=[]
+add MOVE_PARA KB ment=T(girl) index=49 parents=[40] p=4 known=2 count=1
+add MOVE_PARA KB ment=P(girl,person) index=50 parents=[40, 47] p=4 known=2 count=1
+add MOVE_PARA KB ment=T(he) index=51 parents=[46] p=4 known=2 count=1
+add MOVE_PARA KB ment=P(he,person) index=52 parents=[46, 47] p=4 known=2 count=1
+add MOVE_PARA KB ment=he index=46 parents=[] p=4 known=2 count=1
+add MOVE_PARA KB ment=C(girl,person) index=53 parents=[40, 47] p=4 known=2 count=1
+add MOVE_PARA KB ment=person index=47 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=girl index=40 parents=[] p=4 known=2 count=3
+WM remove concept index=9
+WM remove concept index=8
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+add INPUT WM ment= Joe  db=0 index=2 parents=[] p=4 known=2 count=1 kbl=[23]
+add WORD KB ment= readKB  db=-1 index=54 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word read wordindex=16 KB index=54
+add INPUT WM ment= read  db=0 index=3 parents=[] p=4 known=2 count=1 kbl=[54]
+add INPUT WM ment= A(Joe,read)  db=0 index=4 parents=[2, 3] p=4 known=2 count=1 kbl=[]
+add WM ment= policeman  db=0 index=5 parents=[] p=2 known=2 count=1 kbl=[24]
+add REASONED WM ment= P(Joe,policeman)  db=0 index=6 parents=[2, 5] p=4 known=2 count=1 kbl=[]
+WM remove concept index=6
+add REASONED WM ment= T(Joe)  db=0 index=6 parents=[2] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:0 on index:6 rule:[38, 20] reasoned concept:T(Joe) wmuse:[-3] kb_use:[30] p=4 known=2 parents:[2]
+add INPUT WM ment= Mary  db=0 index=7 parents=[] p=4 known=2 count=1 kbl=[39]
+add INPUT WM ment= nice  db=0 index=8 parents=[] p=4 known=2 count=1 kbl=[25]
+add INPUT WM ment= F(Mary,nice)  db=0 index=9 parents=[7, 8] p=4 known=2 count=1 kbl=[]
+add WM ment= girl  db=0 index=10 parents=[] p=2 known=2 count=1 kbl=[40]
+add REASONED WM ment= P(Mary,girl)  db=0 index=11 parents=[7, 10] p=4 known=2 count=1 kbl=[]
+WM remove concept index=11
+add REASONED WM ment= T(Mary)  db=0 index=11 parents=[7] p=4 known=2 count=1 kbl=[]
+WM remove concept index=11
+add REASONED WM ment= F(Joe,nice)  db=0 index=11 parents=[2, 8] p=4 known=2 count=1 kbl=[]
+WM remove concept index=11
+add INPUT WM ment= he  db=0 index=11 parents=[] p=4 known=2 count=1 kbl=[46]
+add WORD KB ment= eatKB  db=-1 index=55 parents=[] p=4 known=2 count=1 kbl=[]
+WL add_word eat wordindex=17 KB index=55
+add INPUT WM ment= eat  db=0 index=12 parents=[] p=4 known=2 count=1 kbl=[55]
+add INPUT WM ment= A(he,eat)  db=0 index=13 parents=[11, 12] p=4 known=2 count=1 kbl=[]
+add WM ment= person  db=0 index=14 parents=[] p=4 known=2 count=1 kbl=[47]
+add WM ment= C(he,person)  db=0 index=15 parents=[11, 14] p=4 known=2 count=1 kbl=[48]
+MAPPING: add rule to WM:person C(he,person)
+add WM ment= D(he,Mary)  db=1 index=16 parents=[11, 7] p=4 known=2 count=1 kbl=[]
+ADD BRANCH: MAPPING: old wm:0 old wm concept:15 mentalese:C(he,person) new WM:1 WM value=4 mapped concept:11 he bonus=1 mapped to:D(he,Mary)
+add WM ment= D(he,Joe)  db=2 index=16 parents=[11, 2] p=4 known=2 count=1 kbl=[]
+ADD BRANCH: MAPPING: old wm:0 old wm concept:15 mentalese:C(he,person) new WM:2 WM value=3 mapped concept:11 he bonus=0 mapped to:D(he,Joe)
+add REASONED WM ment= P(Mary,girl)  db=1 index=17 parents=[7, 10] p=4 known=2 count=1 kbl=[]
+WM remove concept index=17
+add REASONED WM ment= T(Mary)  db=1 index=17 parents=[7] p=4 known=2 count=1 kbl=[]
+WM remove concept index=17
+add REASONED WM ment= C(he,girl)  db=1 index=17 parents=[11, 10] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:1 on index:17 rule:[0] reasoned concept:C(he,girl) wmuse:[16] kb_use:[45] p=4 known=2 parents:[11, 10]
+add REASONED WM ment= P(Mary,person)  db=1 index=18 parents=[7, 14] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:1 on index:18 rule:[0] reasoned concept:P(Mary,person) wmuse:[-3] kb_use:[50, 45] p=4 known=2 parents:[7, 14]
+add REASONED WM ment= P(he,girl)  db=1 index=19 parents=[11, 10] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:1 on index:19 rule:[0] reasoned concept:P(he,girl) wmuse:[16] kb_use:[44] p=4 known=2 parents:[11, 10]
+add REASONED WM ment= T(he)  db=1 index=20 parents=[11] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:1 on index:20 rule:[0] reasoned concept:T(he) wmuse:[16] kb_use:[43] p=4 known=2 parents:[11]
+add REASONED WM ment= A(Mary,eat)  db=1 index=21 parents=[7, 12] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:1 on index:21 rule:[0] reasoned concept:A(Mary,eat) wmuse:[16, 13] kb_use:[] p=4 known=2 parents:[7, 12]
+add REASONED WM ment= P(he,person)  db=1 index=22 parents=[11, 14] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:1 on index:22 rule:[22, 20] reasoned concept:P(he,person) wmuse:[15] kb_use:[] p=4 known=2 parents:[11, 14]
+add REASONED WM ment= C(Mary,person)  db=1 index=23 parents=[7, 14] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:1 on index:23 rule:[0] reasoned concept:C(Mary,person) wmuse:[16, 15] kb_use:[] p=4 known=2 parents:[7, 14]
+add REASONED WM ment= F(he,nice)  db=1 index=24 parents=[11, 8] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:1 on index:24 rule:[0] reasoned concept:F(he,nice) wmuse:[16, 9] kb_use:[] p=4 known=2 parents:[11, 8]
+add REASONED WM ment= C(Mary,girl)  db=1 index=25 parents=[7, 10] p=4 known=2 count=1 kbl=[]
+WM remove concept index=25
+add REASONED WM ment= P(Mary,girl)  db=1 index=25 parents=[7, 10] p=4 known=2 count=1 kbl=[]
+WM remove concept index=25
+add REASONED WM ment= T(Mary)  db=1 index=25 parents=[7] p=4 known=2 count=1 kbl=[]
+WM remove concept index=25
+add REASONED WM ment= A(he,eat)  db=1 index=25 parents=[11, 12] p=4 known=2 count=1 kbl=[]
+WM remove concept index=25
+add REASONED WM ment= C(he,person)  db=1 index=25 parents=[11, 14] p=4 known=2 count=1 kbl=[]
+WM remove concept index=25
+add REASONED WM ment= T(Mary)  db=1 index=25 parents=[7] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:1 on index:25 rule:[0] reasoned concept:T(Mary) wmuse:[16] kb_use:[51] p=4 known=2 parents:[7]
+add REASONED WM ment= C(Mary,girl)  db=1 index=26 parents=[7, 10] p=4 known=2 count=1 kbl=[]
+WM remove concept index=26
+add REASONED WM ment= P(Mary,girl)  db=1 index=26 parents=[7, 10] p=4 known=2 count=1 kbl=[]
+WM remove concept index=26
+add REASONED WM ment= A(he,eat)  db=1 index=26 parents=[11, 12] p=4 known=2 count=1 kbl=[]
+WM remove concept index=26
+add REASONED WM ment= C(he,person)  db=1 index=26 parents=[11, 14] p=4 known=2 count=1 kbl=[]
+WM remove concept index=26
+add REASONED WM ment= F(Mary,nice)  db=1 index=26 parents=[7, 8] p=4 known=2 count=1 kbl=[]
+WM remove concept index=26
+add WM ment= run  db=2 index=17 parents=[] p=2 known=2 count=1 kbl=[31]
+add REASONED WM ment= A(he,run)  db=2 index=18 parents=[11, 17] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:2 on index:18 rule:[0] reasoned concept:A(he,run) wmuse:[16] kb_use:[35] p=4 known=2 parents:[11, 17]
+add WM ment= strong  db=2 index=19 parents=[] p=2 known=2 count=1 kbl=[33]
+add REASONED WM ment= F(he,strong)  db=2 index=20 parents=[11, 19] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:2 on index:20 rule:[0] reasoned concept:F(he,strong) wmuse:[16] kb_use:[34] p=4 known=2 parents:[11, 19]
+add REASONED WM ment= P(Joe,policeman)  db=2 index=21 parents=[2, 5] p=4 known=2 count=1 kbl=[]
+WM remove concept index=21
+add REASONED WM ment= T(Joe)  db=2 index=21 parents=[2] p=4 known=2 count=1 kbl=[]
+INHIBIT reasoning is same_Reasoned. Same wmuse used. inhibited concept: T(Joe) wmuse{-3} same old concept6
+WM remove concept index=21
+add REASONED WM ment= C(he,policeman)  db=2 index=21 parents=[11, 5] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:2 on index:21 rule:[0] reasoned concept:C(he,policeman) wmuse:[16] kb_use:[30] p=4 known=2 parents:[11, 5]
+add REASONED WM ment= F(Joe,nice)  db=2 index=22 parents=[2, 8] p=4 known=2 count=1 kbl=[]
+WM remove concept index=22
+add REASONED WM ment= P(he,policeman)  db=2 index=22 parents=[11, 5] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:2 on index:22 rule:[0] reasoned concept:P(he,policeman) wmuse:[16] kb_use:[29] p=4 known=2 parents:[11, 5]
+add REASONED WM ment= F(he,nice)  db=2 index=23 parents=[11, 8] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:2 on index:23 rule:[0] reasoned concept:F(he,nice) wmuse:[16] kb_use:[27] p=4 known=2 parents:[11, 8]
+add REASONED WM ment= A(Joe,eat)  db=2 index=24 parents=[2, 12] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:2 on index:24 rule:[0] reasoned concept:A(Joe,eat) wmuse:[16, 13] kb_use:[] p=4 known=2 parents:[2, 12]
+add REASONED WM ment= P(he,person)  db=2 index=25 parents=[11, 14] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:2 on index:25 rule:[22, 20] reasoned concept:P(he,person) wmuse:[15] kb_use:[] p=4 known=2 parents:[11, 14]
+add REASONED WM ment= T(he)  db=2 index=26 parents=[11] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:2 on index:26 rule:[38, 20] reasoned concept:T(he) wmuse:[15] kb_use:[] p=4 known=2 parents:[11]
+add REASONED WM ment= C(Joe,person)  db=2 index=27 parents=[2, 14] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:2 on index:27 rule:[0] reasoned concept:C(Joe,person) wmuse:[16, 15] kb_use:[] p=4 known=2 parents:[2, 14]
+add REASONED WM ment= A(he,read)  db=2 index=28 parents=[11, 3] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:2 on index:28 rule:[0] reasoned concept:A(he,read) wmuse:[16, 4] kb_use:[] p=4 known=2 parents:[11, 3]
+add REASONED WM ment= A(Joe,run)  db=2 index=29 parents=[2, 17] p=4 known=2 count=1 kbl=[]
+WM remove concept index=29
+add REASONED WM ment= F(Joe,strong)  db=2 index=29 parents=[2, 19] p=4 known=2 count=1 kbl=[]
+WM remove concept index=29
+add REASONED WM ment= C(Joe,policeman)  db=2 index=29 parents=[2, 5] p=4 known=2 count=1 kbl=[]
+WM remove concept index=29
+add REASONED WM ment= P(Joe,policeman)  db=2 index=29 parents=[2, 5] p=4 known=2 count=1 kbl=[]
+WM remove concept index=29
+add REASONED WM ment= F(Joe,nice)  db=2 index=29 parents=[2, 8] p=4 known=2 count=1 kbl=[]
+WM remove concept index=29
+add REASONED WM ment= A(he,eat)  db=2 index=29 parents=[11, 12] p=4 known=2 count=1 kbl=[]
+WM remove concept index=29
+add REASONED WM ment= P(Joe,person)  db=2 index=29 parents=[2, 14] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:2 on index:29 rule:[0] reasoned concept:P(Joe,person) wmuse:[15, 16] kb_use:[] p=4 known=2 parents:[2, 14]
+add REASONED WM ment= T(Joe)  db=2 index=30 parents=[2] p=4 known=2 count=1 kbl=[]
+REASONED concept added! in WM:2 on index:30 rule:[0] reasoned concept:T(Joe) wmuse:[15, 16] kb_use:[] p=4 known=2 parents:[2]
+add REASONED WM ment= C(he,person)  db=2 index=31 parents=[11, 14] p=4 known=2 count=1 kbl=[]
+WM remove concept index=31
+add REASONED WM ment= A(Joe,run)  db=2 index=31 parents=[2, 17] p=4 known=2 count=1 kbl=[]
+WM remove concept index=31
+add REASONED WM ment= F(Joe,strong)  db=2 index=31 parents=[2, 19] p=4 known=2 count=1 kbl=[]
+WM remove concept index=31
+add REASONED WM ment= C(Joe,policeman)  db=2 index=31 parents=[2, 5] p=4 known=2 count=1 kbl=[]
+WM remove concept index=31
+add REASONED WM ment= P(Joe,policeman)  db=2 index=31 parents=[2, 5] p=4 known=2 count=1 kbl=[]
+WM remove concept index=31
+add REASONED WM ment= F(Joe,nice)  db=2 index=31 parents=[2, 8] p=4 known=2 count=1 kbl=[]
+WM remove concept index=31
+add REASONED WM ment= A(he,eat)  db=2 index=31 parents=[11, 12] p=4 known=2 count=1 kbl=[]
+WM remove concept index=31
+add REASONED WM ment= C(he,person)  db=2 index=31 parents=[11, 14] p=4 known=2 count=1 kbl=[]
+WM remove concept index=31
+add REASONED WM ment= A(Joe,read)  db=2 index=31 parents=[2, 3] p=4 known=2 count=1 kbl=[]
+WM remove concept index=31
+add INPUT WM ment= ?  db=1 index=26 parents=[] p=4 known=0 count=1 kbl=[26]
+add INPUT WM ment= eat  db=1 index=27 parents=[] p=4 known=0 count=2 kbl=[55]
+add INPUT WM ment= A(?,eat)  db=1 index=28 parents=[26, 27] p=2 known=0 count=1 kbl=[]
+add INPUT WM ment= ?  db=2 index=31 parents=[] p=4 known=0 count=1 kbl=[26]
+add INPUT WM ment= eat  db=2 index=32 parents=[] p=4 known=0 count=2 kbl=[55]
+add INPUT WM ment= A(?,eat)  db=2 index=33 parents=[31, 32] p=2 known=0 count=1 kbl=[]
+add REASONED WM ment= A(he,eat)  db=1 index=29 parents=[11, 12] p=4 known=2 count=1 kbl=[]
+WM remove concept index=29
+add REASONED WM ment= A(he,eat)  db=2 index=34 parents=[11, 12] p=4 known=2 count=1 kbl=[]
+WM remove concept index=34
+Question answering started. input row:47  A(?,eat)			
+PARAGRAPH ENDED. WM moved to KB: last row= A(?,eat)			
+WM id:1 parent WM:0 WM length:29 WMvalue=4 last conc used:-1 activated:{4, 6, 9, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25} KB activ:{23, 25, 26, 27, 28, 29, 30, 34, 35, 39, 43, 44, 45, 46, 47, 48, 50, 51, 52, 54, 55}
+0 dummy p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[0] reasonuse:[] same:set()
+1 F(dummy) p=4 parents=[0] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+2 Joe p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[23] reasonuse:[] same:set()
+3 read p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[54] reasonuse:[] same:set()
+4 A(Joe,read) p=4 parents=[2, 3] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+5 policeman p=2 parents=[] known=0 r=[2] general=set() wmuse=[-2] kb_use=[] use_ever=set() kblink:[24] reasonuse:[] same:set()
+6 T(Joe) p=4 parents=[2] known=2 r=[2] general=set() wmuse=[-3] kb_use=[30] use_ever=set() kblink:[] reasonuse:[-3] same:set()
+7 Mary p=4 parents=[] known=2 r=[2] general={10, 14} wmuse=[-1] kb_use=[] use_ever=set() kblink:[39] reasonuse:[] same:{11}
+8 nice p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[25] reasonuse:[] same:set()
+9 F(Mary,nice) p=4 parents=[7, 8] known=2 r=[2, 2] general={7, 10, 11, 14} wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+10 girl p=2 parents=[] known=0 r=[2] general=set() wmuse=[-2] kb_use=[] use_ever=set() kblink:[40] reasonuse:[] same:set()
+11 he p=4 parents=[] known=2 r=[2] general={10, 14} wmuse=[-1] kb_use=[] use_ever=set() kblink:[46] reasonuse:[] same:{7}
+12 eat p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[55] reasonuse:[] same:{27}
+13 A(he,eat) p=4 parents=[11, 12] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+14 person p=4 parents=[] known=2 r=[2] general=set() wmuse=[] kb_use=[] use_ever=set() kblink:[47] reasonuse:[] same:set()
+15 C(he,person) p=4 parents=[11, 14] known=2 r=[4.0, 4.0] general=set() wmuse=[] kb_use=[] use_ever=set() kblink:[48] reasonuse:[] same:set()
+16 D(he,Mary) p=4 parents=[11, 7] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+17 C(he,girl) p=4 parents=[11, 10] known=2 r=[2, 2] general=set() wmuse=[16] kb_use=[45] use_ever=set() kblink:[] reasonuse:[16] same:set()
+18 P(Mary,person) p=4 parents=[7, 14] known=2 r=[2, 2] general=set() wmuse=[-3] kb_use=[50, 45] use_ever=set() kblink:[] reasonuse:[-3] same:set()
+19 P(he,girl) p=4 parents=[11, 10] known=2 r=[2, 2] general=set() wmuse=[16] kb_use=[44] use_ever=set() kblink:[] reasonuse:[16] same:set()
+20 T(he) p=4 parents=[11] known=2 r=[2] general=set() wmuse=[16] kb_use=[43] use_ever=set() kblink:[51] reasonuse:[16] same:set()
+21 A(Mary,eat) p=4 parents=[7, 12] known=2 r=[2, 2] general=set() wmuse=[16, 13] kb_use=[] use_ever=set() kblink:[] reasonuse:[16, 13] same:set()
+22 P(he,person) p=4 parents=[11, 14] known=2 r=[2, 2] general=set() wmuse=[15] kb_use=[] use_ever=set() kblink:[52] reasonuse:[15] same:set()
+23 C(Mary,person) p=4 parents=[7, 14] known=2 r=[2, 2] general=set() wmuse=[16, 15] kb_use=[] use_ever=set() kblink:[] reasonuse:[16, 15] same:set()
+24 F(he,nice) p=4 parents=[11, 8] known=2 r=[2, 2] general={7, 10, 11, 14} wmuse=[16, 9] kb_use=[] use_ever=set() kblink:[] reasonuse:[16, 9] same:set()
+25 T(Mary) p=4 parents=[7] known=2 r=[2] general=set() wmuse=[16] kb_use=[51] use_ever=set() kblink:[43] reasonuse:[16] same:set()
+26 ? p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[26] reasonuse:[] same:set()
+27 eat p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[55] reasonuse:[] same:{12}
+28 A(?,eat) p=2 parents=[-1, 27] known=0 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+PARAGRAPH ENDED. WM moved to KB: last row= A(?,eat)			
+WM id:2 parent WM:0 WM length:34 WMvalue=3 last conc used:-1 activated:{4, 6, 9, 13, 15, 16, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30} KB activ:{23, 25, 26, 27, 28, 29, 30, 34, 35, 39, 43, 44, 45, 46, 47, 48, 50, 51, 52, 54, 55}
+0 dummy p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[0] reasonuse:[] same:set()
+1 F(dummy) p=4 parents=[0] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+2 Joe p=4 parents=[] known=2 r=[2] general={5, 14} wmuse=[-1] kb_use=[] use_ever=set() kblink:[23] reasonuse:[] same:{11}
+3 read p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[54] reasonuse:[] same:set()
+4 A(Joe,read) p=4 parents=[2, 3] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+5 policeman p=2 parents=[] known=0 r=[2] general=set() wmuse=[-2] kb_use=[] use_ever=set() kblink:[24] reasonuse:[] same:set()
+6 T(Joe) p=4 parents=[2] known=2 r=[2] general=set() wmuse=[-3] kb_use=[30] use_ever=set() kblink:[] reasonuse:[-3] same:{30}
+7 Mary p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[39] reasonuse:[] same:set()
+8 nice p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[25] reasonuse:[] same:set()
+9 F(Mary,nice) p=4 parents=[7, 8] known=2 r=[2, 2] general={7} wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+10 girl p=2 parents=[] known=0 r=[2] general=set() wmuse=[-2] kb_use=[] use_ever=set() kblink:[40] reasonuse:[] same:set()
+11 he p=4 parents=[] known=2 r=[2] general={5, 14} wmuse=[-1] kb_use=[] use_ever=set() kblink:[46] reasonuse:[] same:{2}
+12 eat p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[55] reasonuse:[] same:{32}
+13 A(he,eat) p=4 parents=[11, 12] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+14 person p=4 parents=[] known=2 r=[2] general=set() wmuse=[] kb_use=[] use_ever=set() kblink:[47] reasonuse:[] same:set()
+15 C(he,person) p=4 parents=[11, 14] known=2 r=[4.0, 4.0] general=set() wmuse=[] kb_use=[] use_ever=set() kblink:[48] reasonuse:[] same:set()
+16 D(he,Joe) p=4 parents=[11, 2] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+17 run p=2 parents=[] known=0 r=[2] general=set() wmuse=[-2] kb_use=[] use_ever=set() kblink:[31] reasonuse:[] same:set()
+18 A(he,run) p=4 parents=[11, 17] known=2 r=[2, 2] general=set() wmuse=[16] kb_use=[35] use_ever=set() kblink:[] reasonuse:[16] same:set()
+19 strong p=2 parents=[] known=0 r=[2] general=set() wmuse=[-2] kb_use=[] use_ever=set() kblink:[33] reasonuse:[] same:set()
+20 F(he,strong) p=4 parents=[11, 19] known=2 r=[2, 2] general={2, 5, 11, 14} wmuse=[16] kb_use=[34] use_ever=set() kblink:[] reasonuse:[16] same:set()
+21 C(he,policeman) p=4 parents=[11, 5] known=2 r=[2, 2] general=set() wmuse=[16] kb_use=[30] use_ever=set() kblink:[] reasonuse:[16] same:set()
+22 P(he,policeman) p=4 parents=[11, 5] known=2 r=[2, 2] general=set() wmuse=[16] kb_use=[29] use_ever=set() kblink:[] reasonuse:[16] same:set()
+23 F(he,nice) p=4 parents=[11, 8] known=2 r=[2, 2] general={2, 5, 11, 14} wmuse=[16] kb_use=[27] use_ever=set() kblink:[] reasonuse:[16] same:set()
+24 A(Joe,eat) p=4 parents=[2, 12] known=2 r=[2, 2] general=set() wmuse=[16, 13] kb_use=[] use_ever=set() kblink:[] reasonuse:[16, 13] same:set()
+25 P(he,person) p=4 parents=[11, 14] known=2 r=[2, 2] general=set() wmuse=[15] kb_use=[] use_ever=set() kblink:[52] reasonuse:[15] same:set()
+26 T(he) p=4 parents=[11] known=2 r=[2] general=set() wmuse=[15] kb_use=[] use_ever=set() kblink:[51] reasonuse:[15] same:set()
+27 C(Joe,person) p=4 parents=[2, 14] known=2 r=[2, 2] general=set() wmuse=[16, 15] kb_use=[] use_ever=set() kblink:[] reasonuse:[16, 15] same:set()
+28 A(he,read) p=4 parents=[11, 3] known=2 r=[2, 2] general=set() wmuse=[16, 4] kb_use=[] use_ever=set() kblink:[] reasonuse:[16, 4] same:set()
+29 P(Joe,person) p=4 parents=[2, 14] known=2 r=[2, 2] general=set() wmuse=[15, 16] kb_use=[] use_ever=set() kblink:[] reasonuse:[16, 25] same:set()
+30 T(Joe) p=4 parents=[2] known=2 r=[2] general=set() wmuse=[15, 16] kb_use=[] use_ever=set() kblink:[] reasonuse:[16, 26] same:{6}
+31 ? p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[26] reasonuse:[] same:set()
+32 eat p=4 parents=[] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[55] reasonuse:[] same:{12}
+33 A(?,eat) p=2 parents=[-1, 32] known=0 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+BRANCH KILLED db=2 WM value was:3 Not the best branch at paragraph end. Force kill. All living versions:dict_keys([1, 2])
+add PARA_END KB ment= F(he,nice)  db=-1 index=56 parents=[46, 25] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= C(Mary,person)  db=-1 index=57 parents=[39, 47] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= A(Mary,eat)  db=-1 index=58 parents=[39, 55] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= P(he,girl)  db=-1 index=59 parents=[46, 40] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= P(Mary,person)  db=-1 index=60 parents=[39, 47] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= C(he,girl)  db=-1 index=61 parents=[46, 40] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= D(he,Mary)  db=-1 index=62 parents=[46, 39] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= A(he,eat)  db=-1 index=63 parents=[46, 55] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= F(Mary,nice)  db=-1 index=64 parents=[39, 25] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= T(Joe)  db=-1 index=65 parents=[23] p=4 known=2 count=1 kbl=[]
+add PARA_END KB ment= A(Joe,read)  db=-1 index=66 parents=[23, 54] p=4 known=2 count=1 kbl=[]
+add MOVE_PARA KB ment=eat index=55 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=? index=26 parents=[] p=4 known=2 count=1
+add MOVE_PARA KB ment=T(Mary) index=43 parents=[39] p=4 known=2 count=2
+add MOVE_PARA KB ment=F(he,nice) index=56 parents=[46, 25] p=4 known=2 count=1
+add MOVE_PARA KB ment=C(Mary,person) index=57 parents=[39, 47] p=4 known=2 count=1
+add MOVE_PARA KB ment=P(he,person) index=52 parents=[46, 47] p=4 known=2 count=2
+add MOVE_PARA KB ment=A(Mary,eat) index=58 parents=[39, 55] p=4 known=2 count=1
+add MOVE_PARA KB ment=T(he) index=51 parents=[46] p=4 known=2 count=2
+add MOVE_PARA KB ment=P(he,girl) index=59 parents=[46, 40] p=4 known=2 count=1
+add MOVE_PARA KB ment=P(Mary,person) index=60 parents=[39, 47] p=4 known=2 count=1
+add MOVE_PARA KB ment=C(he,girl) index=61 parents=[46, 40] p=4 known=2 count=1
+add MOVE_PARA KB ment=D(he,Mary) index=62 parents=[46, 39] p=4 known=2 count=1
+add MOVE_PARA KB ment=C(he,person) index=48 parents=[46, 47] p=4 known=2 count=2
+add MOVE_PARA KB ment=person index=47 parents=[] p=4 known=2 count=3
+add MOVE_PARA KB ment=A(he,eat) index=63 parents=[46, 55] p=4 known=2 count=1
+add MOVE_PARA KB ment=he index=46 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=girl index=40 parents=[] p=4 known=2 count=3
+add MOVE_PARA KB ment=F(Mary,nice) index=64 parents=[39, 25] p=4 known=2 count=1
+add MOVE_PARA KB ment=nice index=25 parents=[] p=4 known=2 count=3
+add MOVE_PARA KB ment=Mary index=39 parents=[] p=4 known=2 count=3
+add MOVE_PARA KB ment=T(Joe) index=65 parents=[23] p=4 known=2 count=1
+add MOVE_PARA KB ment=policeman index=24 parents=[] p=4 known=2 count=6
+add MOVE_PARA KB ment=A(Joe,read) index=66 parents=[23, 54] p=4 known=2 count=1
+add MOVE_PARA KB ment=read index=54 parents=[] p=4 known=2 count=2
+add MOVE_PARA KB ment=Joe index=23 parents=[] p=4 known=2 count=3
+WM remove concept index=28
+WM remove concept index=27
+WM remove concept index=26
+WM remove concept index=25
+WM remove concept index=24
+WM remove concept index=23
+WM remove concept index=22
+WM remove concept index=21
+WM remove concept index=20
+WM remove concept index=19
+WM remove concept index=18
+WM remove concept index=17
+WM remove concept index=16
+WM remove concept index=15
+WM remove concept index=14
+WM remove concept index=13
+WM remove concept index=12
+WM remove concept index=11
+WM remove concept index=10
+WM remove concept index=9
+WM remove concept index=8
+WM remove concept index=7
+WM remove concept index=6
+WM remove concept index=5
+WM remove concept index=4
+WM remove concept index=3
+WM remove concept index=2
+WM id:1 parent WM:0 WM length:2 WMvalue=4 last conc used:-1 activated:set() KB activ:set()
+0 dummy p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[0] reasonuse:[] same:set()
+1 F(dummy) p=4 parents=[0] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+KB id:-1 parent WM:-1 WM length:67 WMvalue=3 last conc used:-1 activated:set() KB activ:set()
+0 dummy p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[0] reasonuse:[] same:set()
+1 %1 p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[1] reasonuse:[] same:set()
+2 %2 p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[2] reasonuse:[] same:set()
+3 -ing p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[3] reasonuse:[] same:set()
+4 F(%1,%2,-ing) p=2 parents=[1, 2, 3] known=0 r=[2, 2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+5 A(F(%1,%2,-ing),%2) p=2 parents=[4, 2] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+6 %3 p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[6] reasonuse:[] same:set()
+7 F(F(%1,%2,-ing),%3,-ing) p=2 parents=[4, 6, 3] known=0 r=[2, 2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+8 A(F(F(%1,%2,-ing),%3,-ing),%2) p=2 parents=[7, 2] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+9 F(%1,%2) p=2 parents=[1, 2] known=0 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+10 X(F(%1,%2),%3) p=2 parents=[9, 6] known=0 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+11 F(X(F(%1,%2),%3),%2) p=2 parents=[10, 2] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+12 NOT(%2) p=2 parents=[2] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+13 F(%1,NOT(%2)) p=2 parents=[1, 12] known=0 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+14 X(F(%1,NOT(%2)),%3) p=2 parents=[13, 6] known=0 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+15 F(X(F(%1,NOT(%2)),%3),NOT(%2)) p=2 parents=[14, 12] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+16 F(F(%1,%2),%2) p=2 parents=[9, 2] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+17 F(F(%1,NOT(%2)),%2) p=2 parents=[13, 2] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+18 F(F(%1,%2),NOT(%2)) p=2 parents=[9, 12] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+19 A(F(%1,%2,-ing),NOT(%2)) p=2 parents=[4, 12] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+20 C(%1,%2) p=2 parents=[1, 2] known=0 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+21 P(%1,%2) p=2 parents=[1, 2] known=0 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+22 IM(C(%1,%2),P(%1,%2)) p=2 parents=[20, 21] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+23 Joe p=4 parents=[] known=2 r=[2] general={24, 47} wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[23] reasonuse:[] same:set()
+24 policeman p=4 parents=[] known=2 r=[2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({-1})} kblink:[24] reasonuse:[] same:set()
+25 nice p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[25] reasonuse:[] same:set()
+26 ? p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[26] reasonuse:[] same:set()
+27 F(Joe,nice) p=4 parents=[23, 25] known=2 r=[2, 2] general={24, 28, 23} wmuse=[] kb_use=[] use_ever={frozenset({28, 30})} kblink:[] reasonuse:[30, 28] same:set()
+28 F(policeman,nice) p=4 parents=[24, 25] known=2 r=[2, 2] general={24, 23} wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[] reasonuse:[] same:set()
+29 P(Joe,policeman) p=4 parents=[23, 24] known=2 r=[2, 2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({30})} kblink:[] reasonuse:[30] same:set()
+30 C(Joe,policeman) p=4 parents=[23, 24] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[] reasonuse:[] same:set()
+31 run p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[31] reasonuse:[] same:set()
+32 A(policeman,run) p=4 parents=[24, 31] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[] reasonuse:[] same:set()
+33 strong p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[33] reasonuse:[] same:set()
+34 F(Joe,strong) p=4 parents=[23, 33] known=2 r=[2, 2] general={26, 23} wmuse=[] kb_use=[] use_ever={frozenset({36, 30})} kblink:[] reasonuse:[36] same:set()
+35 A(Joe,run) p=4 parents=[23, 31] known=2 r=[2, 2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({32, 30})} kblink:[] reasonuse:[-3] same:set()
+36 F(policeman,strong) p=4 parents=[24, 33] known=2 r=[2, 2] general={24} wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[] reasonuse:[] same:set()
+37 T(%1) p=2 parents=[1] known=0 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+38 IM(C(%1,%2),T(%1)) p=2 parents=[20, 37] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+39 Mary p=4 parents=[] known=2 r=[2] general={40, 47} wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[39] reasonuse:[] same:{46}
+40 girl p=4 parents=[] known=2 r=[2] general={47} wmuse=[] kb_use=[] use_ever={frozenset({-1})} kblink:[40] reasonuse:[] same:set()
+41 hat p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[41] reasonuse:[] same:set()
+42 P(policeman,hat) p=4 parents=[24, 41] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[] reasonuse:[] same:set()
+43 T(Mary) p=4 parents=[39] known=2 r=[2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({45}), frozenset({51, 62})} kblink:[] reasonuse:[62] same:set()
+44 P(Mary,girl) p=4 parents=[39, 40] known=2 r=[2, 2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({45})} kblink:[] reasonuse:[45] same:set()
+45 C(Mary,girl) p=4 parents=[39, 40] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[] reasonuse:[] same:set()
+46 he p=4 parents=[] known=2 r=[2] general={40, 24, 47} wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[46] reasonuse:[] same:{39}
+47 person p=4 parents=[] known=2 r=[2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({-1})} kblink:[47] reasonuse:[] same:set()
+48 C(he,person) p=4 parents=[46, 47] known=2 r=[4.0, 4.0] general=set() wmuse=[] kb_use=[] use_ever=set() kblink:[] reasonuse:[] same:set()
+49 T(girl) p=4 parents=[40] known=2 r=[2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({53})} kblink:[] reasonuse:[53] same:set()
+50 P(girl,person) p=4 parents=[40, 47] known=2 r=[2, 2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({53})} kblink:[] reasonuse:[53] same:set()
+51 T(he) p=4 parents=[46] known=2 r=[2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({48}), frozenset({43, 62})} kblink:[] reasonuse:[62] same:set()
+52 P(he,person) p=4 parents=[46, 47] known=2 r=[2, 2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({48})} kblink:[] reasonuse:[48] same:set()
+53 C(girl,person) p=4 parents=[40, 47] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[] reasonuse:[] same:set()
+54 read p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[54] reasonuse:[] same:set()
+55 eat p=4 parents=[] known=2 r=[2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[55] reasonuse:[] same:set()
+56 F(he,nice) p=4 parents=[46, 25] known=2 r=[2, 2] general={40, 47, 46, 39} wmuse=[] kb_use=[] use_ever={frozenset({64, 62})} kblink:[] reasonuse:[62, 64] same:set()
+57 C(Mary,person) p=4 parents=[39, 47] known=2 r=[2, 2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({48, 62})} kblink:[] reasonuse:[62, 48] same:set()
+58 A(Mary,eat) p=4 parents=[39, 55] known=2 r=[2, 2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({62, 63})} kblink:[] reasonuse:[62, 63] same:set()
+59 P(he,girl) p=4 parents=[46, 40] known=2 r=[2, 2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({44, 62})} kblink:[] reasonuse:[62] same:set()
+60 P(Mary,person) p=4 parents=[39, 47] known=2 r=[2, 2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({50, 45})} kblink:[] reasonuse:[-3] same:set()
+61 C(he,girl) p=4 parents=[46, 40] known=2 r=[2, 2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({45, 62})} kblink:[] reasonuse:[62] same:set()
+62 D(he,Mary) p=4 parents=[46, 39] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[] reasonuse:[] same:set()
+63 A(he,eat) p=4 parents=[46, 55] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[] reasonuse:[] same:set()
+64 F(Mary,nice) p=4 parents=[39, 25] known=2 r=[2, 2] general={40, 47, 46, 39} wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[] reasonuse:[] same:set()
+65 T(Joe) p=4 parents=[23] known=2 r=[2] general=set() wmuse=[] kb_use=[] use_ever={frozenset({30})} kblink:[] reasonuse:[-3] same:set()
+66 A(Joe,read) p=4 parents=[23, 54] known=2 r=[2, 2] general=set() wmuse=[-1] kb_use=[] use_ever={frozenset({-1})} kblink:[] reasonuse:[] same:set()

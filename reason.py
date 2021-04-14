@@ -23,6 +23,7 @@ class Reasoning:
         self.noreplace = {}             # map to record inhibited replacements
         self.replaced = []              # show replacements happened
         self.kbreplace = set()          # collect replacements where a KB index is replaced
+        self.cd_disabled = {}           # remember noreplace cases.
         self.imcount=0                  # number of compound concepts added
         self.addedcount=0               # number of concepts added
         self.repused = []               # concepts that were replaced using repmap
@@ -274,15 +275,18 @@ class Reasoning:
             noset=1
 #        if gl.d==6: print ("SETSPEC 1 db",db.name,"coni",coni,db.cp[coni].mentstr,"noset",noset)
         if noset==0:
+    #        if gl.d==8: print ("SET_MOST 1 con",coni,con.mentstr,"wmuse",con.wmuse)
             if con.wmuse!=[-3]:                                     # do not process wmuse if it has nothing
                 for wmu in con.wmuse:
                     thismost = gl.WM.cp[wmu].most_special_used      # most special in this used
                     if thismost>0:                                  # in WM
                         if mostwm==0: mostwm=thismost                   # most special in wm overall
                         if mostwm in gl.WM.cp[thismost].general: mostwm=thismost   # thismost is more special
+        #                if gl.d==8: print ("SET_MOST 3 con",coni,con.mentstr,"mostwm",mostwm,"thismost",thismost)
                     if thismost<0:                                  # in KB
                         if mostwm==0: mostwm=thismost                   # most special in wm overall (minus shows it is in KB)
                         if mostwm in gl.KB.cp[-thismost].general: mostwm=thismost   # thismost is more special
+        #                if gl.d==8: print ("SET_MOST 4 con",coni,con.mentstr,"mostwm",mostwm)
             for kbu in con.kb_use:
                 thismost = gl.KB.cp[kbu].most_special_used      # most special in this used
                 if mostkb==0: mostkb=thismost                   # most special in wm overall
@@ -297,8 +301,10 @@ class Reasoning:
                         if gl.WM.cp[genwm].kblink!=[]:          # we have KB link
                             gl.KB.cp[kbmo].general.add(gl.WM.cp[genwm].kblink[0])   # extend general set in KB
             if mostwm<0:  kbmo=-mostwm                          # found, in KB
+        #    if gl.d==8: print ("SET_MOST 5 mostwm",mostwm,"kbmo",kbmo)
             if kbmo>0:                                          # identified in KB
                 con.most_special_used = -kbmo                # override with the KB value, minus shows KB
+        #        if gl.d==8: print ("SET_MOST 6 set now here",con.mentstr,"to",con.most_special_used)
                 gl.test.track(db,coni,"      SET_SPEC (set_Mostspec 1 in reason) to value:"+str(db.cp[coni].most_special_used)+" ",gl.args.tr_set_spec,rule="")
             if kbmo==0 and mostkb>0:                            # most special only from KB
                 con.most_special_used = -mostkb                 # override with the KB value, minus shows KB
@@ -320,6 +326,7 @@ class Reasoning:
             gl.WM.consolidate_Specialuse(gl.WM,samemax,gl.WM, coni)       # call consolidation of p etc based on most_special_used
         gl.WM.manage_Consistency(coni)                  # update p, known, occurence, etc based on earlier occurances in WM. Note in concept.override !
         if gl.WM.cp[coni].kblink!=[]:                   # this concept occurs in KB
+            gl.WM.consolidate_withKB(gl.WM.cp[coni].kblink[0],coni)     # consolidate p, known etc of the new WM concept (just reasoned) with the KB occurence.
             gl.WM.consolidate_Specialuse(gl.KB,gl.WM.cp[coni].kblink[0],gl.WM, coni)       # call consolidation of p etc with the KB occurence
         
     def track_Attempt(self,conclist,kb_use,rule):                # track reasoning attempt
@@ -333,6 +340,23 @@ class Reasoning:
             db1=gl.KB
             cuse1=kb_use[1]
         gl.test.track_double(db1,cuse1,"   ATTEMPT reason (FIN).",db2,cuse2," WM used:"+str(conclist)+" KB used:"+str(kb_use)+" ",gl.args.tr_att,rule=gl.KB.cp[rule[0]].mentstr)
+        
+    def same_inKB(self,db,pos):                             # the concept on pos is present in KB and not needed to be reasoned?
+        same_in=False
+        if len(db.cp[pos].kblink)>0 and db.cp[pos].wmuse==[-3]:                             # [-3] means only KB is used for reasoning
+            if frozenset(db.cp[pos].kb_use) in gl.KB.cp[db.cp[pos].kblink[0]].use_ever:     # in KB the same concept was reasoned using the same KB input
+    #            if gl.d==6: print ("SAMEINKB 3 STOPPPPP")
+                gl.act.activate_KBconc(db.cp[pos].kblink[0],db)                    # activate the concept in KB that will not be reasoned
+                same_in=True
+                gl.test.track(db,pos,"      STOP (SAME_INKB): same conc in KB here: "+str(db.cp[pos].kblink[0])+" ",gl.args.tr_stop)
+        return same_in
+
+    def correct_Center(self,center):           # correct the start where resoned concepts need be removed
+    #    print ("CORRECT ci",gl.WM.ci, sorted(gl.WM.cp[gl.WM.ci].parent,reverse=True),"center",center)
+        for par in sorted(gl.WM.cp[gl.WM.ci].parent,reverse=True):
+            if par==center: center=center-1
+    #    print ("CORRECT 2 ci",gl.WM.ci, sorted(gl.WM.cp[gl.WM.ci].parent,reverse=True),"center",center)
+        return center
   
     def finaladd_Concept(self,conclist,kb_use,reasoned_p,rel_list,nplist,rule,r_known=-1):     # single function to add a list of reasoned concepts to WM together with its parents
         s=timer()
@@ -378,6 +402,7 @@ class Reasoning:
                     addedconcept.append(gl.WM.ci)                           # remember where we added a concept
                     gl.WM.cp[gl.WM.ci].rule_use=[rule[0]]                   # record IM level rule used for reasoning
                     self.set_Use(conclist[:],finalconcept)                  # remember used concepts
+                #    if gl.d==8: print ("FINALC 3 add parent. ci",gl.WM.ci,gl.WM.cp[gl.WM.ci].mentstr)
                     is_inhibited=False                                      # TO DO: move inhibition and same_reasoned to search_fullmatch!!
                     if finalconcept==1:
                         gl.WM.cp[gl.WM.ci].kb_use=list(set(gl.WM.cp[gl.WM.ci].kb_use) | set(kb_use))   # concepts used in KB, removing duplications   
@@ -386,17 +411,18 @@ class Reasoning:
                             gl.WM.cp[gl.WM.ci].known = r_known
                     gl.WM.populate_KBlink(gl.WM.ci)                         # populate the kblink field of newly added concept
                     self.set_Mostspecial_Used(gl.WM,gl.WM.ci,rule)               # set most special field
-                    if self.same_Reasoned(gl.WM.ci,samelist)==1 or is_inhibited:    # same concept reasoned as the input used, or inhibited
-                        while gl.WM.ci>center: gl.WM.remove_concept()               # remove all concepts added in this round
+                    same_kb = self.same_inKB(gl.WM,gl.WM.ci)                        # same concept present in KB and not needed to be reasoned
+                    if same_kb or self.same_Reasoned(gl.WM.ci,samelist)==1 or is_inhibited:    # same concept reasoned as the input used, or inhibited
+                #        if gl.d==8: print ("FINALC 6 remove resoned parent. ci",gl.WM.ci,"up to center",center)
+                        center = self.correct_Center(center)                # extend removal to parents immediately preceding
+                        while gl.WM.ci>center: gl.WM.remove_concept()       # remove all concepts added in this round
                     else:
                         if finalconcept==1:
                             self.consolidate_New(gl.WM.ci)                  # consolidate known, p etc with earlier WM occurence (TO DO: also with KB?)
                             if gl.d>0: print ("FINALADD 8 -------- WM=",gl.WM.this,"concept added here=",gl.WM.ci,gl.WM.cp[gl.WM.ci].mentstr,"p=",gl.WM.cp[gl.WM.ci].p,"parents",gl.WM.cp[gl.WM.ci].parent,"wmuse",gl.WM.cp[gl.WM.ci].wmuse,"kb_use",gl.WM.cp[gl.WM.ci].kb_use,"rule:",rule,"reasonuse",gl.WM.cp[gl.WM.ci].reasonuse,"most spec",gl.WM.cp[gl.WM.ci].most_special_used)
-                            #gl.WM.printlog_WM(gl.WM)
-                            #gl.WM.printlog_WM(gl.KB)
                             gl.args.success_reasoncount += 1                            # how many concepts have been reasoned
                             gl.log.add_log(("REASONED concept added! in WM:",gl.WM.this," on index:",gl.WM.ci," rule:",rule," reasoned concept:",gl.WM.cp[gl.WM.ci].mentstr," wmuse:",gl.WM.cp[gl.WM.ci].wmuse," kb_use:",gl.WM.cp[gl.WM.ci].kb_use, " p=",reasoned_p," known=",gl.WM.cp[gl.WM.ci].known," parents:",gl.WM.cp[gl.WM.ci].parent))
-                            gl.test.track(gl.WM,gl.WM.ci,"REASONED concept. p="+str(reasoned_p)+" k="+str(gl.WM.cp[gl.WM.ci].known)+" ",gl.args.tr_reas,rule=gl.KB.cp[rule[0]].mentstr)   # track concept reasoned  in track.txt
+                            gl.test.track(gl.WM,gl.WM.ci,"REASONED concept. p="+str(gl.WM.cp[gl.WM.ci].p)+" k="+str(gl.WM.cp[gl.WM.ci].known)+" ",gl.args.tr_reas,rule=gl.KB.cp[rule[0]].mentstr)   # track concept reasoned  in track.txt
                             gl.WM.track_Concept(gl.WM.ci,"New REASONED.")               # concept and rule usage tracking
                 else:                                                   #found==1
                     while gl.WM.ci>center:                              # all added concepts need to be removed
@@ -452,73 +478,41 @@ class Reasoning:
             print("ERROR! p=p1 missing in rule, more p= values needed. Rule: ",gl.KB.cp[rule[0]].mentstr)
             gl.log.add_log(("ERROR lookup_Rtable: p=p1 missing in rule, more p= valéues needed. Rule: ",gl.KB.cp[rule[0]].mentstr))        
         return reasoned_p
-
-    def stop_Redundant(self,db,conc,reas_rel,parent):                          # stop resoning if result will be a redundant concept
-        stop=False
-        if db.cp[conc].relation == 5:                               # F(F())  will be stopped here
-            p1 = db.cp[conc].parent[0]
-            if db.cp[p1].relation ==  5:                            # F(F())
-                if len(db.cp[conc].parent)>1 and len(db.cp[p1].parent)>1:
-                    feat1 = db.cp[conc].parent[1]
-                    feat2 = db.cp[p1].parent[1]
-                    if db.cp[feat1].mentstr == db.cp[feat2].mentstr:  # F(F(a,x),x)  same feature
-                        stop=True
-                    if db.cp[feat1].mentstr == "NOT("+db.cp[feat2].mentstr+")":  # F(F(a,x),NOT(x))  same feature
-                        stop=True
-                    if "NOT("+db.cp[feat1].mentstr+")" == db.cp[feat2].mentstr:  # F(F(a,NOT(x)),x)  same feature
-                        stop=True
-        if reas_rel == 4 and len(parent)>=2:                        # C(F(x,y),x) will be stopped, parent is in conc
-            if db.cp[parent[0]].relation==5:                        # F() is the parent in C(F(x,y),x)
-                if len(db.cp[parent[0]].parent)>0:
-                    if db.cp[parent[0]].parent[0] == parent[1]:     # x in C(F(x,y),b) is == b which is parent[1]
-                        stop=True
-                    if parent[1] in db.cp[db.cp[parent[0]].parent[0]].same:  # x==x in C(F(x,y),x)
-                        stop=True
-                        #if gl.d==6 : print ("STOPRED 9 stop it !!!!!! parent0",parent[0])
-        return stop
-            
+                                    
+                                
     def reason_Inhibit (self,reasoned_rel,reasoned_concept,pdb):     #check reasoned concept to stop stupid reasoning
+        s=timer()
         inhibit=0; visitand=[]
         if type(reasoned_concept) is int:                               # reasoned concept provided
-            stop=self.stop_Redundant(pdb,reasoned_concept,0,[])              # stop resoning if result will be a redundant concept like F(F(x,y),y)
-            if stop==True: 
-                inhibit=1
-                gl.test.track(pdb,reasoned_concept,"      STOP (REDUND1)",gl.args.tr_stop,rule="")
             reasoned_parents = pdb.cp[reasoned_concept].parent
-            parent1=reasoned_parents[0]
             reasoned_rel = pdb.cp[reasoned_concept].relation
         else:                                                           # parents provided
-            #if gl.d==6: print ("INHIB 2 parents",reasoned_concept,"rel",reasoned_rel)
             reasoned_parents = reasoned_concept                         # list of parents provided
-            parent1=reasoned_parents[0]
-            for parent in reasoned_parents:
-                stop=self.stop_Redundant(pdb,parent,reasoned_rel,reasoned_parents)       # stop resoning if result will be a redundant concept like X(... , F(F(x,y),y))
-                if stop==True: 
+        parent1=reasoned_parents[0]
+        
+        # generally inhibit reasoning based on p=inhibit rules
+        flatlist=[[reasoned_rel],["P"]]                             # here we assemble a flat version of the new concept to be reasoned
+        for rpar in reasoned_parents:                               # all reasoned parents
+            if pdb.cp[rpar].relation!=1:                                # not a word
+                flat=[]                                                     # flat version of concept parent reasoned
+                pdb.pattern_Flat(pdb,flat,rpar)                             # store flat version of parent into flat
+                inhib_pattern=pdb.pattern_Inhibit(pdb,flat)                 # compare flattened parent conc with inhibit rule structures
+                if inhib_pattern[0]==True: 
                     inhibit=1
-                    gl.test.track(pdb,parent,"      STOP (REDUND2)",gl.args.tr_stop,rule="")
-        if reasoned_rel==13: 
-    #        for r_par in reasoned_parents:                              # all reasoned parents
-            flat=[]                                                     # flat version of concept parent reasoned
-            pdb.pattern_Flat(pdb,flat,reasoned_parents[0])              # store flat version of parent into flat
-    # ITT TARTOK        self.pattern_Inhibit()
-        if reasoned_rel==5 and type(reasoned_concept) is list:          # F(a,b) will be reasoned and we have the parents
-            reasoned_parents = reasoned_concept                         # list of parents provided
-            if len(reasoned_parents)>1:
-                parent1=reasoned_parents[0]                             # a in F(a,b)
-                property1=reasoned_parents[1]                           # b in F(a,b)
-                rel1 = pdb.cp[parent1].relation
-                if rel1 in gl.args.subject_rel:                         # a is X(x,y) where X is a relation like A() where the subject is the first parent
-                    subject = pdb.cp[parent1].parent[0]
-                    #if gl.d==4: print ("INHIBIT 1 F(a,b) where b:",parent1,pdb.cp[parent1].mentstr,"subject",subject,pdb.cp[subject].mentstr)
-                    if pdb.cp[subject].relation == 5:                   # a = A(F(...), ...)  so the subject  is F() so it has some property    
-                        if len(pdb.cp[subject].parent)>1:
-                            property2 = pdb.cp[subject].parent[1]       # y in:  a = A(F(x,y), ...)  
-                            #if gl.d==4: print ("INHIBIT 2 prop1:",property1,"prop2:",property2)
-                            if property1 == property2 or property1 in pdb.cp[property2].same:   # b==y the two properties are tzhe same
-                                #if gl.d==4: print ("INHIBIT 3 same property!!!!")
-                                inhibit=1                               # inhibit this:  F( A(F(x,y), ...), y)   same properties.  
-                                gl.test.track(pdb,subject,"      STOP (PROPERTY)",gl.args.tr_stop,rule="")
-        if reasoned_rel==13 and type(reasoned_concept) is list:          # IM(a,b) will be reasoned and we have the parents
+                    gl.test.track(pdb,rpar,"      STOP (PATTERN): parent inhibited.",gl.args.tr_stop,rule=inhib_pattern[1])
+            else:                                                      # a word as parent
+                flat=[1,pdb.cp[rpar].kblink[0]]                        # flattened version - very simple in this case of a word
+            pdb.assemb_Flat(flat,flatlist)                             # assemble a flat version of the new concept to be reasoned
+        flat=[]
+        for flatlevel in flatlist:                                     # put the total flat string together from parents
+            flat.extend(flatlevel)
+            if flatlevel[-1]!="L": flat.append("L")
+        inhib_pattern=pdb.pattern_Inhibit(pdb,flat)                    # now check that the total reasoned concept is inhibited or not
+        if inhib_pattern[0]==True: 
+            inhibit=1
+            gl.test.track(pdb,rpar,"      STOP (PATTERN): reasoned conc inhibited.",gl.args.tr_stop,rule=inhib_pattern[1])
+
+        if reasoned_rel==13 and type(reasoned_concept) is list:         # IM(a,b) will be reasoned and we have the parents
    #         if gl.d==6: print ("INHIBIT, parents:",reasoned_concept)
             reasoned_parents = reasoned_concept                         # list of parents provided
             if len(reasoned_parents)==2:
@@ -527,22 +521,24 @@ class Reasoning:
                 if parent2 in pdb.cp[parent1].same:                     # a==b, IM(a,a) reasoned
                     inhibit=1                                           # inhibit IM(a,a)
                     gl.test.track(pdb,parent1,"      STOP (IM_REDUND)",gl.args.tr_stop,rule="")
-        if reasoned_rel==7 and type(reasoned_concept) is list:          # A(a,b) will be reasoned and we have the parents
-   #         if gl.d==6: print ("INHIBIT, parents:",reasoned_concept)
-            reasoned_parents = reasoned_concept                         # list of parents provided
-            if len(reasoned_parents)==2:
-                parent1=reasoned_parents[0]                             # a in A(a,b)
-                parent2=reasoned_parents[1]                             # b in A(a,b)
-                if pdb.cp[parent1].relation == 5:                       # A(F(),b)
-                    if len(pdb.cp[parent1].parent)==3:                  # A(F(x,y,z),b)
-                        fpar2=pdb.cp[parent1].parent[1]                 # y
-                        fpar3=pdb.cp[parent1].parent[2]                 # z
-                        if pdb.cp[fpar3].mentstr=="-ing":               # A(F(x,y,-ing),b)  
-                            if fpar2 in pdb.cp[parent2].same:           # b==y A(F(x,b,-ing),b)
-                                inhibit=1                                           # inhibit A(F(x,b,-ing),b)
-                                gl.test.track(pdb,parent1,"      STOP (A_REDUND)",gl.args.tr_stop,rule="")
-                        
-                        
+                    
+        if reasoned_rel==4 and len(reasoned_parents)==2 :               # C(a,b)
+            par0cp = pdb.cp[reasoned_parents[0]]                        # the parent conc
+            par1cp = pdb.cp[reasoned_parents[1]]                        # the parent conc
+            if par0cp.relation==5:                                      # C(F(x,y),b)
+                xcpindex = par0cp.parent[0]                             # first parent of F, thsi is x
+                xcp = pdb.cp[xcpindex]
+                gen=set()
+                for geni in xcp.general:                                # add all the concepts general to parent0 to gen
+                    if pdb.name=="WM" and len(pdb.cp[geni].kblink)>0: gen.add(pdb.cp[geni].kblink[0])
+                    else: gen.add(geni)
+                if pdb.name=="WM" and len(par1cp.kblink)>0 : categ = par1cp.kblink[0]       # parent1, the catgeory
+                else: categ = reasoned_parents[1]
+                if categ in gen:                                        # the category, b in C(a,b), is general to x in C(F(x,y),b)
+                    inhibit=1
+                    gl.test.track(pdb,reasoned_parents[0],"      STOP (CD_REDUND) because C relation is known in category="+par1cp.mentstr,gl.args.tr_stop,rule="")
+                #    gl.test.track(pdb,reasoned_parents[0],"+++TEST C parent 2 = "+str(reasoned_parents[1])+" general to parent1 = "+str(gen)+" categ="+str(categ),gl.args.tr_stop)
+                       
         allsame=1
         if pdb.name=="WM":                          # FIX3 TO DO make thsi work for KB
             for pind in range(len(reasoned_parents)):
@@ -564,6 +560,7 @@ class Reasoning:
                                 if gl.WM.cp[ppar].relation==16: 
                                     inhibit=1  # inhibit AND(AND(), ...)
                                     gl.test.track(pdb,ppar,"      STOP (AND)",gl.args.tr_stop,rule="")
+        gl.args.settimer("reason_907: reason_Inhibit",timer()-s)
         return inhibit
     
     def generate_MultiConcept(self,new,old,rulei,wmpi):      # create reasoned concept if condition is AND()
@@ -590,12 +587,10 @@ class Reasoning:
             condimap = self.check_condition(visitnew,visitcond)          # check that %1 %1 etc have the proper words in new
             if len(condimap)>0:                                          # all new parents successfully created in condimap
                 reasoned_p = self.lookup_Rtable(new,old,rulei,wmpi,implication)  # TO DO read p values form reasoning table
-                if gl.d==9: print ("GEN MULT 8 new",new,gl.WM.cp[new].mentstr,"old=",old,gl.WM.cp[old].mentstr,"rulei",rulei,"wmpi",wmpi,"impl",implication,"reas_p",reasoned_p)
                 clist = [new,old]                                        # initiallist of concepts used for reasoning
                 for olditem in gl.WM.cp[old].rule_match[rulei][wmpi]:    # look at further concepts used
                     if olditem not in clist: clist.append(olditem)
                 self.imparents=[]; self.recordparents=[]; self.recordrel=[]; self.imcount=0; self.addedcount=0; self.repused=[]
-                if gl.d==9: print ("GEN MULT 9 db=",gl.WM.this,"new=",new,"old=",old,"rule=",rule,"reasoned_P:",reasoned_p)
                 klist=[]                                                 # concepts used in KB (TO DO)
                 reasoned_k=2    # TO DO read kp_xxx known value conversion table in lookup_Rtable !!!
                 self.build_concept(gl.WM, implication, condimap, clist[:],klist[:], reasoned_p, reasoned_k, rule)  # FIX ndb parameter=WM. call finaladd_Concept for several concepts
@@ -669,6 +664,8 @@ class Reasoning:
                         self.fix_clist(kbuse,clist)             # populate kbuse and clist
                         start=gl.WM.ci
                         reasoned_concept =  self.manage_Implic(ndb,new,clist[:],kbuse[:])    # reasoned concept is the implication. Add it to WM if needed.
+                    #    if gl.d==6: print ("GENIM 6 resoned_conc",reasoned_concept,"db",ndb.name,"in KB:",ndb.cp[ndb.cp[new].parent[1]].mentstr,"WM ci",gl.WM.ci)
+                    #    if gl.d==6: print ("GENIM 6.1 WM ci-1 ci",gl.WM.cp[gl.WM.ci-1].mentstr,gl.WM.cp[gl.WM.ci].mentstr)
                         added_inwm=gl.WM.ci-start           # how many concepts added in WM
                         matching=0
                         inhibit = self.reason_Inhibit(gl.KB.cp[implication].relation,reasoned_concept,gl.WM)      #inhibit if needed
@@ -686,11 +683,12 @@ class Reasoning:
                                 gl.WM.cp[gl.WM.cp[new].parent[1]].p = int(reasoned_p)   # set reasoned p value in IM parent occurance too. Consistency.
                                 gl.log.add_log(("PVALUE OVERRIDE in generate_IMconcept: implication p=",reasoned_p," in WM concept:",gl.WM.cp[new].parent[1]," ",gl.WM.cp[gl.WM.cp[new].parent[1]].mentstr))                  
                         else:                                   # IM reasoning inhibited
-            #                if gl.d==6: print ("GENIM 8 IM resoning inhibited")
+                        #    if gl.d==6: print ("GENIM 8 IM resoning inhibited")
+                            if matching>0:                      # reasoning stopped because of matching to earlier concept
+                        #        if gl.d==6: print ("GENIM 9 resoned_conc",reasoned_concept,"db",ndb.name,"WM ci",gl.WM.ci)
+                                gl.test.track(gl.WM,reasoned_concept,"      STOP (MATCHING IM)",gl.args.tr_stop,rule="")
                             for rem in range(0,added_inwm):     # remove concepts copied from KB
                                 gl.WM.remove_concept()
-                            if matching>0:                      # reasoning stopped because of matching to earlier concept
-                                gl.test.track(gl.WM,reasoned_concept,"      STOP (MATCHING IM)",gl.args.tr_stop,rule="")
                     else: 
                         a=1
                        # print ("GENIM 10 IM reasoning stopped. condiknow=0 clist",clist,"condiknow",condiknow,"new",new,"wmcondi",wmcondi)
@@ -767,7 +765,7 @@ class Reasoning:
         if gl.d==5 and rule[0]==20: print ("UNI 1  db",db.name,"new",new,db.cp[new].mentstr,"rule",rule)
         #if gl.d==4: gl.WM.printlog_WM(gl.KB)
         if len(condimap)>0 and not (gl.KB.cp[implication].mentstr=="%2" and gl.KB.cp[rule[1]].relation == 13): # condition and new match, not the im rule
-            gl.test.track(db,new,"   ATTEMPT reason (UNI). ",gl.args.tr_att,gl.KB.cp[rule[0]].mentstr)
+            gl.test.track(db,new,"   ATTEMPT reason (UNI).",gl.args.tr_att,gl.KB.cp[rule[0]].mentstr)
             if len(rtable)!=0:                              # reasoning table exist
                 try:
                     reasoned_p=gl.args.pmap[rtable[(rtable.find("=")+1):]][int(db.cp[new].p)]   #index is p value of condition in WM
@@ -794,7 +792,7 @@ class Reasoning:
                 self.build_concept(db, implication, condimap,clist[:],klist[:],reasoned_p,reasoned_k,rule)   # call finaladd_Concept for several concepts
         if gl.KB.cp[implication].mentstr=="%2" and gl.KB.cp[rule[1]].relation == 13:    # rule portion is IM, the implication in rule is just %2
     #        if gl.d==4: print ("GENUNI 9 call genIM. db",db.name,"new",new,db.cp[new].mentstr)
-            gl.test.track(db,new,"   ATTEMPT reason (IM3). ",gl.args.tr_att,gl.KB.cp[rule[0]].mentstr)
+            gl.test.track(db,new,"   ATTEMPT reason (IM3).",gl.args.tr_att,gl.KB.cp[rule[0]].mentstr)
             self.generate_IMconcept(db,new,rule,implication,condition,0,db)     # wmcondi not known. this is hard-wired for rule: IM(IM(%1,%2),%2)
 
     def combine_condi(self,condim1,condim2):                # combine two condimaps into one, check that %1 mean the same in both
@@ -977,7 +975,7 @@ class Reasoning:
                             break                                   # only delete once
 
     def manage_Replaced (self,rel,pari,repmap,pix,top,odb,curri):     # calculate replacement disable or enable 
-        enab=0
+        enab=0; reason="default"
         if (-1 not in self.replaced): enab=1
         if (-1 not in self.replaced) and pari in repmap and pix in self.noreplace[rel]:   # now disable
             if pari not in self.kbreplace:                      # kbreplace would enable this replacement (it is just a WM index for a KB index)
@@ -989,12 +987,16 @@ class Reasoning:
                             self.noreplace[rel]=[99]            # override noreplace, enable
                         else:
                             self.replaced.append(-1)            #disable further replacements
+                            self.cd_disabled[pari]=repmap[pari]   # remember disable applied
+        #                    if gl.d==6: print ("MANAGE disabled! curri",curri,"pari",pari,"repm pari",repmap[pari],"pix",pix)
                             if odb.cp[top].track==1:            # concept tracked
                                 print ("TRACK concept in manage_Repl 1. db=",odb.name, "db index:",top,"CD reasoning has been disabled for relation:",rel,"parent",pix)
                 else:
                     self.replaced.append(-1)            #disable further replacements
+                    self.cd_disabled[pari]=repmap[pari]   # remember disable applied
                     if odb.cp[top].track==1:          # concept tracked
                         print ("TRACK concept in manage_Repl 2. db=",odb.name, "db index:",top,"CD reasoning has been disabled for relation:",rel,"parent",pix)
+                reason=" noreplace "+str(rel)+" "+str(pix)+" "
         if (-1 not in self.replaced) and pari in repmap and pix not in self.noreplace[rel]:   # should be enabled, but further investifaetion done below
             if repmap[pari]<gl.WM.ci:
                 if odb.cp[curri].relation==6:                # Q relation                    
@@ -1002,7 +1004,7 @@ class Reasoning:
                     if gl.WM.cp[repmap[pari]].relation==6:   # we will replace to Q()
                         self.replaced.append(-1)             # disable Q(Q()) reasoned
         if enab==1 and -1 in self.replaced:                  # reasoning was disabled here
-            msg = "   DISABLE (CD) reason due to noreplace:"+str(self.noreplace[rel])+" relation:"+str(rel)
+            msg = "   DISABLE (CD) reason due to:"+reason+str(self.noreplace[rel])+" relation:"+str(rel)
             gl.test.track(odb,curri,msg,gl.args.tr_dis)                  # track the DISABLE event     
 
     def get_KBtowm(self,curri):                          # curri is in KB, ghet the proper index valid in gl.WM
@@ -1100,6 +1102,7 @@ class Reasoning:
                 #if gl.d==3: print ("CONVP 2 ndb",ndb.name,"pari in KB",pari,gl.KB.cp[pari].mentstr,"wmpari",wmpari,"WM ci",gl.WM.ci,"repmap",repmap)
                 if gl.KB.cp[pari].relation==1 and gl.WM.cp[wmpari].kblink[0]==pari:   # it is a word, just a KB-WM replacement, not an inference
                     self.kbreplace.add(pari)                    # remember that pari is an index valid in KB
+
         # FIX: seems this is not necessary because repmap has already the WM replacement!!!
             #elif ndb.name=="KB":                                # both odb and ndb == KB, repmap has KB replacements, needs to be handled
                 #wmpari = self.visit_Parlist(gl.KB,repmap[pari],repmap)  # recursive visit of repmap[pari] concept
@@ -1110,7 +1113,15 @@ class Reasoning:
                 return True
             else:
                 return False
-                
+    
+    def fix_kbreplace(self,pari):                           # for compund concepts, populate kbreplace
+        if gl.KB.cp[pari].relation!=1:                  # FIX
+            allkb=True
+            for secondp in gl.KB.cp[pari].parent:       # iff all parents of pari are in kbreplace, then pari too !!!
+                if secondp not in self.kbreplace: allkb=False
+     #       if gl.d==6: print ("CONVERT pari",pari,"secondp",gl.KB.cp[pari].parent,"kbreplac",self.kbreplace)
+            if allkb==True: self.kbreplace.add(pari)     # remember that pari is an index valid in KB
+    
     def visit_Replace (self,top,curri,odb,ndb,repmap):   #recursive visit of old and build of reasoned concept
         nextp=0
         if gl.d==3: print ("VREP -1 curri",curri)
@@ -1122,19 +1133,17 @@ class Reasoning:
         if gl.d==3: print ("VREP 0 odb",odb.name,"curri",curri,odb.cp[curri].mentstr,"parents",odb.cp[curri].parent,"ndb",ndb.name,"repmap",repmap,"parentlist",parentlist,"recordparent",self.recordparents)
         if odb.name=="KB":                      # curri is in KB: parentlist is invalid in WM.
             self.convert_Parentlist(ndb,parentlist,repmap) # parentlist should get values valid in ndb (which is a WM). This adds missing words in WM.
-        if gl.d==4 and 21 in repmap: print ("VREP 1 odb",odb.name,"curri",curri,odb.cp[curri].mentstr,"parents",odb.cp[curri].parent,"ndb",ndb.name,"repmap",repmap,"parentlist",parentlist,"recordparent",self.recordparents)
+    #    if gl.d==6: print ("VISIT 1 repmap",repmap)
         mentales=odb.cp[curri].mentstr[:]
         pix=0 ; repcount=0                      #zero parents needed replacement in concept curri
         inkb=[]                                 # which parent index is valid in KB!!
         for pari in odb.cp[curri].parent:       # parents may need to be replaced7  FIX: repl changhed to curri
             if odb.name=="KB": inkb.append(1)   # remember this position is still in KB
             else: inkb.append(0)
+        #    if odb.name=="KB": self.fix_kbreplace(pari)            # for compund concepts, populate kbreplace
             self.manage_Replaced(rel,pari,repmap,pix,top,odb,curri)           # enable or disable replacement
-            if gl.d==4: print ("VREP 2 curri",curri,odb.cp[curri].mentstr,"repmap",repmap,"inkb",inkb,"recordparents",self.recordparents,"pari",pari,"self.r",self.replaced)
-            #if gl.d==3: gl.WM.printlog_WM(gl.WM)
-            #if gl.d==3: gl.WM.printlog_WM(gl.KB)
+    #        if gl.d==6: print ("VISIT odb",odb.name,"curri",curri,"rel",rel,"pari",pari,"pix",pix,"repmap",repmap,"kbreplace",self.kbreplace,"disbaled",self.cd_disabled)
             if pari in repmap  and (-1 not in self.replaced) : #       parent need replace and is not disabled
-                if gl.d==4: print ("VREP 25 justKBrep:", self.just_KBrep(pari,repmap))
                 if (pix not in self.noreplace[rel]) or self.just_KBrep(pari,repmap):  # either replacement is OK, or replacement is just a KB index replacement with the WM index
                     parentlist[pix]=repmap[pari]        #replace parent
                     if gl.d==4: print ("VREP 3 pix",pix,"parentlist",parentlist,"pari",pari,"repmap pari",repmap[pari])
@@ -1246,7 +1255,6 @@ class Reasoning:
             p1=odb.cp[old].p                                # p of target concept
             pval=self.read_ptable("pclass",[int(p0),int(p1)])   # p value of reasoned concept based on C reasoning table
             kval=self.read_ptable("kp_pclass",[int(p0),int(p1)])   # known value of reasoned concept based on kp_pclass, index: p values   
-            if gl.d==5 : print ("CDREL 1 ndb",ndb.name,"new",new,ndb.cp[new].mentstr,"new parents",ndb.cp[new].parent,"odb",odb.name,"old",old,odb.cp[old].mentstr)            
             if kval>0:                                      # inhibit a result where known==0
                 fromc=ndb.cp[new].parent[1]                 #class, this will be replaced
                 toc=ndb.cp[new].parent[0]                   #member, this will be used
@@ -1260,10 +1268,7 @@ class Reasoning:
                     self.addedconcfor = {}
                     if 1==1:
                         self.replaced=[]                                                # need to initialize
-                        #if gl.d==4: print ("CDREL startinggggggg 3 odb",odb.name,"old",old,odb.cp[old].mentstr,"old parents",odb.cp[old].parent,"repmap",repmap,"new",ndb.name,new,ndb.cp[new].mentstr)
-                        if gl.d==4 and new==40 and old==29: gl.WM.printlog_WM(gl.KB)
-                        if gl.d==4 and new==40 and old==29: gl.WM.printlog_WM(gl.WM)
-                        if gl.d==4: print ("CDREL 3 repmap",repmap,"recordparents",self.recordparents,"KB:",gl.KB.ci)
+#                        if gl.d==8: print ("CDREL 3 starting  odb",odb.name,"old",old,odb.cp[old].mentstr,"known",odb.cp[old].known,"new",ndb.name,new,ndb.cp[new].mentstr)
                         self.visit_Replace(old,old,odb,ndb,repmap)                      # perform replacement and recursively add reasoned concept with parents
                         if len(self.topparents)>0 and (-1 not in self.replaced):        # we have something to reason and not disabled
                             conclist_use=[];kb_use=[]
@@ -1271,7 +1276,6 @@ class Reasoning:
                             if conclist_use==[]: conclist_use=[-3]                      # -3 will show that no WM concept is used, only KB
                             self.finaladd_Concept(conclist_use[:],kb_use[:],pval,self.recordrel,self.recordparents,[0])  # add the reasoned concepts
                         else:
-                            if gl.d==5: print ("CDREL 4 : inhibited.", ndb.name,"new",new,ndb.cp[new].mentstr,"odb",odb.name,"old",old,odb.cp[old].mentstr,"start",start,"ci",gl.WM.ci) 
                             gl.test.track(ndb,new,"      STOP (CD) using this C/D concept.",gl.args.tr_stop,rule="")
                             if gl.WM.ci>start:                                          # if something added in visit_Replace
                                 gl.test.track(gl.WM,gl.WM.ci,"      REMOVE (CD) concepts because reasoning inhibited. from up to: "+str(start)+" "+str(gl.WM.ci)+" ",gl.args.tr_add)
@@ -1303,7 +1307,7 @@ class Reasoning:
         if (odb.cp[old].relation==3 or odb.cp[old].relation==4) and len(odb.cp[old].parent)==2:   #C or D rel with 2 parents
             menp1=odb.cp[odb.cp[old].parent[0]].mentstr; menp2=odb.cp[odb.cp[old].parent[1]].mentstr   # C or D parent mentalese
             if menp1 in ndb.cp[new].mentstr or menp2 in ndb.cp[new].mentstr:            # C,D parent mentalese in new
-                gl.test.track_double(ndb,new,"   ATTEMPT reason (CD2). ",odb,old,"",gl.args.tr_attcd)
+                gl.test.track_double(ndb,new,"   ATTEMPT reason (CD2).",odb,old,"",gl.args.tr_attcd)
                 isfirst=True                                                            #old is the first occurence of this C or D rel
                 if odb.name=="WM":                                                      # in WM, not in KB
                     for samec in gl.WM.vs_samestring[gl.WM.cp[old].mentstr]:            #same concepts: check that this occurence of old is the first
@@ -1329,8 +1333,7 @@ class Reasoning:
             menp1=ndb.cp[ndb.cp[new].parent[0]].mentstr; menp2=ndb.cp[ndb.cp[new].parent[1]].mentstr   # C or D parent mentalese
             if ndb.name=="KB" or self.isnew_CDrel(new) :        #see if this C or D rel is the first occurence, or it is in KB
                 if menp1 in odb.cp[old].mentstr or menp2 in odb.cp[old].mentstr:    # a parent is present in old mentstr
-                    gl.test.track_double(ndb,new,"   ATTEMPT reason (CD1). ",odb,old,"",gl.args.tr_attcd)
-                    #if gl.d==4: print ("ENTER call CD. new:",ndb.name,new,ndb.cp[new].mentstr,"old:",odb.name,old,odb.cp[old].mentstr)
+                    gl.test.track_double(ndb,new,"   ATTEMPT reason (CD1).",odb,old,"",gl.args.tr_attcd)
                     self.process_CDrel(new,old,ndb,odb)             #reason on old, using the C or D rel in new
         if ndb.cp[new].relation!=1 and enable==1:               #not a word
             self.process_Anyrel(new,old,ndb,odb)                #check that old is C or D and reason on new
@@ -1361,7 +1364,7 @@ class Reasoning:
                                 implication=gl.KB.cp[ruleold[0]].parent[1]       # implication part of the rule for "old"
                                 condition=gl.KB.cp[ruleold[0]].parent[0]         # condition part of the rule
                                 condi_p = ndb.cp[new].p                          # p value of teh condition, which was found now
-                                gl.test.track_double(ndb,new,"   ATTEMPT reason (IM1). ",odb,old,"",gl.args.tr_att)
+                                gl.test.track_double(ndb,new,"   ATTEMPT reason (IM1).",odb,old,"",gl.args.tr_att)
                                 self.generate_IMconcept(odb,old,ruleold,implication,condition,new,ndb,condi_p)  # reason the implication now
             orulei+=1
         if odb.name=="KB":
@@ -1378,7 +1381,7 @@ class Reasoning:
                                 implication=gl.KB.cp[ruleold[0]].parent[1]       # implication part of the rule for "old"
                                 condition=gl.KB.cp[ruleold[0]].parent[0]         # condition part of the rule
                                 condi_p = ndb.cp[new].p                          # p value of teh condition, which was found now
-                                gl.test.track_double(ndb,new,"   ATTEMPT reason (IM2). ",odb,old,"",gl.args.tr_att)
+                                gl.test.track_double(ndb,new,"   ATTEMPT reason (IM2).",odb,old,"",gl.args.tr_att)
                                 self.generate_IMconcept(odb,old,ruleold,implication,condition,new,ndb,condi_p)  # reason the implication now
             orulei+=1
         gl.args.settimer("reason_010: enter_RuleMatch", timer()-s)     # measure execution time
@@ -1422,11 +1425,13 @@ class Reasoning:
             cnew=newdb.cp[wmkbpos]; cold=odb.cp[old]
             #if cold.kbrules_filled==1:                      # only for concepts that have kb_rules filled
             self.fill_Kbrules(odb,old,0)                     # fill kb_rules every time again (a new rule may have turned up). Disable reasoning.
-            if cold.kb_rules!=[] or cnew.relation in [3,4] or cold.relation in [3,4]:  # old has the rule, or it is C, D relation
+            if cold.known>0 and (cold.kb_rules!=[] or cnew.relation in [3,4] or cold.relation in [3,4]):  # old has the rule, or it is C, D relation
                 #if newdb.name=="WM" or odb.name=="KB":      # this will exclude newdb=KB, odb=WM. this pair is not needed, it will come as newdb=WM, odb=KB.
                 self.replaced=[]                            # initialize replacement flag
                 gl.args.total_reasoncount+=1                # reasoning attempt
                 reasondone=gl.args.success_reasoncount      # indicate whether reasoning is completed
+    #            if gl.d==8: print ("CALL RULE 1 old",old,"known",cold.known,"pos",wmkbpos)
+    #            if old==42 and wmkbpos==36: print (gl.WM.xxxx)
                 self.enter_RuleMatch(wmkbpos,old,odb,newdb,1)   # 1.completes rule_match list  2. runs reasoning.  ndb=gl.WM for wm_pos.
                 if reasondone==gl.args.success_reasoncount-1:   # FIX3 enter_rulematch has successfully reasoned
                     cnew.reasoned_with.add(mold)                # remember this pair was reasoned about
@@ -1456,22 +1461,23 @@ class Reasoning:
             kbactminus=set()                                        # a minus sign will show that this is in KB
             for kbcon in db.kbactiv:
                 kbactminus.add(-kbcon)                              # kbactminus has all kbactiv concepts with a minus sign
-            if gl.d==4: print ("VS PERFORM 1 +++ toprocess",toprocess,"kbactminus",kbactminus,"kbactiv_new",db.kbactiv_new,"processed",processed,"kbactiv",db.kbactiv)
+    #        if gl.d==8: print ("VS PERFORM 1 +++ toprocess",toprocess,"kbactminus",kbactminus,"kbactiv_new",db.kbactiv_new,"processed",processed,"kbactiv",db.kbactiv)
             while len(toprocess)>0: # and gl.WM.ci<200:                                 # DEBUG <200 continue reasoning while there is any concept to process
-                if gl.d==2: print ("VS PERFORM 2 toprocess",toprocess,"kbactminus",kbactminus)
-                for wm_pos in sorted(toprocess):                    # this round, toprocess does not change
-                    if wm_pos>0:                                    # this is in WM
+                gl.test.track (gl.WM,gl.WM.ci,"ACTIVATED in KB: "+str(gl.WM.kbactiv_new),gl.args.tr_act)
+                for wm_pos in sorted(toprocess):                         # this round, toprocess does not change
+    #                if gl.d==8: print ("PERF 2 wm_pos",wm_pos)
+                    if wm_pos>0 and gl.WM.cp[wm_pos].known>0:            # this is in WM
                         #if db.cp[wm_pos].kbrules_filled == 0:           # not yet applied
-                        self.fill_Kbrules(db,wm_pos,1)                # fill kb_rules every time again (a new rule may have turned up)
+                        self.fill_Kbrules(db,wm_pos,1)                   # fill kb_rules every time again (a new rule may have turned up)
                         reason_due = ((db.activ|kbactminus)-set([wm_pos])) - db.cp[wm_pos].reasoned_with  # reasoning to be done with all activ, except itself, and those already done
-                        #if gl.d==4: print ("VS PERFORM 4 wm_pos:",wm_pos,gl.WM.cp[wm_pos].mentstr,"db:",db.this,"reason_due",reason_due,"dbactiv",db.activ,"kbactminus",kbactminus,"reasonwith",db.cp[wm_pos].reasoned_with)
+    #                    if gl.d==8: print ("PERF 4 wm_pos",wm_pos)
                         self.call_Rulematch(gl.WM,wm_pos,reason_due)    # wm_pos is in WM, perform pairing and call RuleMatch
                         self.evaluate_Branch(db,wm_pos)                 # update consistency for db - only relevant for new concepts that were reasoned into WM
-                    elif wm_pos<0:                                  # wm_pos is in KB !
+                    elif wm_pos<0 and gl.KB.cp[-wm_pos].known>0:        # wm_pos is in KB !
                         kb_pos=-wm_pos
                         self.fill_Kbrules(gl.KB,kb_pos,1)             # fill kb_rules every time again (a new rule may have turned up)
                         reason_due = ((db.activ|kbactminus)-set([wm_pos])) - gl.KB.cp[kb_pos].reasoned_with  # reasoning to be done with all activ, except itself, and those already done
-                        #if gl.d==4: print ("VS PERFORM 41 kb_pos:",kb_pos,"db:",db.this,"reason_due:",reason_due)
+    #                    if gl.d==8: print ("PERF 5 kb_pos",kb_pos)
                         self.call_Rulematch(gl.KB,kb_pos,reason_due)    # kb_pos is in KB, perform pairing and call RuleMatch 
                     processed.add(wm_pos)                           # remember this was processed
                 processed = processed | toprocess                   # add concepts that were processed in this round (toprocess) to all processed

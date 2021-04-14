@@ -23,6 +23,9 @@ from timeit import default_timer as timer
 # regtest.txt small error in evaluation: // A(Joe,eat) also shown from branch=2 which is a wrong branch
 # regetst2 not activated: P(Q(bird,all),head).  (if +1 set for P in kbactiv_addone). Activation needed from two sides, bird and head !!!!!!!!!!!
 
+# PRE-ACTIVATION and spreading activation
+# branch.py copy_WMfields does not copy the new dict kbact_pre.  So this must be fixed.
+
 def process_testinput (tf):                     # run mentalese comprehension, input is the Testinput object
     for ri in range(len(tf.mentalese)):         # take mentalese items (rows in test input file)
         tfment = []
@@ -83,7 +86,7 @@ if gl.args.argnum == 2:         # an argument is needed , .txt file, which has t
     for id,wmitem in enumerate(gl.VS.wmlist):           # all wms created
         if id in gl.VS.wmliv:                   # for living wm only
             print ("WM id:"+str(id)+" WM end:"+str(wmitem.ci)+" parent WM:"+str(wmitem.pawm)+" this wm id:"+str(wmitem.this)+" WMvalue="+str(wmitem.branchvalue)+" last conc used:"+str(wmitem.last)+" activated:"+str(wmitem.activ))
-            #gl.WM.printlog_WM(wmitem)
+            gl.WM.printlog_WM(wmitem)
 
     print ("KB list:")
     gl.WM.printlog_WM(gl.KB)        # print KB
@@ -92,9 +95,9 @@ if gl.args.argnum == 2:         # an argument is needed , .txt file, which has t
     gl.test.resultf.close()
     print ("branches:",gl.VS.wmliv.keys(),"this WM:",gl.WM.this," branchvalue:",gl.WM.branchvalue)
     
- #   print ("TIME USAGE REPORT IN BPS FOLLOWS.",end-s, " s total run time.")
-  #  for t in sorted(gl.args.timecheck,reverse=False):
-   #     print (t, int(gl.args.timecheck[t]*10000/(end-s)))
+    print ("TIME USAGE REPORT IN BPS FOLLOWS.",end-s, " s total run time.")
+    for t in sorted(gl.args.timecheck,reverse=False):
+        print (t, int(gl.args.timecheck[t]*10000/(end-s)))
         
     gl.test.check_result()                  # compare _base to _result file
     gl.log.logf.close()                     # close log file

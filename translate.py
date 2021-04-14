@@ -64,7 +64,7 @@ class Translator():
         self.rules = dict()
         self.irreg_verb = {"is":"be", "has":"have"}                 # irregular verbs
         self.verbs_se = set(["causes","pauses","uses","abuses","browses","aches","releases"])   # verbs ending "se"
-        self.verb_inge = set(["living","countershading","taking"])  # verbs ending e, live -> living  
+        self.verb_inge = set(["living","countershading","taking","moving"])  # verbs ending e, live -> living  
         self.nowildcard = 200                                   # bonus for a rule that has a [] expression with no wildcards
         self.punishwildcard = 2                                 # piunishment for % character
         self.enclosed = 100                                     # bonus if rule is encolsed in brackets like (xxx)
@@ -321,8 +321,7 @@ class Translator():
                 if bestrule != "":                                  # a rule to be applied is selected
                     self.replace_Rule(i,row,bestrule[:],rulefound,rulevars)   # replace the left rule part with the right part
                     nochange=0
-                else: nochange=1
-                    
+                else: nochange=1       
 
     def write_result(self):  # write output file
         with open('output.txt', 'w+') as output:

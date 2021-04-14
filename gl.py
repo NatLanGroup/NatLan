@@ -32,18 +32,18 @@ class Arguments:
         self.loglevel = 1       # level of logging. 0 is least log.
         self.tr_reas = 1        # track limit for REASONED
         self.tr_upd = 1         # track limit for UPDATE
-        self.tr_reject = 1      # track limit for REJECT (do not update KB based on WM)
-        self.tr_over = 1        # track limit for p, known overrides
+        self.tr_reject = 2      # track limit for REJECT (do not update KB based on WM)
+        self.tr_over = 1        # track limit for OVERRIDE p, known overrides
         self.tr_inp = 1         # track limit for INPUT
         self.tr_match = 4       # track level for MATCHING
         self.tr_att = 2         # track level for ATTEMPT
-        self.tr_attcd = 1       # track level for ATTEMPT CD
-        self.tr_dis = 1         # track level for DISABLE
-        self.tr_stop = 1        # track limit for STOP stopping / inhibiting of add concept. (usually reason.)
+        self.tr_attcd = 2       # track level for ATTEMPT CD
+        self.tr_dis = 2         # track level for DISABLE
+        self.tr_stop = 2        # track limit for STOP stopping / inhibiting of add concept. (usually reason.)
         self.tr_addkb = 3       # track limit for ADDKB
-        self.tr_add = 1         # track additions in WM ADD
-        self.tr_finaladd = 4    # track additions in WM ADD (FIN) from finaladd_concept
-        self.tr_set_spec = 5    # SET_SPEC most_special_use got set
+        self.tr_add = 3         # track additions in WM ADD
+        self.tr_finaladd = 3    # track additions in WM ADD (FIN) from finaladd_concept
+        self.tr_set_spec = 2    # SET_SPEC most_special_use got set
         self.tr_act = 2         # ACTIV (KB) activated concepts in KB
         
 
@@ -106,14 +106,14 @@ class Arguments:
 
 
         self.rcode = {
-            "X":-1, "W": 1, "S": 2, "D": 3, "C": 4, "F": 5,
+            "X":99, "W": 1, "S": 2, "D": 3, "C": 4, "F": 5,
             "Q": 6, "A": 7, "I": 8, "R": 9, "T": 10,
             "P": 11, "M": 12, "IM": 13, "N": 14, "V": 15,
             "AND": 16, "NOT": 17, "OR": 18, "XOR": 19
         }
 
         self.rcodeBack = {
-            -1:"X", 1: "W", 2: "S", 3: "D", 4: "C", 5: "F",
+            99:"X", 1: "W", 2: "S", 3: "D", 4: "C", 5: "F",
             6: "Q", 7: "A", 8: "I", 9: "R", 10: "T",
             11: "P", 12: "M", 13: "IM", 14: "N", 15: "V",
             16: "AND", 17: "NOT", 18: "OR", 19: "XOR"
@@ -138,11 +138,11 @@ class Arguments:
         self.kbactiv_limit = [0,1,2,3,4] # limit of relevance, for KB concept activation, based on input occurence. Dimension is level deepness in terms of children.
                                 # [0,1,2,3,4] means to activate first children concepts of the input (first children: round=2, threshold=2). But for children of children limit=3.
                                 # [0,1,2,2,2] means children on all levels are activated.
-        self.kbactiv_qlimit = [0,2,2,1,0] # limit of relevance, for KB concept activation, for question
+        self.kbactiv_qlimit = [0,1,2,3,4] # limit of relevance, for KB concept activation, for question
                                 # [0,2,2,1,0] means ordinary concepts in the input (round=1, r=2, threshold=2) activate all children in KB        
 #        self.kbactiv_spreadlimit = [0,4,2,1,0] # TO DO IMPLEMENT: limit of relevance, for KB concept spreading activation. Dimension is activation round.
-        self.kbactiv_addone =   { 4:{1:1}, 11:{1:0}, 7:{1:1} }  
-                            # relation:{parent:addition}. exceptions to kbactiv_limit activations: relevance limit higher C(.., x) and P(.., x) is activated based on x with higher limit=+1.
+        self.kbactiv_addone =   { 4:{1:2}, 11:{1:0}, 7:{1:1}, 5:{1:1} }  
+                            # somewhat inhibit some activations in KB. relation:{parent:addition}. exceptions to kbactiv_limit activations: relevance limit higher C(.., x) and P(.., x) is activated based on x with higher limit=+1.
             
         self.subject_rel = {5,6,7,9,11,17}          # concepts which have the subject of the proposition in the first argument like A(subject, ...)
 

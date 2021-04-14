@@ -1,0 +1,27 @@
+e/ Animals live.                                 s/ ([live:VERB,VBP,ROOT];[Animals:NOUN,NNS,nsubj];[.:PUNCT,.,punct])    
+e/ If something lives, then it is an animal.     s/ ([is:VERB,VBZ,ROOT];([lives:VERB,VBZ,advcl];[If:ADP,IN,mark];[something:NOUN,NN,nsubj]);[,:PUNCT,,,punct];[then:ADV,RB,advmod];[it:PRON,PRP,nsubj];([animal:NOUN,NN,attr];[an:DET,DT,det]);[.:PUNCT,.,punct])
+e/ Animals are the same as living things.        s/ ([are:VERB,VBP,ROOT];[Animals:NOUN,NNS,nsubj];([same:ADJ,JJ,attr];[the:DET,DT,det];([as:ADP,IN,prep];([things:NOUN,NNS,pobj];[living:VERB,VBG,amod])));[.:PUNCT,.,punct])    
+e/ A dead animal does not live.                  s/ ([live:VERB,VB,ROOT];([animal:NOUN,NN,nsubj];[A:DET,DT,det];[dead:ADJ,JJ,amod]);[does:VERB,VBZ,aux];[not:ADV,RB,neg];[.:PUNCT,.,punct])    
+e/ An animal not living is dead.                 s/ ([is:VERB,VBZ,ROOT];([animal:NOUN,NN,nsubj];[An:DET,DT,det];([living:VERB,VBG,acl];[not:ADV,RB,neg]));[dead:ADJ,JJ,acomp];[.:PUNCT,.,punct])    
+e/ An animal that lives is not dead.             s/ ([is:VERB,VBZ,ROOT];([animal:NOUN,NN,nsubj];[An:DET,DT,det];([lives:VERB,VBZ,relcl];[that:ADJ,WDT,nsubj]));[not:ADV,RB,neg];[dead:ADJ,JJ,acomp];[.:PUNCT,.,punct])    
+e/ An animal that is not dead lives.             s/ ([lives:VERB,VBZ,ROOT];([animal:NOUN,NN,nsubj];[An:DET,DT,det];([is:VERB,VBZ,relcl];[that:ADJ,WDT,nsubj];[not:ADV,RB,neg];[dead:ADJ,JJ,amod]));[.:PUNCT,.,punct])    
+
+e/ Living animals move.                          s/ ([move:VERB,VBP,ROOT];([animals:NOUN,NNS,nsubj];[Living:VERB,VBG,amod]);[.:PUNCT,.,punct])    
+e/ Moving animals live.                          s/ ([live:VERB,VBP,ROOT];([animals:NOUN,NNS,nsubj];[Moving:VERB,VBG,amod]);[.:PUNCT,.,punct])    
+e/ Animals move.                                 s/ ([move:VERB,VBP,ROOT];[Animals:NOUN,NNS,nsubj];[.:PUNCT,.,punct])    
+e/ Dead animals do not move.                     s/ ([move:VERB,VB,ROOT];([animals:NOUN,NNS,nsubj];[Dead:ADJ,JJ,amod]);[do:VERB,VBP,aux];[not:ADV,RB,neg];[.:PUNCT,.,punct])    
+/e Animals move by themselves.                   s ([move:VERB,VBP,ROOT];[Animals:NOUN,NNS,nsubj];([by:ADP,IN,prep];[themselves:PRON,PRP,pobj]);[.:PUNCT,.,punct])    
+/e Animals eat.                                  s ([eat:VERB,VBP,ROOT];[Animals:NOUN,NNS,nsubj];[.:PUNCT,.,punct])    
+/e Animals grow.                                 s ([grow:VERB,VBP,ROOT];[Animals:NOUN,NNS,nsubj];[.:PUNCT,.,punct])    
+/e Animals have babies.                          s ([have:VERB,VBP,ROOT];[Animals:NOUN,NNS,nsubj];[babies:NOUN,NNS,dobj];[.:PUNCT,.,punct])    
+
+/e All living things grow and change.            s ([grow:VERB,VB,ROOT];([things:NOUN,NNS,nsubj];[All:DET,DT,det];[living:VERB,VBG,amod]);[and:CCONJ,CC,cc];[change:VERB,VB,conj];[.:PUNCT,.,punct])    
+/e They need food, water and air.                s ([need:VERB,VBP,ROOT];[They:PRON,PRP,nsubj];([food:NOUN,NN,dobj];[,:PUNCT,,,punct];([water:NOUN,NN,conj];[and:CCONJ,CC,cc];[air:NOUN,NN,conj]));[.:PUNCT,.,punct])    
+/e Things that are not alive are nonliving.      s ([nonliving:VERB,VBG,ROOT];([Things:NOUN,NNS,nsubj];([are:VERB,VBP,relcl];[that:ADJ,WDT,nsubj];[not:ADV,RB,neg];[alive:ADJ,JJ,acomp]));[are:VERB,VBP,aux];[.:PUNCT,.,punct])    
+/e They do not need food, water and air.         s ([need:VERB,VB,ROOT];[They:PRON,PRP,nsubj];[do:VERB,VBP,aux];[not:ADV,RB,neg];([food:NOUN,NN,dobj];[,:PUNCT,,,punct];([water:NOUN,NN,conj];[and:CCONJ,CC,cc];[air:NOUN,NN,conj]));[.:PUNCT,.,punct])    
+
+
+ Nonliving things do not live.                 s ([live:VERB,VB,ROOT];([things:NOUN,NNS,nsubj];[Nonliving:VERB,VBG,compound]);[do:VERB,VBP,aux];[not:ADV,RB,neg];[.:PUNCT,.,punct])
+ Animals are not nonliving things.             s ([nonliving:VERB,VBG,ROOT];[Animals:NOUN,NNS,nsubj];[are:VERB,VBP,aux];[not:ADV,RB,neg];[things:NOUN,NNS,dobj];[.:PUNCT,.,punct])    
+ Nonliving things are not animals.             s ([are:VERB,VBP,ROOT];([things:NOUN,NNS,nsubj];[Nonliving:VERB,VBG,compound]);[not:ADV,RB,neg];[animals:NOUN,NNS,attr];[.:PUNCT,.,punct])    
+ The world is made up of living things and nonliving things. s ([made:VERB,VBN,ROOT];([world:NOUN,NN,nsubjpass];[The:DET,DT,det]);[is:VERB,VBZ,auxpass];([up:PART,RP,prt];([of:ADP,IN,prep];([things:NOUN,NNS,pobj];[living:VERB,VBG,amod];[and:CCONJ,CC,cc];([things:NOUN,NNS,conj];[nonliving:VERB,VBG,compound]))));[.:PUNCT,.,punct])    

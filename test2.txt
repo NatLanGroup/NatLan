@@ -7,15 +7,16 @@ e/ The big head of animals live long.  		m/ A(P(animal,F(head,big).r=1).p=1.r=3,
 												// C(dog,animal)
 e/ A dead animal does not live.                 // A(F(animal,dead),NOT(live))
 
-  
- 
+m/ C(elephant,animal).p=1.r=2.k=7.g=0.t=5    //sok paraméter tesztelése -> OK
+m/ A(Q(three, people),run.t=1).known=1	     //sima szón NEM működik, hosszabb paraméternévvel OK
+m/ A(F(animal,dead),NOT(live).true=1)	     //OK
 
-
-  
-					
 
 							
-
+//A parse_Inputvalues függvény csak akkor működik, ha a paraméterek numerikus értékeket vesznek fel
+//A függvény hívása miatt egy szón nem érzékeli a paramétereket
+//A függvény a ".nev=5" felépítésre épít, ha így jelenik meg, akkor az ivalues-ba a helyes paraméterek és értékek kerülnek
+//A függvény arra is épít, hogy conceptet mindig , vagy ) karakter zár
 
 
 

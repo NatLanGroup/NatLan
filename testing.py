@@ -698,6 +698,7 @@ class Testinput:
 
     def track(self,db,coni,msg,level,rule=""):              # write self.tracking with tracking rows
         tr=""; ruletext=""
+   #     if gl.d==6: print ("TRACK 1 db",db.name,"coni",coni,"db ci",db.ci)
         tr = self.is_tracked(" TRACKED CONCEPT",tr,db.cp[coni].mentstr)    # record tracked concept in tr
         if len(rule)>0 :
             tr=self.is_tracked(" TRACKED RULE ",tr,rule)    # record tracked rule in tr              
@@ -714,7 +715,7 @@ class Testinput:
             ruletext="  rule: "+rule
         tr2 = self.is_tracked(" TRACKED CONCEPT","",db2.cp[coni2].mentstr)    # record tracked concept2 in tr
         if gl.args.debug>=level or len(tr)>0 or len(tr2)>0: 
-            self.tracking.append (msg+tr+" db="+str(db.this)+" "+str(coni)+" "+db.cp[coni].mentstr+msg2+tr2+" db2="+str(db2.this)+" "+str(coni2)+" "+db2.cp[coni2].mentstr+ruletext)
+            self.tracking.append (msg+tr+" db="+str(db.this)+" "+str(coni)+" "+db.cp[coni].mentstr+" p="+str(db.cp[coni].p)+msg2+tr2+" db2="+str(db2.this)+" "+str(coni2)+" "+db2.cp[coni2].mentstr+" p="+str(db2.cp[coni2].p)+ruletext)
 
             
 class Temptest:                                 # unit tests and other temporary data
