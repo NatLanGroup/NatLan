@@ -178,15 +178,8 @@ class Reasoning:
             rule=gl.WM.cp[old].kb_rules[rulei]
             firstarg=gl.KB.cp[rule[0]].parent[0]
             if gl.KB.cp[firstarg].relation==16:     #AND relation
-                if "induction" in gl.KB.cp[rule[0]].rulestr[0]:         
-                    if gl.d==9: print ("ADDREAS 4 rule",rule,"table",gl.KB.cp[rule[0]].rulestr)
-                    self.induct_test(db,new,old,rulei,wmpi,rule)
-                else:                                               # multiconcept reasoning
-                    self.generate_MultiConcept(new,old,rulei,wmpi)
+                self.generate_MultiConcept(new,old,rulei,wmpi)
                     
-    def induct_test(self,db,new,old,rulei,wmpi,rule):                   # induction
-        print ("INDUCT 1 db",db.name,"new",new,"old",old,"rulei",rulei,"wmpi",wmpi,"rule",rule)     # all inputs
-        print ("INDUCT 2 rule",rule,gl.KB.cp[rule[0]].mentstr,"rule_match[rulei]",gl.WM.cp[old].rule_match[rulei])   # the rule in KB, and the selected matching concept (itg must be in WM)
 
     def kill_Duplicatebranch(self,newparent):                   # kill the branch if it has the same assumption as another one
         if gl.d==4: print ("KILL DUPLICATE BRANCH")
