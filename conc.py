@@ -23,6 +23,7 @@ class Concept:
         self.wmuse = [-1]   # what concepts (from WM) were used to get this one by reasoning. [-1]: original input [-2]: parent [-3]: reasoned, based on KB only
         self.kb_use = []    # what concepts in KB were used for reasoning
         self.use_ever = set()   # set of sets, which concepts (in KB) were ever used to reason this concept.
+        self.use_before = set() # WM only: set of sets, which concepts were used earlier to reason this concept - because an override will also override the wmuse and kb_use info.
         self.most_special_used = 0   # the most special concept used to get this reasoned concept.
         self.most_special_used_wm = 0   # the most special concept used to get this reasoned concept, if found only in wm
         self.reasonwith_ever = dict()  # NOT YET USED which concepts were used together with this one. rule:concept list.
@@ -46,6 +47,8 @@ class Concept:
         self.unirule_with = set()   # set of rules for which Uniconcept reasoning was already done
         self.allchild = set()       # set of all children on all levels
         self.allparent = set()      # set of all parents on all levels
+        
+        self.inputmap = {"p":self.p}
         
     def add_parents(self, parents):
         for parentitem in parents: self.parent.append(parentitem)
@@ -74,8 +77,8 @@ class Kbase:
         self.activ_new = set()          # set of newly activated concepts in this WM
         self.activ_qu = set()           # set of newly activated concepts based on question in this WM
         self.kbactiv_new = set()        # set of newly activated concepts in KB given this WM
-        self.kbact_pre = {3:set(),2:set(),1:set()}  # KB pre-activation with strengtht mapped
-        self.kbact_prestrong = set()     # KB pre-activation with strengtht 2 (concepts of knowledge of a general concept C(... ,x)  )
+        self.kbact_pre = {4:set(),3:set(),2:set(),1:set()}  # KB pre-activation with strengtht mapped
+        self.kbact_from = {} # source of activation
         self.mapped_Inpara = {}         # words already mapped to something within paragraph : concept index
         self.mapped_Already = {}        # at the point of mapping (in old WM!) remember what mappings are complete for each concept to be mapped.
                                         # do not copy to the new WM, it is not applicable there !! This is to avoid such a new mapping that has just been perfomed in ANOTHER wm.
@@ -84,6 +87,9 @@ class Kbase:
         self.vs_samestring = {}         # a map of mentalese string: all occurences in this wm (or in kb)
         self.branchvalue = int(1+gl.args.bmax/2) # evaluation (consistency) of branch. 
         self.inhibit_parent = {}        # (flattened) structures stored in KB that are inhibited to be a parent. kbindex:flattened inhibitor rule.
+        self.question_now = []          # list of WM concepts that are current questions
+        self.question_observe = {}      # (flattened) structures in KB of questions, for which we have a structure of spreading activation in question_spread. x in AND(x,y)p=question
+        self.question_spread = {}       # (flattened) structures in KB for which question based activation should be spread. kbindex:flattened spreading rule. y in AND(x,y)p=question
         
     def map_Attrib(self,concindex,char):    # read and return single letter attributes given in input (a/ good answer)
         conc = self.cp[concindex]
@@ -103,6 +109,7 @@ class Kbase:
             else:
                 for con in self.cp[forcon].wmuse:           # base concepts
                     m_general.update(gl.WM.cp[con].general) # base concepts' generals may become inhibitors
+                #    if gl.d==8: print ("SET GENERAL 4 based on",forcon,"update:",self.cp[forcon].general)
         return m_general
 
     def based_General(self,new,old):                        # return whether either conmcept is based on more general ones
@@ -154,8 +161,10 @@ class Kbase:
             new_general = self.get_General(conclist[:])     # concepts more general than the new one is based on
             if self.cp[sindex].wmuse!=[-1]:                 # old concept is reasoned
                 if len(set(self.cp[sindex].wmuse) & new_general) > 0:  # we used some more general concepts in old
+    #                if gl.d==8: print ("CONTRA 7 sindex",sindex,"wmuse sindex",set(self.cp[sindex].wmuse),"new conc general",new_general)
                     new_special = 1                         # enable such reasoning
-        if pmatch==1 and new_special==0:                    # p is matching and new concept is not based on special
+    #    if gl.d==8: print ("CONTRA 8 pmatsh",pmatch,"new_special",new_special,"conclist",conclist)
+        if new_special==0:                    # FIX /delete: pmatch==1 p is matching/  and new concept is not based on special
             return 1                                        # inhibit rerasoning
         return 0
 
@@ -177,22 +186,26 @@ class Kbase:
 
     def same_Use(self,sindex,conclist):                     # check that the concept to be reasoned is based on something new or not
         olduse = set(self.cp[sindex].wmuse)                 # the matching old concept's wmuse
+        for kbuo in self.cp[sindex].kb_use: olduse.add(-kbuo)
         newuse = set()
         sameuse = 1                                         # default is that reasoning gets inhibited because nothing new used
         for con in conclist:
-            if self.cp[con].wmuse == [-1]: con_use=[con]    # if this is input, use the concept itself
+            if self.cp[con].wmuse == [-1] : con_use=[con]    # if this is input, use the concept itself
             else: con_use = self.cp[con].wmuse[:]
-            if self.cp[con].wmuse == [-2]: con_use=[]    #parent of a reasoned concept
+            if self.cp[con].wmuse == [-2]: con_use=[]       #parent of a reasoned concept
+            if self.cp[con].wmuse == [-3]:                  # reasoned from KB only
+                con_use=[]
+                for kbu in self.cp[con].kb_use: con_use.append(-kbu)
             newuse = newuse | set(con_use)                  # add new eleemnts. full set of used concepts.
-    #    if gl.d==1: print ("SAMEUSE newuse",newuse,"olduse",olduse)
+    #        if gl.d==8: print ("SAMEUSE 4 newuse",newuse,"added",set(con_use),"con",con)
         if len(newuse-olduse)>0:                            # something new is used
-            if max(newuse) > sindex:                        # more recent input used than the matching old concept
-                sameuse=0                                   # significant new usage. Reasoning enabled.
-        #if gl.d==1: print ("SAMEUSE sindex",sindex,"olduse",olduse,"newuse",newuse,"SAMEUSE:",sameuse)
+    #FIX        if max(newuse) > sindex:                        # more recent input used than the matching old concept
+            sameuse=0                                   # significant new usage. Reasoning enabled.
+        if gl.d==8 and sameuse==0: print ("SAMEUSE 5 sindex",sindex,"olduse",olduse,"newuse",newuse,"diff",(newuse-olduse),"len",len(newuse-olduse),"conclist",conclist,"SAMEUSE:",sameuse)
         return sameuse
             
 
-    def search_fullmatch(self,pin,rel,parents,rule,samelist,conclist=[]):    # check whether the same concept was reasoned already WM
+    def search_fullmatch(self,pin,rel,parents,rule,samelist,conclist=[],kbuselist=[]):    # check whether the same concept was reasoned already WM
         found=0; s=timer()
         not_known=0
        # if conclist[0]>0:                                           # conclist is meaningful, in WM
@@ -222,16 +235,21 @@ class Kbase:
                                     if con.relation==3 and len(parents)==2 and len(con.parent)==2 and parents[0]!=con.parent[0]:
                                         allsame=0                   #direct index comparison
                             else:
-                                allsame=0
+                                allsame=0  
                             pari+=1
                         if allsame==1:
                             samelist.append(sindex)                 #remember that in sindex the concept matches
                             sameuse = self.same_Use(sindex,conclist[:])   # check whether new concept will use some new base
                             foundnow=self.check_Contradiction(sindex,rule,pin,conclist[:])    # check whether we have contradiction and resolve it
+                            if gl.d==8:print ("SEARCH FULL KBUSE SAME kbuselist:",kbuselist,"same with con:",sindex,"sameuse",sameuse,"conclist",conclist,"foundnow",foundnow,"parents",parents)
                             if foundnow == 2 or (foundnow==1 and sameuse==1):   # p matching and same base used
                                 found=1 ; foundsave=sindex
         if found==1:
             for basec in conclist: self.track_Concept(basec,"Attempted use inhibited in search_fullmatch. Inhibitor conc:"+str(foundsave)+" "+self.cp[foundsave].mentstr+" not known?:"+str(not_known)+" ",rule[0])
+            if not_known==0: 
+                gl.test.track(self,foundsave,"      STOP (FULLMATCH) matching: ",gl.args.tr_stop,rule="")
+            else: 
+                gl.test.track(self,foundsave,"      STOP (FULLMATCH) concept directly used known value=0. ",gl.args.tr_stop,rule="")
         gl.args.settimer("concep_902: search_fullmatch",timer()-s)
         return found    # TO DO: feed back allsame in found, to populate .general in reasoned concept in finaladd
 
@@ -268,7 +286,9 @@ class Kbase:
             #self.cp[new].reasonuse = gl.KB.cp[fromkb].reasonuse[:]    # FIX we dont want to clone reasonuse
             self.cp[new].rule_use = gl.KB.cp[fromkb].rule_use[:]
             self.cp[new].most_special_used = -gl.KB.cp[fromkb].most_special_used  # FIX
-            self.cp[new].kb_use.append(fromkb)          # FIX
+            if gl.KB.cp[fromkb].kb_use==[]:             # FIX
+                self.cp[new].kb_use = [fromkb]          # FIX: not append()
+            else: self.cp[new].kb_use = gl.KB.cp[fromkb].kb_use[:] # FIX total copy of kb_use
             gl.test.track_double(self,new,"   OVERRIDE (ADD) p="+str(self.cp[new].p)+" k="+str(self.cp[new].known)+" (old p="+str(oldp)+" k="+str(oldk)+")",gl.KB,fromkb," Based on earlier occurence: ",gl.args.tr_over)
             #if gl.KB.cp[fromkb].wmuse!=[-1]:                           # FIX do not clone wmuse
             #    self.cp[new].wmuse = gl.KB.cp[fromkb].wmuse[:]
@@ -285,6 +305,7 @@ class Kbase:
             if gl.WM.cp[fromwm].wmuse!=[-1]:
                 self.cp[new].wmuse = gl.WM.cp[fromwm].wmuse[:]
             else: self.cp[new].wmuse = [fromwm]
+            self.cp[new].kb_use = gl.WM.cp[fromwm].kb_use[:] # FIX total copy of kb_use
             self.cp[new].most_special_used = gl.WM.cp[fromwm].most_special_used  # FIX
             gl.test.track_double(self,new,"   OVERRIDE (ADD) p="+str(self.cp[new].p)+" k="+str(self.cp[new].known)+" (old p="+str(oldp)+" k="+str(oldk)+")",gl.WM,fromwm," Based on earlier occurence: ",gl.args.tr_over)
             
@@ -582,7 +603,7 @@ class Kbase:
             nextp=nextp+1
             
         fromc = db.cp[curri]
-        added=self.add_concept(fromc.p,fromc.relation,abovep,kbl=[curri],nknown=fromc.known,reason="REASONED IM ")
+        added=self.add_concept(fromc.p,fromc.relation,abovep,kbl=[curri],isinput=False,nknown=fromc.known,reason="REASONED IM ")
         if nextp>0 and nextp == len(db.cp[curri].parent):   # all parenmst are collected
             abovep=[]                                       # initialize above parent list                                                            
         abovep.append(added)                                        # added concept is a parent above, add to above parent list
@@ -614,20 +635,14 @@ class Kbase:
         self.cp.append(Concept(new_rel))                        #concept added
         self.ci = len(self.cp) - 1                              #current index
         self.thispara.append(self.ci)                           #note concept is in current paragraph
-   #     self.cp[self.ci].previous=self.ci-1                     #set previous
-    #    if self.ci>0:
-     #       if self.cp[self.ci-1].next==[]:
-      #          self.cp[self.ci-1].next.append(self.ci)         # set next                
         self.cp[self.ci].p = int(new_p)                         # set p value
         if isquestion==1: self.cp[self.ci].known=0              # set known=0 for questions
         elif nknown>=0: self.cp[self.ci].known=nknown                     # FIX3
         self.cp[self.ci].track = 0                              # set default tracking to NO        
         self.cp[self.ci].add_parents(new_parents)               # set parents
-   #     if gl.d==6: print ("ADDC ci",self.ci,"parenmt",self.cp[self.ci].parent)
         self.add_Allchild_parent()                              # fill allparent and allchild fields
         for par in self.cp[self.ci].parent:
             self.cp[self.ci].relevance.append(int(gl.args.rmax/2))   # add the relevance value for each parent
-  #          if gl.d==6: print ("ADDC ci 2",self.ci, "rel",self.cp[self.ci].relevance)
         if len(self.cp[self.ci].relevance)==0:                  # for words
             self.cp[self.ci].relevance.append(int(gl.args.rmax/2))
         self.cp[self.ci].kblink[:]=kbl[:]                       # set link to KB
@@ -661,7 +676,8 @@ class Kbase:
             gl.WM.kbact_pre[3].add(kbl[0])                      # set activation level of input. level is 3.shows that children need be activated.
             gl.WM.kbact_pre[kbl[0]]=set([0])                    # set activation level of input. this set of KB index:set 0 means that the previously added kbl[0] has no restriction for child activation.
                                                                 # if A(x,z) is preactivated from C(y,x), now we consider the activation of A(x,z) then it should be z only (not x) that we can use. So for A(x,z) we need to exlude x.
-            gl.act.activKB_Allchild(gl.KB,kbl[0],kbl[0],self,1,isinput) # recursively activate KB concepts based on occurence in WM (word etc) beyond relevance limit, in round=1
+            if isquestion==0:                                   # for questions, separate activation in activate_fromwords
+                gl.act.activKB_Allchild(gl.KB,kbl[0],kbl[0],self,1,isinput) # recursively activate KB concepts based on occurence in WM (word etc) beyond relevance limit, in round=1
             gl.test.track(gl.KB,kbl[0],"   ACTIV (ADD) KB new activated="+str(gl.WM.kbactiv_new-oldact),gl.args.tr_act,rule="")
         dbstr=" db="+str(self.this)
         mentalese=""
@@ -1028,12 +1044,11 @@ class Kbase:
             else: thisl.append(flitem)                          # collect this level
             count+=1
              
-    def pattern_Inhibit(self,db,cflat):                         # compare flattened parent conc with inhibit rule structures
-        match=False; irule_ment=""
-        for inhibrule in gl.KB.inhibit_parent:                      # all inhibit rules stored
-            inhib = gl.KB.inhibit_parent[inhibrule]                 # the flattened rule
+    def pattern_flatmatch(self,cflat,inhib):                # compare cflat and inhib flattened patterns
+        if 1==1:
+            match=False
             wordsmem={}; irule_ment=""
-        #    if gl.d==6: print ("PATTERN_INHIB conc=",cflat, "rule",inhib)
+        #    if gl.d==8: print ("PATTERN_SPREAD conc=",cflat, "rule",inhib)
             if len(inhib)==len(cflat):                              # inhibitor rule length equals this concept length (cflat)
                 rix=0; isrel=True; isword=False                     # isrel shows whether ritem (citem) is a relation number or not; isword whether it is word meaning (KB)
                 match=True
@@ -1061,10 +1076,29 @@ class Kbase:
                     if ritem=="P": isrel=True                       # next isrel may be true
                     if match==False: break
                     rix+=1
+        return match
+
+    def pattern_Inhibit(self,db,cflat):                         # compare flattened parent conc with inhibit rule structures
+        match=False; irule_ment=""; inhibrule=0
+        for inhibrule in gl.KB.inhibit_parent:                      # all inhibit rules stored
+            inhib = gl.KB.inhibit_parent[inhibrule]                 # the flattened rule
+            match = self.pattern_flatmatch(cflat,inhib)             # compare cflat and inhib flattened patterns
             if match==True:                                         # cflat is inhibited
                 irule_ment=gl.KB.cp[inhibrule].mentstr              # store the rule mentalese
-                break                                   # if cflat matches any inhibitor rule, return and ihnibit reasoning
-        return [match,irule_ment]
+                break                                               # if cflat matches any inhibitor rule, return and ihnibit reasoning. first match enough.
+        return [match,irule_ment,inhibrule]
+
+
+    def pattern_Spread(self,db,cflat):                         # compare flattened parent conc with =question rule structures
+        evermatch=False;  inhibrules=[]
+        for inhibr in gl.KB.question_spread:                    # in question_spread we have the structures y from AND(x,y)=question that are candidates of spreading activation
+            inhib = gl.KB.question_spread[inhibr]               # the flattened rule
+            match = self.pattern_flatmatch(cflat,inhib)         # compare cflat and inhib flattened patterns
+            if match==True:                                     # cflat is inhibited
+                evermatch=True
+                inhibrules.append(inhibr)                       # store the rule - several matches possible
+        return [evermatch,inhibrules]                           # return the full list of matching question spread patterns
+
         
     def pattern_Flat(self,db,flat,conci):                       # store flat version of concept structure (relations and word meanings)
         flat.append(db.cp[conci].relation)                          # flat structure starts with top level relation
@@ -1086,6 +1120,20 @@ class Kbase:
                         flat.append(db.cp[parent].kblink[0])            # the KB link of the word is added to flat, this must match
             flat.append("L")
             curplist=nextplist[:]
+        
+
+    def move_Question(self,kbpos):                          # populate the question and the question-spread rule inventory
+        rulcon = gl.KB.cp[kbpos]                            # this is used to spread activation from the question to certain structures
+        if len(rulcon.parent)==2:                               # AND(x,y) where x is the question, y is where to spread activation
+            que=rulcon.parent[0]                                # the question part
+            flat=[]                                             # flat version of rule
+            gl.KB.pattern_Flat(gl.KB,flat,que)                  # "flat" will get the flattened rule, question part       
+            gl.KB.question_observe[kbpos] = flat[:]             # the flat string mapped to the KB index on rulcon level    
+            que_spread=rulcon.parent[1]                         # the spread part
+            flat=[]                                             # flat version of rule
+            gl.KB.pattern_Flat(gl.KB,flat,que_spread)           # "flat" will get the flattened rule, spread-to part       
+            gl.KB.question_spread[kbpos] = flat[:]              # the flat string mapped to the KB index on rulcon level    
+            if gl.d==8: print ("MOVE_R =question itt:",kbpos,"rulestr:",gl.KB.cp[kbpos].rulestr,"que spread:",gl.KB.question_spread[kbpos],"Que now:",gl.KB.question_observe[kbpos])
             
     def move_rule(self,tf,ri,starti):           # if this is a rule then move it to KB
         moved=0
@@ -1103,11 +1151,13 @@ class Kbase:
                 except: gl.log.add_log(("ERROR in move_rule in conc.py: could not assemble rule string. KB index:",kblink[0]," WM index:",gl.WM.ci)) 
                 gl.WM.remove_concept()          # remove rule from WM
                 moved=1                         # note something was moved
-                if "=inhibit" in gl.KB.cp[kblink[0]].rulestr[0][-8:] :      # =inhibit rules are inhibited as reasoned parents
+                rulcon = gl.KB.cp[kblink[0]]
+                if "=inhibit" in rulcon.rulestr[0][-8:] :       # =inhibit rules are inhibited as reasoned parents
                     flat=[]                                                 # flat version of rule
                     gl.KB.pattern_Flat(gl.KB,flat,kblink[0])                # "flat" will get the flattened rule       
                     gl.KB.inhibit_parent[kblink[0]] = flat[:]               # the flat string mapped to the KB index       
- #                   if gl.d==6: print ("MOVE_R itt:",kblink,"rulestr:",gl.KB.cp[kblink[0]].rulestr,"flat rule:",flat)
+                if "=question" in rulcon.rulestr[0][-9:] :      # =question rules trigger spreading activation to matching concepts
+                    self.move_Question(kblink[0])               # question and spread-to rule populated
         return moved
         
 
@@ -1393,6 +1443,39 @@ class Kbase:
                 self.cp[thiscon].general.update(gener)  # update .general on wmuse concept
                 #if gl.d==4: print ("SPREAD *** GENERAL 9 here:",thiscon,"general:",self.cp[thiscon].general)
 
+    def use_m(self,db,con):
+        if db.name=="KB" and con>0: return -con    # transform con sign to minus (if needed)
+        else: return con                           # keep sign
+    
+    def set_Useall(self,db,pos,clist,kbuse,update=False):    # set the wmuse, kb_use, usedby and use_before fields  (+reasonuse, use_ever?)
+        # concepts in clist and kbuse are those from which we directly reason / copy / update the db:pos concept. So clist needs to be used to update pos: wmuse, kb_use, use_before etc.
+        print ("SET USEALL 0 clist",clist,"kb_use",kbuse)
+        flist=[]
+        for kbc in kbuse: flist.append(-kbc)            # if we have separate kbuse then put it together with clist. Minus shows KB.
+        for wmc in clist: 
+            if wmc>0: flist.append(wmc)                 # -3 may come in clist, we dont need that
+            if wmc<-3: flist.append(wmc)                # in KB
+        collect = set()                                 # collection of used concepts
+        for old in flist:                               # directly used concepts
+            odb=gl.WM                                   # gl.WM is the default odb
+            if old<0:                                   # a KB conncept
+                odb=gl.KB; old=-old                     # set these to KB
+            ocon=odb.cp[old]                            # the old concept that is used
+            if ocon.known>0:
+                if ocon.wmuse==[] or ocon.wmuse==[-1] or ocon.wmuse==[-2] or ocon.wmuse==[-3]:   # wmuse has no content
+                    if ocon.kb_use==[]:                 # kbuse has no content
+                        collect.add(self.use_m(odb,old))    # collect old itself as used concept 
+                    #print ("SET USEALL 1 wmuse no content. wmuse:",ocon.wmuse,"old",odb.name,old,"added:",self.use_m(odb,old))
+                else:
+                    collect.update(ocon.wmuse)          # collect entire wmuse list, it must be in WM of course.
+                for kbu in ocon.kb_use:
+                    if len(gl.KB.cp[kbu].use_ever)==0 or frozenset({-1}) in gl.KB.cp[kbu].use_ever:   # -1 means it was once an input, wmuse==[-1]
+                        collect.add(-kbu)                   # old kb_use item added, with minus sign
+                    else: 
+                        print ("SET USEALL 8 KB conc nem input!! kbu:",kbu,"frozen:",list(gl.KB.cp[kbu].use_ever)[0]) #ITT TARTOK elso use_ever mehet collect-be, tobbi meg use_everbe menjen?
+        print ("SET USEALL 9 wmuse or old added for pos:",db.name,pos,"collection:",collect)
+        return
+
     def copydata_KB(self,concid,newconid):           # copy concept fields from WM to the KB copy of the concept
         newwm = gl.KB                                       # the new database is KB
         oldwm = self
@@ -1520,6 +1603,12 @@ class Kbase:
         msg=""
         if ncon.p!=wmcon.p: msg=" PVALUE"
         if ncon.known!=wmcon.known: msg=msg+" KNOWN"
+        if "PVALUE" in msg or "KNOWN" in msg:           # any of these updated (below)
+            ncon.wmuse=wmcon.wmuse[:]                   # take wmuse from old, this is only valid now
+            ncon.kb_use=wmcon.kb_use[:]                 # take kb_use from old, this is only valid now
+            if len(ncon.wmuse)==0 or ncon.wmuse==[-1] or ncon.wmuse==[-2] or ncon.wmuse==[-3]:   # no info in wmuse
+                if odb.name=="KB" and len(ncon.kb_use)==0 :     # no info in kb_use
+                    ncon.kb_use=[old]                   # register old itself as the origin of new
         oldp=ncon.p
         ncon.p=wmcon.p                                  # update p etc with old values
         ncon.known=wmcon.known
@@ -1594,7 +1683,8 @@ class Kbase:
         if gl.KB.cp[old].known > gl.WM.cp[new].known:       # KB version is better known
             gl.WM.cp[new].known = gl.KB.cp[old].known       # copy known from KB
             gl.WM.cp[new].p = gl.KB.cp[old].p               # copy p from KB
-            
+            gl.WM.cp[new].kb_use = gl.KB.cp[old].kb_use[:]  # override kb_use FIX !!! 04.15
+            if gl.WM.cp[new].kb_use==[]: gl.WM.cp[new].kb_use=[old]   # if empty use old itself
         msg="";msg2=" orig values:"
         if gl.KB.cp[old].known != new_known: 
             msg2=msg2+" k="+str(new_known)
@@ -1745,7 +1835,7 @@ class Kbase:
         print (wminfo)
         gl.log.add_log((wminfo))
         for i,conc in enumerate(wmitem.cp): 
-            concinfo = str(i)+ " "+conc.mentstr+" p="+str(conc.p)+" parents="+str(conc.parent)+" known="+str(conc.known)+" r="+str(conc.relevance)+" general="+str(conc.general)+" wmuse="+str(conc.wmuse)+" kb_use="+str(conc.kb_use)+" kblink:"+str(conc.kblink)+" same:"+str(conc.same)+" most sp:"+str(conc.most_special_used)
+            concinfo = str(i)+ " "+conc.mentstr+" p="+str(conc.p)+" parents="+str(conc.parent)+" known="+str(conc.known)+" r="+str(conc.relevance)+" general="+str(conc.general)+" wmuse="+str(conc.wmuse)+" kb_use="+str(conc.kb_use)+" use_ever="+str(conc.use_ever)+" reasonuse="+str(conc.reasonuse)+" kblink:"+str(conc.kblink)+" same:"+str(conc.same)+" most sp:"+str(conc.most_special_used)
             print (concinfo)
             gl.log.add_log((concinfo))
  
@@ -1779,22 +1869,27 @@ class Kbase:
                                                                 # {"r":1}
                                                                 # {"p":1, "r":3}
                                                                 # {"p":3}
-        if gl.d==7: print ("PARSE_INPUTVALUES 1. istr=",istr,"ivalues",ivalues)
+        
         istr = istr[1:len(istr)]
         for i in range(0, len(istr)):
             if (istr[i] == ')' or istr[i] == ','):
                 istr = istr[0:i]
                 break
         value_list = istr.split('.')
+        
+        if (value_list[0].find('=') == -1):
+            raise Exception("Input syntax wrong. Correct: .p=1 (parse_Inputvalues)")
+            return
+        
         for i in range(0, len(value_list)):
             element = value_list[i].split('=')
             val = element[1]
-            for j in range(0, len(val)):
-                if (val[j].isnumeric() == False):
-                    val = val[0:j]
-                    break
-            ivalues[element[0]] = int(val)
-        if gl.d==7: print("PARSE_INPUTVALUES 2 ivalues=",ivalues)
+            try:
+                value = int(val)
+            except:
+                raise Exception("Input value must be a number (parse_Inputvalues)")
+                return
+            ivalues[element[0]] = value
         
     def get_Inputvalues(self,aStr,ivalues):              # call the function to store values in the input, from aStr, in the dictionary ivalues      
         if gl.d==7: print ("GET_INP 1. aStr=",aStr,"ivalues",ivalues)
@@ -1808,10 +1903,42 @@ class Kbase:
                             self.parse_Inputvalues(istr,ivalues)  # istr has now the right format ! Now ivalues need to be populated.
                             break
 
-    def store(self,ivalues):    # store values in concept   "p":3, "r":1,  
+    def store_Inputvalues(self,ivalues):    # store values in concept   "p":3, "r":1, provided in ivalues by parse_Inputvalues 
         for valuestr in ivalues:
-            if valuestr=="p": gl.WM.cp[gl.WM.ci].p = ivalues["p"]
-            if valuestr=="k": gl.WM.cp[gl.WM.ci].known = ivalues["k"]
+            if valuestr=="p":
+                if (ivalues["p"] >= 0 and ivalues["p"] <= gl.args.pmax):
+                    gl.WM.cp[gl.WM.ci].p = ivalues["p"]
+                else:
+                    raise Exception("Invalid value of p (store_Inputvalues)")
+                    return
+            elif valuestr=="c":
+                if (ivalues["c"] >= 0 and ivalues["c"] <= gl.args.cmax):
+                    gl.WM.cp[gl.WM.ci].c = ivalues["c"]
+                else:
+                    raise Exception("Invalid value of c (store_Inputvalues)")
+                    return
+            elif valuestr=="g":
+                if (ivalues["g"] >= 0 and ivalues["g"] <= gl.args.gmax):
+                    gl.WM.cp[gl.WM.ci].g = ivalues["g"]
+                else:
+                    raise Exception("Invalid value of g (store_Inputvalues)")
+                    return
+            elif valuestr=="k":
+                if (ivalues["k"] >= 0 and ivalues["k"] <= gl.args.kmax):
+                    gl.WM.cp[gl.WM.ci].known = ivalues["k"]
+                else:
+                    raise Exception("Invalid value of k (store_Inputvalues)")
+                    return
+            elif valuestr=="r":
+                if (ivalues["r"] >= 0 and ivalues["r"] <= gl.args.rmax):
+                    for i in range(0, len(gl.WM.cp[gl.WM.ci].parent)):
+                        gl.WM.cp[gl.WM.ci].relevance.append(ivalues["r"])
+                else:
+                    raise Exception("Invalid value of r (store_Inputvalues)")
+                    return
+            else:
+                raise Exception("This attribute does not exist: "+valuestr+" (store_Inputvalues)")
+                return
             
                     
     def read_concept(self,attrList,isquestion,isparent=-1,istrack=0):     # recursive function to read concepts from Mentalese input
@@ -1848,6 +1975,7 @@ class Kbase:
                         wl_ind = gl.WL.add_word(ss,g_value)
                     thisparent = self.add_concept(gl.args.pmax,1,[],[wl_ind],g_value,isquestion=isquestion,reason="INPUT ")   #parent is empty, KB link is wl_ind
                 #    print ("READ CONC 1 return !!!",gl.WM.ci,gl.WM.cp[gl.WM.ci].mentstr)
+                    self.store_Inputvalues(ivalues)   # store values like .p=3.r=1 in the concept added now
                     return thisparent
                 else:                                       #if the concept is not a single word, register the embedded concept as parent, and read the next parent
                     attrList[0]=str(aStr[actPos+1:]).strip()
@@ -1870,6 +1998,7 @@ class Kbase:
                         wl_ind = gl.WL.add_word(ss,g_value)
                     thisparent = self.add_concept(gl.args.pmax,1,[],[wl_ind],g_value,isquestion=isquestion,reason="INPUT ")   #parent is empty, KB link is wl_ind
                 #    print ("READ CONC 2 return !!!",gl.WM.ci,gl.WM.cp[gl.WM.ci].mentstr)
+                    self.store_Inputvalues(ivalues)   # store values like .p=3.r=1 in the concept added now
                     return thisparent
                 else:                               #if the concept is not a single word, register the embedded concept as parent, and read the next parent
                     p_result = None
@@ -1927,6 +2056,7 @@ class Kbase:
                         self.cp[newindex].g=g_result[0]
                     self.cp[newindex].track=istrack             # track concept if needed
                 #    print ("READ CONC 3 return !!!",gl.WM.ci,gl.WM.cp[gl.WM.ci].mentstr)
+                    self.store_Inputvalues(ivalues)   # store values like .p=3.r=1 in the concept added now
                     return newindex
                 
             actPos=actPos+1

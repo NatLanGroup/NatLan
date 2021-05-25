@@ -1,14 +1,22 @@
 
 // Regression tests of KB reasoning fixes. 
 
+m/ F(dummy)
+m/ A(F(%1,%2,-ing),%2)p=inhibit
+m/ A(F(F(%1,%2,-ing),%3,-ing),%2)p=inhibit
+m/ F(X(F(%1,%2),%3),%2)p=inhibit
+m/ F(X(F(%1,NOT(%2)),%3),NOT(%2))p=inhibit
+m/ F(F(%1,%2),%2)p=inhibit
+m/ F(F(%1,NOT(%2)),%2)p=inhibit
+m/ F(F(%1,%2),NOT(%2))p=inhibit
+m/ A(F(%1,%2,-ing),NOT(%2))p=inhibit
+
 m/ IM(C(%1,%2)p=p0,P(%1,%2))p=pide1
 
 // KB reasoning for C,D relation
 // KB reasoning for uniconcept. first case: self.kbactiv_limit = [0,2,2,1,0]
 // second case: needs to have self.kbactiv_limit = [0,3,2,1,0] -  F(?,strong) A(?,run) T(?)	are not fully working now.
 // F(Joe,?) works only because of question activation.
-
-m/ F(dummy)
 
 m/ C(Joe,policeman)
 m/ F(policeman,nice)
@@ -31,7 +39,7 @@ m/ P(policeman,hat)    // this will not activate C(Joe,policeman) we have no act
 m/ T(?)				a/  T(Mary)
 
 // a few cases with branching
-m/ C(he,person)r=4
+m/ C(he,person).r=4
 m/ C(girl,person)
 
 m/ A(Joe,read)
@@ -40,5 +48,5 @@ m/ A(he,eat)
 m/ A(?,eat)			a/ A(he,eat) A(Mary,eat)
 				    // A(Joe,eat) also shown from branch=2 which is a wrong branch
 
-// 1296 attempted. 37 concepts reasoned
+// 1352 attempted. 32 concepts reasoned
 

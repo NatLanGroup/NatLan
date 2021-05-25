@@ -160,7 +160,13 @@ class Branch:           #branching in WM
             mapconcept = gl.WM.add_concept(gl.KB.cp[maprule].p, 3, [self.wmpos,currentword])        # mapping added to WM D()
             gl.WM.mapped_Inpara[gl.WM.cp[self.wmpos].mentstr]=currentword   # note that the concept on wmpos was mapped to currentword within paragraph
             gl.WM.cp[mapconcept].wmuse=[-1]                             #wmuse for a mapping is  -1 like for concepts that were in the input
-            gl.act.activate_inKB(gl.WM,currentword,1,True)              # activate KB based on the word mapped to. activation round=1.
+       #     gl.act.activate_inKB(gl.WM,currentword,1,True)              # activate KB based on the word mapped to. activation round=1.
+            kbl=gl.WM.cp[currentword].kblink[:]
+            if len(kbl)>0:
+                oldact=set(gl.WM.kbactiv_new)
+                gl.act.activKB_Allchild(gl.KB,kbl[0],kbl[0],gl.WM,1,True)    # activate KB based on the word mapped to. activation round=1.
+                if len(gl.WM.kbactiv_new-oldact)>0:
+                    gl.test.track(gl.KB,kbl[0],"   ACTIV (MAP) KB new activated="+str(gl.WM.kbactiv_new-oldact),gl.args.tr_act,rule="")
             if gl.d==1: print ("ADD MAPPING currentw:",currentword,gl.WM.cp[currentword].mentstr,"KB activ:",gl.WM.kbactiv)
             gl.log.add_log(("ADD BRANCH: MAPPING: old wm:",oldwm.this," old wm concept:",ruleinwm," mentalese:",oldwm.cp[ruleinwm].mentstr," new WM:",gl.WM.this," WM value=",gl.WM.branchvalue," mapped concept:",self.wmpos," ",gl.WM.cp[self.wmpos].mentstr," bonus=",bonus," mapped to:",gl.WM.cp[mapconcept].mentstr))
             gl.WM = oldwm                                               #COMP compatibility, set back original wm

@@ -36,15 +36,15 @@ class Arguments:
         self.tr_over = 1        # track limit for OVERRIDE p, known overrides
         self.tr_inp = 1         # track limit for INPUT
         self.tr_match = 4       # track level for MATCHING
-        self.tr_att = 2         # track level for ATTEMPT
+        self.tr_att = 1         # track level for ATTEMPT
         self.tr_attcd = 2       # track level for ATTEMPT CD
-        self.tr_dis = 2         # track level for DISABLE
-        self.tr_stop = 2        # track limit for STOP stopping / inhibiting of add concept. (usually reason.)
+        self.tr_dis = 1         # track level for DISABLE
+        self.tr_stop = 1        # track limit for STOP stopping / inhibiting of add concept. (usually reason.)
         self.tr_addkb = 3       # track limit for ADDKB
         self.tr_add = 3         # track additions in WM ADD
         self.tr_finaladd = 3    # track additions in WM ADD (FIN) from finaladd_concept
         self.tr_set_spec = 2    # SET_SPEC most_special_use got set
-        self.tr_act = 2         # ACTIV (KB) activated concepts in KB
+        self.tr_act = 1         # ACTIV (KB) activated concepts in KB
         
 
       
@@ -96,7 +96,7 @@ class Arguments:
             [[0,0,0,0,1],[1,1,1,1,2],[2,2,2,2,2],[2,3,3,3,3],[3,3,4,4,4]],
             [[0,0,0,0,0],[1,1,1,1,1],[2,2,2,2,2],[3,3,3,3,3],[4,4,4,4,4]]]
 
-        self.pmerge = [[0,1,1,1,1],[1,1,2,2,2],[1,2,2,2,3],[1,2,2,3,3],[1,2,3,3,4]]     # merge two p values equally known
+        self.pmerge = [[0,1,1,1,2],[1,1,2,2,2],[1,2,2,2,3],[1,2,2,3,3],[2,2,3,3,4]]     # merge two p values equally known
 
         self.excep_final = [[0,0,1,1,1],[1,1,1,2,2],[2,2,2,2,3],[3,3,3,3,4],[4,4,4,4,4]]    # final exception value from pe_final and pdiff
 

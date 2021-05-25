@@ -36,7 +36,7 @@ def process_testinput (tf):                     # run mentalese comprehension, i
         while len(tfment[0])>3 and counter<20:     # counter protects against endless loop
             gl.WM.branch_read_concept(starti,tfment,tf,ri) # store concepts in all WMs
             counter+=1
-        if counter == 100: 
+        if counter == 20: 
             gl.log.add_log(("ERROR: Invalid input row provided, endless loop stopped. row=",ri," ",tf.mentalese[ri]))
             break
         if starti > 0 and starti!=gl.WM.ci:         # if something read: reason on new concept, but vs_perform_reason will reason on reasoned concepts
@@ -49,7 +49,7 @@ def process_testinput (tf):                     # run mentalese comprehension, i
 
 # GLOBAL VARIABLES
 
-gl.d=7                      # debugging
+gl.d=9                      # debugging
 gl.args = gl.Arguments()    # initialize global parameters
 gl.args.debug = 1           # debug mode
 gl.error = 0                # error counter
