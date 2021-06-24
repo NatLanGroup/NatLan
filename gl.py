@@ -37,13 +37,13 @@ class Arguments:
         self.tr_inp = 1         # track limit for INPUT
         self.tr_match = 4       # track level for MATCHING
         self.tr_att = 1         # track level for ATTEMPT
-        self.tr_attcd = 2       # track level for ATTEMPT CD
+        self.tr_attcd = 1       # track level for ATTEMPT CD
         self.tr_dis = 1         # track level for DISABLE
         self.tr_stop = 1        # track limit for STOP stopping / inhibiting of add concept. (usually reason.)
         self.tr_addkb = 3       # track limit for ADDKB
         self.tr_add = 3         # track additions in WM ADD
         self.tr_finaladd = 3    # track additions in WM ADD (FIN) from finaladd_concept
-        self.tr_set_spec = 2    # SET_SPEC most_special_use got set
+        self.tr_set_spec = 1    # SET_SPEC most_special_use got set
         self.tr_act = 1         # ACTIV (KB) activated concepts in KB
         
 

@@ -48,5 +48,7 @@ m/ A(he,eat)
 m/ A(?,eat)			a/ A(he,eat) A(Mary,eat)
 				    // A(Joe,eat) also shown from branch=2 which is a wrong branch
 
-// 1352 attempted. 32 concepts reasoned
+// 1422 attempt  37 reasoned
+
+
 

@@ -1,30 +1,28 @@
 import sys, gl, conc, wrd, testing, reason, branch, activ
 from timeit import default_timer as timer
 
-# VS MIGRACIO, VERSIONS BEVEZETESE
-# 10. KESZ: general feldolgozas - atrakni  rogton add_concept utan ugyanugy mint a same feldolgozast
-# PARAGRAPH mozgatasa KB-be:
-# 12. KESZ: a bekezdes vegenel a branch-ek mindegyikenek törlése a legjobb kivételével.
 # MAPPING:
 # 13. KESZ: utolso conceptre mappeles +1 pontot kapjon
 # 14. KESZ: a C(he,person) rule-lal valo konzisztencia nincs elegge juztalmazva?   wmuse-ba betenni a D(he,ploceman) conceptet !!!!
-# REASONING WITH KB:
-# 16. KESZ: KB-ben levo aktivalt concepttel reasoneljen. (CD reasoning)
-# 22. KESZ a KB-ben most mar van kerdes alapu aktivalas.
-# 24. KESZ:  Minden aktivált conceptre,  ujra kell fusson a createconceptrules és a convert_kbrules. 
-# 25. KESZ: kb_rules töltése a vs_perform_reasonben minding megtörténik KB-ben is. A reasoning (UniConcept) KB esetben is megy.
+# REASONING WITH KB: generate_Multiconcept does not work yet with KB.
+# reverse_Drel not called in case of KB based reasoning
+
 # KESZ: track.txt : /TRACK es /END koze megy a trackkkelendo concept. Ha darab akkor *darab szintaxissal.
 
 # lookup_Rtable: kp_pide2 and similar kp_xxx known tranformation tables are not yet used (only in UniConcept)
-
-# AND()  Multiconcept reasoning not yet working in KB
-# reverse_Drel not called in case of KB based reasoning
 
 # regtest.txt small error in evaluation: // A(Joe,eat) also shown from branch=2 which is a wrong branch
 # regetst2 not activated: P(Q(bird,all),head).  (if +1 set for P in kbactiv_addone). Activation needed from two sides, bird and head !!!!!!!!!!!
 
 # PRE-ACTIVATION and spreading activation
 # branch.py copy_WMfields does not copy the new dict kbact_pre.  So this must be fixed.
+
+# use_ever : shows in KB, what was ever used to reason this concept. If some of the used concepts change, we should be able to reason again! Based on same concepts !
+# 1) when a KB concepts gets p-update, we can crerate a new KB concept (invalidate the old one by deletinmg from the parents' child list)  ->  The reasoning will be based on different concepts.
+# 2) for smaller updates - we can note for each KB concept addition and update, how big was the KB then. For a use_ever check we can use this to see if some of the used was updated since last reeasoningh!
+
+# KESZ: set_Use2 helyesen kezeli a wmuse és a kb_use beállítást !!  (lehetne még több helyről hívni, pl generate_IMconcept típusú reasoningnél is.)
+
 
 def process_testinput (tf):                     # run mentalese comprehension, input is the Testinput object
     for ri in range(len(tf.mentalese)):         # take mentalese items (rows in test input file)
@@ -49,7 +47,7 @@ def process_testinput (tf):                     # run mentalese comprehension, i
 
 # GLOBAL VARIABLES
 
-gl.d=9                      # debugging
+gl.d=12                   # debugging
 gl.args = gl.Arguments()    # initialize global parameters
 gl.args.debug = 1           # debug mode
 gl.error = 0                # error counter
@@ -98,7 +96,7 @@ if gl.args.argnum == 2:         # an argument is needed , .txt file, which has t
     print ("TIME USAGE REPORT IN BPS FOLLOWS.",end-s, " s total run time.")
     for t in sorted(gl.args.timecheck,reverse=False):
         print (t, int(gl.args.timecheck[t]*10000/(end-s)))
-        
+              
     gl.test.check_result()                  # compare _base to _result file
     gl.log.logf.close()                     # close log file
     gl.test.process_logfile()               # create evaluations, reports based on log file

@@ -1,7 +1,17 @@
 // Regression tests 2 of KB reasoning fixes.
-m/ IM(IM(%1,%2),%2)p=im
 
 m/ F(dummy)
+m/ A(F(%1,%2,-ing),%2)p=inhibit
+m/ A(F(F(%1,%2,-ing),%3,-ing),%2)p=inhibit
+m/ F(X(F(%1,%2),%3),%2)p=inhibit
+m/ F(X(F(%1,NOT(%2)),%3),NOT(%2))p=inhibit
+m/ F(F(%1,%2),%2)p=inhibit
+m/ F(F(%1,NOT(%2)),%2)p=inhibit
+m/ F(F(%1,%2),NOT(%2))p=inhibit
+m/ A(F(%1,%2,-ing),NOT(%2))p=inhibit
+
+m/ IM(IM(%1,%2),%2)p=im
+
 m/ F(boy,nice)
 m/ P(boy,bike)
 m/ C(boy,person)
@@ -16,6 +26,7 @@ m/ P(you,bike)
 m/ C(Jim,you)
 
 m/ C(Bill,boy)
+// C(Bill,person)
 
 m/ C(roller,bike)
 m/ P(?,bike)		a/ P(boy,bike) P(girl,bike) P(Jim,bike) P(Joe,bike) P(you,bike) P(Bill,bike)
@@ -32,7 +43,7 @@ m/ P(Q(duck,all),head)?			a/ P(Q(duck,all),head).p=4
 
 m/ C(sparrow,bird) 
 m/ P(Q(sparrow,all),head)?		a/ P(Q(sparrow,all),head)
-// self.kbactiv_addone =   { 4:{1:1}, 11:{1:0},  11:P() esetén +0 kell különben nem aktiválja hogy P(Q(bird,all),head).  KÉTIRÁNYÚ AKTIVÁLÁS KELL!! bird és head felől !!!!
+// self.kbactiv_addone =   { 4:{1:1}, 11:{1:0},  11:P() eseten +0 kell kulonben nem aktivalja hogy P(Q(bird,all),head).  ketirnyu aktivalas
 
 m/ P(Q(F(snake,long),all),head)
 m/ C(eel,snake)
@@ -68,10 +79,12 @@ m/ A(boy,run)
 m/ F(boy,fast)?					a/ F(boy,fast).p=4
 m/ IM(A(boy,eat),F(boy,hungry))
 
+// F(person,hungry)
+
 m/ A(boy,eat)
 m/ F(boy,hungry)?				a/ F(boy,hungry).p=4
 m/ F(Bill,hungry)?				a/ F(Bill,hungry).p=4
 // F(Bill,big)
 
-//  1074 attempted, 30 concepts reasoned
+ //  1089 attempted, 27 concepts reasoned
 

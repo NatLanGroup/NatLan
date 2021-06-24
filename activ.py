@@ -91,29 +91,42 @@ class Activate:
                     question_flat = []                                  # this will hold the flattened current question
                     gl.WM.pattern_Flat(gl.WM,question_flat,question)    # the current question gets flattened
                     match = gl.KB.pattern_flatmatch(question_flat,flatim) # check that a question matches the implication, b in IM(a,b)
-                #    if gl.d==8: print ("SPREAD IM:",question,implic,"match",match)
-                    if match:
-                        if gl.d==8: print ("SPREAD MATCH !!:",coni,question)
+                    if match: 
+                        act=True                                # activate coni
+                        gl.test.track(db,coni,"   ACTIV (SPREAD_1) triggered. IM concept implication matched question: "+str(question)+" ",gl.args.tr_act,rule="")
+                        break
             flat=[]                             
             db.pattern_Flat(db,flat,coni)                       # store flat version of concept into flat
             spread_match=db.pattern_Spread(db,flat)             # compare flat (coni) to all stored patterns of spreading structures (based on questions)
-            if spread_match[0]==True:                           # coni matches a p=question spreading pattern_Flat
-                for kb_que_rule in spread_match[1]:                   # the matching =question rule in KB. several matches possible.
+            if act==False and spread_match[0]==True:                        # coni matches a p=question spreading pattern_Flat
+                if gl.d==11: print ("SPREAD ACT 6 coni",db.name,coni,"matcvhing rules list",spread_match[1])
+                for kb_que_rule in spread_match[1]:                         # the matching =question rule in KB. several matches possible.
+                    toact = gl.KB.question_spread[kb_que_rule]              # the flattened b from the rule AND(a,b). This needs to be activated.
+                    cmap={}                                                 # %1 %2 in rule mapped to the words in coni
+                    gl.KB.pattern_flatmatch(flat,toact,cmap)                # we know that flat and toact match. But we call this again to fill cmap!!
                     related_question = gl.KB.question_observe[kb_que_rule]  # the first part of the rule, the related question to this match, flattened
                     for question in gl.WM.question_now:                     #  questions at hand
                         question_flat = []                                  # this will hold the flattened current question
-                        gl.WM.pattern_Flat(gl.WM,question_flat,question)    # the current question gets flattened
-                
+                        gl.WM.pattern_Flat(gl.WM,question_flat,question)    # the current question gets flattened                
                         if len(related_question) == len(question_flat):     # these two need to match in order to spread the activation
-                            match = gl.KB.pattern_flatmatch(question_flat,related_question)   # if they match, this spreading is relevant and should be carried out
+                            qmap={}                                         # %1 %2 in rule mapped to the words in question
+                            match = gl.KB.pattern_flatmatch(question_flat,related_question,qmap)   # if they match, this spreading is relevant and should be carried out
                                                                         # limitation (TO DO): we don't check yet if %1 %2 are the same in coni as in the current question.
                             if match:                                       # spread activation
+                                if gl.d==11: print ("SPREAD ACT 9 coni",db.name,coni,"match",match,"question part in rule","none","current WM question",question,question_flat,"qmap",qmap,"cmap",cmap)
+                                words_same=True
+                                for wildcard in qmap:                       # %1 %2 etc we had in qmap, mapped to actual words in the question
+                                    if wildcard in cmap:                    # the same %x wildcard occurs in coni conbcept to be activated according to the rule
+                                        if qmap[wildcard]==cmap[wildcard]:  # the same word denoted in both question and coni by the same %x wildcard
+                                            print ("SAME in SPREAD!!!! wildcard qm cm",wildcard,qmap[wildcard],cmap[wildcard])
+                                        else:
+                                            if cmap[wildcard] in gl.KB.cp[qmap[wildcard]].general:  # more general in coni, this is also fine, count as if it was the same  (KB because these are words)
+                                                print ("GENREAL in SPREAD!!!! wildcard qm cm",wildcard,qmap[wildcard],"general",gl.KB.cp[qmap[wildcard]].general)
+                                         #ITT TARTOK, működik, ezzel beáéllítható az act=True  .  még hozzá lehet tenni: gl.KB.cp[qmap[wildcard]].same SAME !!!!
                                 act=True
-                                if gl.d==8: print ("!!!@@@ TRUE !!! ACTKB 9 level 1 pre-activate:",coni,gl.KB.cp[coni].mentstr,"spread_match",spread_match[0],"KB rule:",spread_match[1],"question related:",related_question,"curr que:",question)
+                                gl.test.track(db,coni,"   ACTIV (SPREAD_2) triggered based on =question rule. matched question: "+str(question)+" ",gl.args.tr_act,rule=str(kb_que_rule))
                                 break
                     if act: break                                           # first match enough for activation
-                            # TO DO? record spread_From info? what would that be??                        
-            # ITT TARTOK: 105-et kell aktiválni. 104 aktiválása során 104-et question_now-be kell tenni, de ehhez WM-be kell copizni. Utana a fenti IM ág kezeli majd.
         return act
                  
     def activKB_Allchild(self,db,start,curri,wmdb,around,isinput,nextch=0,isquestion=False):                 #nextp fixed recursive activation of curri and all children, used in KB

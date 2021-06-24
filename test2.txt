@@ -3,13 +3,13 @@
 m/ F(dummy)
 // IM(A(F(%1,%2),%3),IM(F(%1,%2),A(%1,%3)))p=pide1
 
-e/ The big head of animals live long.  		m/ A(P(animal,F(head,big).r=1).p=1.r=3,F(live,long)).p=3
-												// C(dog,animal)
-e/ A dead animal does not live.                 // A(F(animal,dead),NOT(live))
+e/ The big head of animals live long.  		// A(P(animal,F(head,big).r=1).p=1.r=3,F(live,long)).p=3
 
-m/ C(elephant,animal).p=1.r=2.k=7.g=0.t=5    //sok paraméter tesztelése -> OK
-m/ A(Q(three, people),run.t=1).known=1	     //sima szón NEM működik, hosszabb paraméternévvel OK
-m/ A(F(animal,dead),NOT(live).true=1)	     //OK
+m/ A(animal.r=0,run)
+
+// C(elephant,animal).p=1.r=2.k=7.g=0.t=5    //sok paraméter tesztelése -> OK
+// A(Q(three, people),run.t=1).known=1	     //sima szón NEM működik, hosszabb paraméternévvel OK
+// A(F(animal,dead),NOT(live).true=1)	     //OK
 
 
 							
@@ -17,8 +17,5 @@ m/ A(F(animal,dead),NOT(live).true=1)	     //OK
 //A függvény hívása miatt egy szón nem érzékeli a paramétereket
 //A függvény a ".nev=5" felépítésre épít, ha így jelenik meg, akkor az ivalues-ba a helyes paraméterek és értékek kerülnek
 //A függvény arra is épít, hogy conceptet mindig , vagy ) karakter zár
-
-
-
 
 

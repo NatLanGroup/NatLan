@@ -379,7 +379,7 @@ class Testinput:
                 brow+=1
             self.resultf.close()
             self.basef.close()
-        except: message = "ERROR in RESULT CHECK, probably _base file not found"
+        except: message = "modositva33 ERROR in RESULT CHECK, probably _base file not found"
         if diff==0 and notf==0: alleval=" ALL OK"
         else: alleval=""
         if "ERROR" in message: print (message)
@@ -468,6 +468,7 @@ class Testinput:
             numb= row[0:spac]                           # row number
             ment= row[spac+1:row.find(" ",spac+1)]      # mentalese
             pval = row[row.find("p=")+2:row.find(" ",row.find("p=")+1)]   # p= value
+        #    print ("LOGKB row",row,"pval",pval)
             know = row[row.find("known=")+6:row.find(" ",row.find("known=")+1)]   # known= value
             logfkb.append([]); rowi=len(logfkb)-1       # logfkb has items corresponding to the current KB
             logfkb[rowi]={"prval":(str(rowi)+" p="+pval+" k="+know+" "+ment)}  # logfkb items are lists of dicts. prval is the printable value for the KB row.
@@ -608,6 +609,7 @@ class Testinput:
     def process_logfile(self):                                  # read logfile.txt and logfile_base.txt and evaluate them
         success=self.read_logfile("logfile.txt",self.logrow)                # read logfile into self.logrow
         if success==1:
+            print ("PROC LOGFILE call log_KB.")
             self.log_KB(self.lognewkb,self.logrow)                          # process the KB content of the current log file, "lognew"
         success=self.read_logfile("logfile_base.txt",self.baselogrow)       # read earlier logfile into self.baselogrow
         if success==1:                                                      # if we have an earlier log file
