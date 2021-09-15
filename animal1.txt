@@ -2,6 +2,7 @@
 
 m/ F(dummy)
 m/ A(F(%1,%2,-ing),%2)p=inhibit
+m/ A(F(%1,%2,-ing),%2,R(%3,%4))p=inhibit		// HIBA, nem tiltja le! :  129 MORE reason: p=4 A(F(dog,move,-ing),move,R(by,themselves))
 m/ A(F(F(%1,%2,-ing),%3,-ing),%2)p=inhibit
 m/ F(X(F(%1,%2),%3),%2)p=inhibit
 m/ F(X(F(%1,NOT(%2)),%3),NOT(%2))p=inhibit
@@ -35,8 +36,12 @@ m/ A(dog,live)?									a/ A(dog,live).p=0
 e/ An animal that lives is not dead.            m/ F(A(animal,live),NOT(dead))
 e/ An animal that is not dead lives.            m/ A(F(animal,NOT(dead)),live) 
 
-e/ Living animals move.                         m/  A(F(animal,live,-ing),move) 
-e/ Moving animals live.                         m/  A(F(animal,move,-ing),live)
+// exception for A(animal,live) must be increased because of A(F(animal,dead),NOT(live))
+
+e/ Animals move.								m/ A(animal,move)
+e/ Living animals move.                         m/ A(F(animal,live,-ing),move) 
+e/ Moving animals live.                         m/ A(F(animal,move,-ing),live)
+e/ Animals move by themselves.                  m/ A(animal,move,R(by,themselves))   
 m/ A(bat,move)
 m/ A(bat,live)?									a/ A(bat,live).p=2
 m/ C(bat,animal)
@@ -45,7 +50,63 @@ e/ Dead animals do not move.                    m/ A(F(animal,dead),NOT(move))
 
 m/ A(dog,move)?									a/ A(dog,move).p=0
 
-// 11440 attempted 70 reasoned  10 sec
+// 9119 attempted kb. 73 reasoned  8 sec
+
+e/ Animals eat.                                 m/  A(animal,eat)
+e/ Animals grow.                                m/  A(animal,grow)
+e/ Animals have babies.                         m/  A(animal,I(have,baby))
+m/ IM(A(%1,eat),C(%1,animal))p=pide1            // A(animal,eat) -> induction:  if sthing eats, it is an animal. 
+m/ IM(A(%1,grow),C(%1,animal))p=pide1           // IM(AND(A(%1,%2)p=p1,A(%3,%2)p=p2),C(%1,%3))p=c_induction  will have the same effect as this rule. So induction is enough instead of the rules. (At a later stage, even the rule can be induced, that is a different type of induction.)
+m/ IM(A(%1,I(have,baby)),C(%1,animal))p=pide1   // 
+e/ Animals can move, eat and grow.              m/  A(animal,Q(AND(move,eat,grow),can))
+e/ Things that are not alive cannot do any of these things. m/  F(A(thing,I(Q(do,can,not),P(Q(thing,s,these),any))),NOT(alive))
+m/ IM(F(%1,NOT(alive)),A(%1,NOT(live)))p=pide1  // If something is alive it means it lives.
+m/ IM(F(%1,alive),A(%1,live))p=pide1
+m/ IM(A(%1,NOT(eat)),F(%1,NOT(alive)))p=pide1
+m/ IM(F(%1,NOT(alive)),A(%1,NOT(eat)))p=pide1
+m/ IM(F(%1,NOT(alive)),A(%1,NOT(grow)))p=pide1
+m/ IM(F(%1,NOT(alive)),A(%1,NOT(I(have,baby))))p=pide1
+
+m/ F(stone,NOT(alive))
+m/ A(stone,live)?								a/ A(stone,live).p=0
+m/ A(stone,eat)?								a/ A(stone,eat).p=0
+m/ A(stone,I(have,baby))?						a/ A(stone,I(have,baby)).p=0
+m/ A(stone,move)?								a/ A(stone,move).p=2
+m/ C(stone,animal)?								a/ C(stone,animal).p=0
+m/ F(cat,alive)    
+m/ C(cat,animal)?								a/ C(cat,animal).p=4
+m/ A(cat,I(have,baby))?							a/ A(cat,I(have,baby)).p=4
+m/ A(snake,eat)
+m/ A(snake,grow)?								a/ A(snake,grow).p=4
+m/ A(book,NOT(eat))
+m/ A(book,grow)?								a/ A(book,grow).p=0
+// C(book,animal) is still p=2. When we will have "object" we should a way to find out if sthing is object or animal.
+// this could work by generatimg automatically rules (induction). If we know A(animal,eat) and animal is a major category then we generate IM(A(%1,eat),C(%1,animal))p=maybe with maybe table that will have p=2,3,4 and k=1,2. 
+// this will depend how many members "animal" has, how many of them eat, what other things eat that are not animals.
+// result will be: "book" is probably object, or a dead/ill animal (but mentioning "eat" already makes it probable that it is an animal at the end)
+
+// 19834 attempts 115 reasoned 18 sec
+
+m/ IM(A(F(%1,%4,%5),AND(%6,%7)),A(F(%1,%4,%5),%6))p=pide1
+m/ IM(A(F(%1,%4,%5),AND(%6,%7)),A(F(%1,%4,%5),%7))p=pide1
+m/ IM(A(%1,I(%2,AND(%3,%4,%5))),A(%1,I(%2,%3)))p=pide1
+m/ IM(A(%1,I(%2,AND(%3,%4,%5))),A(%1,I(%2,%4)))p=pide1
+m/ IM(A(%1,I(%2,AND(%3,%4,%5))),A(%1,I(%2,%5)))p=pide1
+m/ IM(A(F(Q(thing,s,all),%1,-ing),%2),A(F(Q(thing,s,all),%1,-ing),%1))p=pide1    // a somewhat strange rule bevcause %2 is not used. Explains that "all xxx-ing things ..." do xxx.
+m/ IM(A(F(Q(thing,s,all),%2,-ing),%3),IM(A(%1,%2),A(%1,%3)))p=pide1
+// as this rule is more speciific than IM(A(F(%1,%2,-ing),%3),IM(A(%1,%2),A(%1,%3))), the usage of the general one should be inhibited.
+
+// C(they,animal).r=4  when we add this, d(they,F(..)) needs to be removed
+
+m/ C(cat,F(Q(thing,s,all),live,-ing))		// later this should be reasoned using this: IM(A(%1,%2),C(%1,F(Q(thing,s,all),%2,-ing))) but this needs rule activation so that we dont use it all the time.
+e/ All living things grow and change.            m/ A(F(Q(thing,s,all),live,-ing),AND(grow,change)) 
+e/ They need food, water and air. 				 m/ A(they,I(need,AND(food,water,air))) 
+m/ D(F(Q(thing,s,all),live,-ing),they)    		// mapping needed here for they. Should be based on previous A(x,y), to map they to x. 
+m/ A(cat,I(need,water))?      					a/ A(cat,I(need,water)).p=4 
+
+
+// 25903 attempts 149 reasoned (all good) 27 sec
+
 
 
 

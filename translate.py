@@ -321,7 +321,8 @@ class Translator():
                 if bestrule != "":                                  # a rule to be applied is selected
                     self.replace_Rule(i,row,bestrule[:],rulefound,rulevars)   # replace the left rule part with the right part
                     nochange=0
-                else: nochange=1       
+                else: nochange=1  
+            if len(self.evaluate[i])>3: print (self.parse.eng[i],"   ",self.evaluate[i])
 
     def write_result(self):  # write output file
         with open('output.txt', 'w+') as output:

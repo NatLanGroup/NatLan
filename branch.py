@@ -111,6 +111,7 @@ class Branch:           #branching in WM
         rulw=-1 ; thispara=1                            # flag to show we did not cross paragraph border yet
         ruleinwm = -1
         bonus = 1
+        if gl.d==11: print ("TRYMAP 1 starting currentwm:",currentwm,gl.WM.cp[currentwm].mentstr)
         while currentwm>0:                             
             thispara = self.collect_Potential(thispara,currentwm)       # add currentwm to potential words to map, if so.   
             #TO DO: if currentwm is a word, search for C relation  in KB  (done in earlier WM) !!
@@ -121,7 +122,7 @@ class Branch:           #branching in WM
                 if (self.wmpos not in gl.WM.mapped_Already) or (currentwm not in gl.WM.mapped_Already[self.wmpos]):
                     wmapto=gl.WM.check_Crel(currentwm,maprule)          # check if there is a C-relation for currentwm in KB or in this WM
             if wmapto!=-1:  
-                if gl.d==1: print ("TRYMAP 2 wmapto=",wmapto,gl.WM.cp[wmapto].mentstr)
+                if gl.d==11: print ("TRYMAP 2 wmapto=",wmapto,gl.WM.cp[wmapto].mentstr)
                 ruleword=gl.KB.cp[maprule].parent[1]                    # in the rule in KB, second parent is a new word to be added
                 if gl.KB.cp[ruleword].relation==1:                      #TO DO not only word but concept
                     if gl.KB.cp[ruleword].mentstr != gl.WM.cp[self.wmpos].mentstr:   #TO DO: avoid D(x,x)?
@@ -180,11 +181,12 @@ class Branch:           #branching in WM
         else:
             maplist = db.get_Maprules(self.wmpos)           #mapping rules list
             lastconc=-1
+            if gl.d==11: print ("PERF BRANCHING. pos in WM:",self.wmpos,gl.WM.cp[self.wmpos].mentstr,"maplist=",maplist)
             for maprule in maplist:
                 lastconc = self.trymap_Single(maprule)      # perform mapping, lastconc is the last concept used in old wm
             if lastconc>-1:
                 gl.VS.wmliv.pop(gl.WM.this,None)            # in case of branching, old wm is not live anymore      
-            gl.args.settimer("branch_710: perform_branching",timer()-s)
+        gl.args.settimer("branch_710: perform_branching",timer()-s)
                 
 if __name__ == "__main__":
     print("This is a module file, run natlan.py instead")

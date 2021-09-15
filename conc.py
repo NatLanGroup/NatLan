@@ -890,7 +890,6 @@ class Kbase:
                 return rvalu
         
         if len(what1.parent) != len(inwhat.parent):
-            if gl.d==2: print ("NO MATCH 2")
             return 0     # if number of parents are not equal -> not match
             
         for pindex in range(0, len(what1.parent)):
@@ -904,8 +903,7 @@ class Kbase:
                 pm = self.rec_match(self.cp[p1], gl.WM.cp[p2], [p1,p2], castSecondKbase)
             else :
                 pm = self.rec_match(self.cp[p1], self.cp[p2], [p1,p2],goodanswer=goodanswer)      # compare parent concepts for match
-            if pm==0:
-                if gl.d==2: print ("NO MATCH 3 p1 p2:",p1,p2)                
+            if pm==0:               
                 return 0                                                  # if parent concept does not match -> no match
             if pm == 2:
                 if self.name=="WM" and not "%" in self.cp[p1].mentstr:     # only in WM, should not be a rule
@@ -995,10 +993,12 @@ class Kbase:
         for childkb in gl.KB.cp[parentinkb].child:              # all children of this parent
             if gl.KB.cp[childkb].relation == orig.relation:     # relation match
                 allmatch=1
-                for pix in range(0,len(gl.KB.cp[childkb].parent)):
-                    if self.cp[orig.parent[pix]].kblink == []: allmatch=0    # no match
-                    else:
-                        if self.cp[orig.parent[pix]].kblink[0] != gl.KB.cp[childkb].parent[pix]: allmatch = 0   # no match
+                if len(gl.KB.cp[childkb].parent) == len(orig.parent):    # FIX the potential match, childkb, has the same number of parents, so match is possible
+                    for pix in range(0,len(gl.KB.cp[childkb].parent)):
+                        if self.cp[orig.parent[pix]].kblink == []: allmatch=0    # no match
+                        else:
+                            if self.cp[orig.parent[pix]].kblink[0] != gl.KB.cp[childkb].parent[pix]: allmatch = 0   # no match
+                else: allmatch = 0                          # no match, different number of parents 
                 if allmatch==1:                                 # coni found in KB
                     orig.kblink.append(childkb)                 # kblink filled in
                     # no return after first match
@@ -1066,7 +1066,6 @@ class Kbase:
         if 1==1:
             match=False
             wordsmem={}; irule_ment=""
-        #    if gl.d==8: print ("PATTERN_SPREAD conc=",cflat, "rule",inhib)
             if len(inhib)==len(cflat):                              # inhibitor rule length equals this concept length (cflat)
                 rix=0; isrel=True; isword=False                     # isrel shows whether ritem (citem) is a relation number or not; isword whether it is word meaning (KB)
                 match=True
@@ -1464,7 +1463,6 @@ class Kbase:
                 self.spread_General(nowuse[0],gener,depth)   # recursive call one level deeper, this can only be 1 element
             else:
                 self.cp[thiscon].general.update(gener)  # update .general on wmuse concept
-                #if gl.d==4: print ("SPREAD *** GENERAL 9 here:",thiscon,"general:",self.cp[thiscon].general)
 
     def use_m(self,db,con):
         if db.name=="KB" and con>0: return -con    # transform con sign to minus (if needed)
@@ -1553,6 +1551,18 @@ class Kbase:
             if conclist==[-3] or (newcon.wmuse==[] and len(newcon.kb_use)>0):   # wmuse ended up empty but kb_use nonempty
                 newcon.wmuse=[-3]                                   # KB is used only, marked by -3
 #        if gl.d==9: print ("SETUSE2 9 here",new,"conclist",conclist,"kbuse_in",kbusein,"wmuse",newcon.wmuse,"kbuse",newcon.kb_use,"use_before",newcon.use_before)
+
+    def general_Rule(self,pos,rule,genrules):       # check that the concept on pos, just reasoned, has used a general rule and needs inhibited. called from finaladd_Concept only.
+        inhib_general=False                         # flag to inhibit this reasoning
+        conc = gl.WM.cp[pos]
+        for wmpos in range(len(gl.WM.cp)-1):        # entire WM except pos itself
+            check_con = gl.WM.cp[wmpos]
+            if check_con.reasonuse == conc.reasonuse and check_con.known>0:    # same input concepts used for reasoning
+                if len(check_con.rule_use)==1 and rule in genrules and check_con.rule_use[0] in genrules[rule]:    # rule we use now for pos is general, and its special version was used in check_con
+                    inhib_general = True            # inhibit becasue special rule already delivered a reasoned concept
+                    gl.test.track(gl.WM,pos,"      STOP (GENERAL RULE): general rule usage inhibited. Inhibitor conc db="+str(gl.WM.this)+":"+str(wmpos)+" inhibitor rule="+str(check_con.rule_use[0]),gl.args.tr_stop,rule=str(rule))
+                #    if gl.d==11: print ("!!!!!!!!! GEN RULE check positive. pos:",pos,"matching wm con:",wmpos)
+        return inhib_general
 
     def copydata_KB(self,concid,newconid):           # copy concept fields from WM to the KB copy of the concept
         newwm = gl.KB                                       # the new database is KB
@@ -1657,6 +1667,7 @@ class Kbase:
                     self.transform_List(kbcon.wmuse[usei],wm_tokb)        # transform the wmuse list to concepts valid in kb
                     kbcon.wmuse[usei].extend(kbcon.kb_use[usei])      # in wmuse item we now have the kb_use as well
                 self.transform_List(kbcon.reasonuse,wm_tokb)    # transform the reasonuse list
+                if gl.d==2: print ("TRANSFORM wm:",wmoldi,"kb:",wm_tokb[wmoldi],"new reasonuse",kbcon.reasonuse,"new wmuse",kbcon.wmuse)
                 #self.copy_Set(wm_tokb[wmoldi],kbcon.reasoned_with,wmcon.reasoned_with,wm_tokb,kbsign=1) # copy field
                 kbcon.reasoned_with = set()                        # FIX4 forget reasoned_with when copied to KB !!
                 self.copy_Set(wm_tokb[wmoldi],kbcon.usedby,wmcon.usedby,wm_tokb)    # copy field
@@ -1905,7 +1916,7 @@ class Kbase:
         print (wminfo)
         gl.log.add_log((wminfo))
         for i,conc in enumerate(wmitem.cp): 
-            concinfo = str(i)+ " "+conc.mentstr+" p="+str(conc.p)+" parents="+str(conc.parent)+" known="+str(conc.known)+" kblink:"+str(conc.kblink)+" wmuse="+str(conc.wmuse)+" kb_use="+str(conc.kb_use)+" reasonuse="+str(conc.reasonuse)+" general:"+str(conc.general)+" r="+str(conc.relevance)+" g="+str(conc.g)
+            concinfo = str(i)+ " "+conc.mentstr+" p="+str(conc.p)+" parents="+str(conc.parent)+" known="+str(conc.known)+" kblink:"+str(conc.kblink)+" wmuse="+str(conc.wmuse)+" kb_use="+str(conc.kb_use)+" use_ever="+str(conc.use_ever)+" reasonuse="+str(conc.reasonuse)+" rule_use:"+str(conc.rule_use)+" kb_rules="+str(conc.kb_rules)
             print (concinfo)
             gl.log.add_log((concinfo))
  
@@ -1930,6 +1941,7 @@ class Kbase:
                 #if gl.d==3: self.printlog_WM(gl.KB)        # print and log branch concepts for debugging
             self.keep_OneBranch()               # force kill all WMs except a single one
             self.move_Paratokb()                # move a paragraph (can be the last one) to KB
+            gl.reasoning.CDuses={}              # initialize the inventory of concepts used for CD reasoning
         gl.act.update_Para()                    # update list of activated concepts in this and previous paragraph
 
 

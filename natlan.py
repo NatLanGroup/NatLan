@@ -47,7 +47,7 @@ def process_testinput (tf):                     # run mentalese comprehension, i
 
 # GLOBAL VARIABLES
 
-gl.d=12                   # debugging
+gl.d=99                  # debugging
 gl.args = gl.Arguments()    # initialize global parameters
 gl.args.debug = 1           # debug mode
 gl.error = 0                # error counter

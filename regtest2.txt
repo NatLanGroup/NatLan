@@ -29,7 +29,7 @@ m/ C(Bill,boy)
 // C(Bill,person)
 
 m/ C(roller,bike)
-m/ P(?,bike)		a/ P(boy,bike) P(girl,bike) P(Jim,bike) P(Joe,bike) P(you,bike) P(Bill,bike)
+m/ P(?,bike)		a/ P(boy,bike) P(girl,bike) P(Joe,bike) P(you,bike)
 
 m/ F(girl,long,very)
 m/ P(animal,head)
@@ -86,5 +86,5 @@ m/ F(boy,hungry)?				a/ F(boy,hungry).p=4
 m/ F(Bill,hungry)?				a/ F(Bill,hungry).p=4
 // F(Bill,big)
 
- //  1089 attempted, 27 concepts reasoned
+ //  857 attempted, 25 concepts reasoned
 

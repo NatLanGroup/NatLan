@@ -153,6 +153,7 @@ SENT+%1;([by:ADP,IN];SENT+%2) > SENT+IM(F(%2.p=4,by),%1.p=4)
 SENT+A(%1,%2);NPO+%3 > SENT+A(%1,I(%2,%3))
 [ADJWDT+%2];SENT+A(%3, > D(%2,%3);SENT+A(%3,            
 (SENT+%1;D(%2);SENT+%4;[.:PUNCT,.,punct]) > %1_D(%2)_%4
+(D(%1,that);SENT+F(that,%2);SENT+%3;[.:PUNCT,.,punct]) > %3_D(%1,that)_F(that,%2)
 #29 > 118
 (NP%5+%1;[%2:ADJ,PRP$,poss];[%3:ADJ,JJ,amod]) > NP%5+F(Q(%1,%2),%3)
 ([by:ADP,IN,prep];(VPG+Q(%1,-ing);NPO+%2;ADV+%3));NPS+%4 > ([by:ADP,IN,SUBJ+%4];(VPG+Q(%1,-ing);NPO+%2;ADV+%3));NPS+%4
@@ -458,4 +459,8 @@ F(%1,not) > NOT(%1)
 F(%1,%2,Q(not)) > F(%1,NOT(%2))
 A(%1,%2)_D(%1,that)_F(that,%3) > F(A(%1,%2),%3)
 A(%1,Q(%2,not)) > A(%1,NOT(%2))
+SENT+A(%1,Q(%2,can));[,:PUNCT,,,punct];VP+AND(%3,%4) > SENT+A(%1,Q(AND(%2,%3,%4),can))
+[are:VERB,VBP,relcl] > VPB+be
+[%1:VERB,%,ROOT];NPS+%2;[ADJWDT+%3];SENT+%4 > [ADJWDT+%3];SENT+%4;[%1:VERB,%,ROOT];NPS+%2
+SENT+A(%1,%2);[and:CCONJ,CC,cc];VP+%3;[.:PUNCT > SENT+A(%1,AND(%2,%3));[.:PUNCT
 SENT+X(%1) > SENT+X(%1)     ]]))))))))))))))))))))))]]))))))))))]]))))))))))))))))))))))))))))))))))))))))))))))))]]

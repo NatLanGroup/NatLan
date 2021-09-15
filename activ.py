@@ -28,12 +28,6 @@ class Activate:
                         new_act=self.preact_Child(child,wmdb,db,3)              # children of this double-activ child are pre-activated to level 3 !!
                         if len(new_act)>0:                                      # any level3 peractivation
                             gl.test.track(db,child,"   ACTIV (PRE4) double-preact. "+str(new_act),gl.args.tr_act,rule="")
-                    if gl.d==88 and level==2 and child in wmdb.kbact_pre[2]:            
-                        print ("PREACT CHILD 2 level=2 itt. child: :",child,"parent",parent)  #ITT TARTOK ennek gyerekeit aktivalni kell!!
-                        if parent in wmdb.kbact_from: print ("parent from",wmdb.kbact_from[parent])
-                        else: print ("parent from: not present in kbact_from.")
-                        if child in wmdb.kbact_from: print ("child from:",wmdb.kbact_from[child])
-                        else: print ("child from: not present in kbact_from.")
                     self.spread_From(wmdb,parent,child,level,[3])             # spread activation-from info from parent to the child
                     if level==2 and child in wmdb.kbact_pre[1]: 
                         wmdb.kbact_pre[1].remove(child)   # remove from lower preactivation
@@ -57,7 +51,8 @@ class Activate:
         else:                                                           # not a C relation - perform level 1 preactivation   ???? not called for C relations!!
             new_act = self.preact_Child(curri,wmdb,db,1)                # children of parent
             if len(new_act)>0:                                          # any level2 peractivation
-                gl.test.track(db,curri,"   ACTIV (PRE2) preact. "+str(new_act),gl.args.tr_act,rule="")
+                gl.test.track(db,curri,"   ACTIV (PRE2) children preact. "+str(new_act),gl.args.tr_act,rule="")
+            #    if gl.d==11: print ("PREACT 2 children. based on",db.cp[curri].mentstr,"preactivated 1",new_act)   # ITT TARTOK 09.03 kbactiv_limit = [0,1,3,3,4] miatt regtest2-ben van egy MISSING.
         if curri in wmdb.kbact_pre[2]:                              # now activated, earlier pre-activated on level 2
         #    if gl.d==8: print ("!!!!! PREACT 2, most aktivált és 2-es preaktivált:",curri,"from:",wmdb.kbact_from[curri])
             new_act=self.preact_Child(curri,wmdb,db,3)              # children of this double-activ curri are pre-activated to level 3 !!
@@ -82,7 +77,7 @@ class Activate:
     def spread_Actpattern(self,db,coni,wmdb):           # spread activation based on p=question patterns
                                                         # in order to narrow, we check here, that this pattern matches the question at hand !!!!!!
         act=False
-        if coni in wmdb.kbact_pre[1] or coni in wmdb.kbact_pre[2]:     # coni is pre-activated, close to something activated   amikor a 103-at pre=2-beteszem, akkor pre=1-bol kiveszem !!!!!!!
+        if coni in wmdb.kbact_pre[1] or coni in wmdb.kbact_pre[2]:     # coni is pre-activated, close to something activated
             if db.cp[coni].relation == 13 and len(db.cp[coni].parent)>1:   # IM(a,b) relation is coni, and pre-activated
                 implic = db.cp[coni].parent[1]                  # implication - if this is the same structure as the question we need to proceed
                 flatim = []
@@ -99,12 +94,13 @@ class Activate:
             db.pattern_Flat(db,flat,coni)                       # store flat version of concept into flat
             spread_match=db.pattern_Spread(db,flat)             # compare flat (coni) to all stored patterns of spreading structures (based on questions)
             if act==False and spread_match[0]==True:                        # coni matches a p=question spreading pattern_Flat
-                if gl.d==11: print ("SPREAD ACT 6 coni",db.name,coni,"matcvhing rules list",spread_match[1])
+        #        if gl.d==11: print ("SPREAD ACT 6 coni",db.name,coni,"matcvhing rules list",spread_match[1])
                 for kb_que_rule in spread_match[1]:                         # the matching =question rule in KB. several matches possible.
                     toact = gl.KB.question_spread[kb_que_rule]              # the flattened b from the rule AND(a,b). This needs to be activated.
                     cmap={}                                                 # %1 %2 in rule mapped to the words in coni
                     gl.KB.pattern_flatmatch(flat,toact,cmap)                # we know that flat and toact match. But we call this again to fill cmap!!
                     related_question = gl.KB.question_observe[kb_que_rule]  # the first part of the rule, the related question to this match, flattened
+                    act=False
                     for question in gl.WM.question_now:                     #  questions at hand
                         question_flat = []                                  # this will hold the flattened current question
                         gl.WM.pattern_Flat(gl.WM,question_flat,question)    # the current question gets flattened                
@@ -113,26 +109,31 @@ class Activate:
                             match = gl.KB.pattern_flatmatch(question_flat,related_question,qmap)   # if they match, this spreading is relevant and should be carried out
                                                                         # limitation (TO DO): we don't check yet if %1 %2 are the same in coni as in the current question.
                             if match:                                       # spread activation
-                                if gl.d==11: print ("SPREAD ACT 9 coni",db.name,coni,"match",match,"question part in rule","none","current WM question",question,question_flat,"qmap",qmap,"cmap",cmap)
-                                words_same=True
+                        #        if gl.d==11: print ("SPREAD ACT 8 coni",db.name,coni,"match",match,"question part in rule","none","current WM question",question,question_flat,"qmap",qmap,"cmap",cmap)
+                                words_same=False; no_match=False
                                 for wildcard in qmap:                       # %1 %2 etc we had in qmap, mapped to actual words in the question
                                     if wildcard in cmap:                    # the same %x wildcard occurs in coni conbcept to be activated according to the rule
-                                        if qmap[wildcard]==cmap[wildcard]:  # the same word denoted in both question and coni by the same %x wildcard
-                                            print ("SAME in SPREAD!!!! wildcard qm cm",wildcard,qmap[wildcard],cmap[wildcard])
-                                        else:
-                                            if cmap[wildcard] in gl.KB.cp[qmap[wildcard]].general:  # more general in coni, this is also fine, count as if it was the same  (KB because these are words)
-                                                print ("GENREAL in SPREAD!!!! wildcard qm cm",wildcard,qmap[wildcard],"general",gl.KB.cp[qmap[wildcard]].general)
-                                         #ITT TARTOK, működik, ezzel beáéllítható az act=True  .  még hozzá lehet tenni: gl.KB.cp[qmap[wildcard]].same SAME !!!!
-                                act=True
-                                gl.test.track(db,coni,"   ACTIV (SPREAD_2) triggered based on =question rule. matched question: "+str(question)+" ",gl.args.tr_act,rule=str(kb_que_rule))
+                                        if qmap[wildcard]==cmap[wildcard] or cmap[wildcard] in gl.KB.cp[qmap[wildcard]].same:  # the same word denoted in both question and coni by the same %x wildcard
+                                            words_same=True
+                                #            print ("SAME in SPREAD!!!! wildcard qm cm",wildcard,qmap[wildcard],cmap[wildcard])
+                                        else:                               # word not same - continue looking
+                                            if cmap[wildcard] in gl.KB.cp[qmap[wildcard]].general:  # more general in coni,  (KB because these are words)
+                                                words_same=True             # this is also fine, count as if it was the same 
+                                #                print ("GENREAL in SPREAD!!!! wildcard qm cm",wildcard,qmap[wildcard],"general",gl.KB.cp[qmap[wildcard]].general)
+                                            else:                           # no match
+                                                no_match=True               # remember that a no-match was found. This will not allow activation.
+                                if words_same==True and no_match==False:     # %1 %2c in the question same or general as in the concept to activate
+                                #    print ("SPREAD ACT 9 coni",db.name,coni,"ACTIVATED")
+                                    act=True
+                                    gl.test.track(db,coni,"   ACTIV (SPREAD_2) triggered based on =question rule. matched question: "+str(question)+" ",gl.args.tr_act,rule=str(kb_que_rule))
                                 break
                     if act: break                                           # first match enough for activation
         return act
                  
     def activKB_Allchild(self,db,start,curri,wmdb,around,isinput,nextch=0,isquestion=False):                 #nextp fixed recursive activation of curri and all children, used in KB
         s=timer()
-        if isquestion: limit=gl.args.kbactiv_qlimit
-        else: limit=gl.args.kbactiv_limit
+        if isquestion: limit=gl.args.kbactiv_qlimit[:]   #FIX copy
+        else: limit=gl.args.kbactiv_limit[:]
     #    gl.test.track(db,curri,"   ACTIV (ATTEMPT) children of:",gl.args.tr_act)
         while (curri<len(db.cp) and len(db.cp[curri].child)>0 and nextch<len(db.cp[curri].child)):  # walk over children 
             if len(limit)>around+1: nextround=around+1
@@ -149,7 +150,7 @@ class Activate:
                 if start==curri:                    # top level, not the children
                     wmdb.kbactiv.add(curri)         # add this KB concept to the list of KB-activated concepts with regard to this WM
                     wmdb.kbactiv_new.add(curri)     # add this KB concept to the list of KB-activated concepts with regard to this WM
-                    if gl.d==6: print ("ACTKB 4 activate:",curri,gl.KB.cp[curri].mentstr)
+                    gl.test.track(gl.KB,curri,"   ACTIV (CHILD1) above limit. level="+str(max(db.cp[curri].relevance)+prelevel),gl.args.tr_act,rule="")
                 else:                               # we are at children
                     for pari in range(len(db.cp[curri].parent)):                            # look at relevance of each parent separately
                         if db.cp[curri].parent[pari]==start:
@@ -158,9 +159,11 @@ class Activate:
                                     addlimit=gl.args.kbactiv_addone[db.cp[curri].relation][pari]
                                     if db.cp[curri].relevance[pari]+prelevel < limit[around]+addlimit:   # relevance of the specific parent is not high enough
                                         thisact=False                                        # do not activate this curri
+                                        gl.test.track(gl.KB,curri,"   DECLINE ACTIV (CHILD2) due to kbactiv_addone. addlimit="+str(addlimit),gl.args.tr_act,rule="")
                     if thisact:                         # if curri 
                         wmdb.kbactiv.add(curri)         # add this KB concept to the list of KB-activated concepts with regard to this WM
                         wmdb.kbactiv_new.add(curri)     # add this KB concept to the list of KB-activated concepts with regard to this WM
+                        gl.test.track(gl.KB,curri,"   ACTIV (CHILD2) above limit. level="+str(max(db.cp[curri].relevance)+prelevel)+" round:"+str(around)+" limit:"+str(limit[around]),gl.args.tr_act,rule="")
                     #    if gl.d==8: print ("+++ ACTKB 7 activate:",curri,gl.KB.cp[curri].mentstr,"around",around,"limit",limit[around])
                 if thisact :                                        # curri has been activated now
                     self.spread_From(wmdb,start,curri,0,[3])        # spread activation-from info level==0 means activation
@@ -178,6 +181,7 @@ class Activate:
                     wmdb.kbactiv.add(curri)                     # add this KB concept to the list of KB-activated concepts with regard to this WM
                     wmdb.kbactiv_new.add(curri)                 # add this KB concept to the list of KB-activated concepts with regard to this WM
                     self.pre_Activate(curri,wmdb,db,False)      # pre-activate children of current activation
+                    gl.test.track(gl.KB,curri,"   ACTIV (CHILD3) below limit, pre-activated. ",gl.args.tr_act,rule="")
             #From is recorded in pre-activation but not recorded in structure spreading!        self.spread_From(wmdb,start,curri,0,[3])    # spread activation-from info level==0 means activation
                     if gl.d==8: print ("+++ ACTKB 9 activate:",curri,gl.KB.cp[curri].mentstr,"from",wmdb.kbact_from[curri])
                 #ITT TARTOK: 105-öt kell aktiválni. IM(a,b) alapon, ahol b lett most a question.  
